@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Document Sorter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.5rem;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: rotate(90deg);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #34495e;
+            border-bottom: 3px solid #2c3e50;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            background: #34495e;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: #3f5a70;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Upload Tab Styles */
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #2980b9;
+            background: #e3f2fd;
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .file-list {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Processing Tab Styles */
+        .progress-container {
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .current-file {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .processing-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+        }
+
+        .document-item.completed {
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .document-item.error {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .document-item.processing {
+            border-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .document-item.waiting {
+            border-color: #95a5a6;
+            background: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-block;
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .status-completed {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-error {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-processing {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-waiting {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* Results Tab Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+        
+        .results-table td:last-child {
+            white-space: nowrap;
+        }
+
+        .results-table th {
+            background: #34495e;
+            color: white;
+            font-weight: 500;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* File Explorer Styles */
+        .file-explorer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .explorer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .view-btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .view-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .breadcrumb-nav {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-nav a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .breadcrumb-nav a:hover {
+            text-decoration: underline;
+        }
+
+        .file-explorer {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            min-height: 400px;
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .file-explorer.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-explorer.grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .folder-item, .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            position: relative;
+        }
+
+        .folder-item:hover, .file-item:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+            transform: translateY(-1px);
+        }
+
+        .folder-item.selected, .file-item.selected {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .folder-item.dragging, .file-item.dragging {
+            opacity: 0.6;
+            transform: rotate(5deg);
+        }
+
+        .folder-item.drop-target {
+            background: #e8f5e8;
+            border-color: #28a745;
+            border-style: dashed;
+        }
+
+        .item-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            color: #6c757d;
+        }
+
+        .folder-item .item-icon {
+            color: #ffc107;
+        }
+
+        .item-name {
+            flex: 1;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .folder-item:hover .item-actions,
+        .file-item:hover .item-actions {
+            opacity: 1;
+        }
+
+        .item-actions button {
+            padding: 4px 8px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s ease;
+        }
+
+        .item-actions button:hover {
+            background: #495057;
+        }
+
+        .rename-btn {
+            background: #28a745 !important;
+        }
+
+        .preview-btn {
+            background: #17a2b8 !important;
+        }
+
+        /* Grid view specific styles */
+        .file-explorer.grid-view .folder-item,
+        .file-explorer.grid-view .file-item {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .file-explorer.grid-view .item-icon {
+            font-size: 2.5rem;
+            margin-right: 0;
+            margin-bottom: 10px;
+        }
+
+        .file-explorer.grid-view .item-name {
+            font-size: 0.9rem;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .file-explorer.grid-view .item-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* Dialog styles */
+        .dialog-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .dialog {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .dialog h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .dialog-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s ease;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #545b62;
+        }
+
+        .create-btn, .rename-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .create-btn:hover, .rename-btn:hover {
+            background: #0056b3;
+        }
+
+        .dialog-error {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Mode Toggle Styles */
+        .mode-toggle-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .mode-toggle-container h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 20px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .toggle-option:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .toggle-option input[type="radio"] {
+            display: none;
+        }
+
+        .toggle-option input[type="radio"]:checked + .toggle-label {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .toggle-option input[type="radio"]:checked {
+            & ~ * {
+                border-color: #3498db;
+            }
+        }
+
+        .toggle-option:has(input:checked) {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .toggle-label {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-option small {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Manual Client Input Styles */
+        .manual-client-input {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+        }
+
+        .manual-client-input h4 {
+            margin-bottom: 15px;
+            color: #856404;
+        }
+
+        .client-input-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .client-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .client-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* Remove Button Styles */
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        /* Dropdown folder styles for list view */
+        .file-explorer.list-view .folder-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-explorer.list-view .folder-item.expanded {
+            background: #f0f8ff;
+            border-color: #007bff;
+        }
+
+        .file-explorer.list-view .folder-dropdown {
+            display: none;
+            width: 100%;
+            margin-top: 8px;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+
+        .file-explorer.list-view .folder-item.expanded .folder-dropdown {
+            display: block;
+        }
+
+        .folder-dropdown .dropdown-file {
+            padding: 6px 12px;
+            margin: 1px 0;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #333;
+            margin-left: 32px;
+        }
+
+        .folder-dropdown .dropdown-file:hover {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .folder-dropdown .dropdown-loading {
+            text-align: left;
+            color: #999;
+            font-style: italic;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-left: 32px;
+        }
+
+        .folder-dropdown .dropdown-empty {
+            text-align: left;
+            color: #999;
+            font-style: italic;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-left: 32px;
+        }
+
+        .folder-toggle-icon {
+            transition: transform 0.15s ease;
+            cursor: pointer;
+            margin-right: 6px;
+            font-size: 10px;
+            color: #666;
+            width: 12px;
+            display: inline-block;
+        }
+
+        .folder-item.expanded .folder-toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Better folder icon */
+        .folder-item .item-icon {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        /* Settings Modal Styles */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .settings-modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .settings-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            color: #e74c3c;
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-help {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div>
+                    <h1>📄 Tax Document Sorter</h1>
+                    <p>Automatically classify, extract client information, and organize your tax documents</p>
+                </div>
+                <button class="settings-btn" onclick="openSettingsModal()" title="Settings">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('upload', this)">📤 Upload</button>
+            <button class="tab" onclick="showTab('processing', this)">⚙️ Processing</button>
+            <button class="tab" onclick="showTab('results', this)">📊 Results</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <!-- Processing Mode Toggle -->
+            <div class="mode-toggle-container">
+                <h3>Processing Mode</h3>
+                <div class="mode-toggle">
+                    <label class="toggle-option">
+                        <input type="radio" name="processingMode" value="auto" checked onchange="toggleProcessingMode()">
+                        <span class="toggle-label">🤖 Auto Mode</span>
+                        <small>AI extracts client names automatically</small>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="processingMode" value="manual" onchange="toggleProcessingMode()">
+                        <span class="toggle-label">✏️ Manual Mode</span>
+                        <small>Specify client name manually</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Manual Client Input (hidden by default) -->
+            <div id="manualClientInput" class="manual-client-input hidden">
+                <h4>Client Information</h4>
+                <div class="client-input-row">
+                    <input type="text" id="clientFirstName" placeholder="First Name" class="client-input">
+                    <input type="text" id="clientLastName" placeholder="Last Name" class="client-input">
+                </div>
+            </div>
+
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drop files here or click to browse</div>
+                <div class="upload-subtext">Supports PDF, PNG, JPG, JPEG, TIFF, BMP files (max 16MB each)</div>
+                <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
+            </div>
+            
+            <div id="fileList" class="file-list hidden">
+                <h3>Selected Files:</h3>
+                <div id="fileItems"></div>
+                <button id="processBtn" class="btn btn-success" onclick="processFiles()">
+                    Start Processing
+                </button>
+            </div>
+        </div>
+
+        <!-- Processing Tab -->
+        <div id="processing" class="tab-content">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="progressText" class="progress-text">Ready to process...</div>
+            </div>
+
+            <div id="currentFile" class="current-file hidden">
+                <h3>Currently Processing:</h3>
+                <div id="currentFileName">-</div>
+            </div>
+
+            <div class="processing-list">
+                <div id="processingItems"></div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-content">
+            <div id="resultsContent">
+                <p style="text-align: center; color: #7f8c8d; font-size: 1.2rem;">
+                    No results yet. Please upload and process some documents first.
+                </p>
+            </div>
+            
+            <!-- File Explorer Section -->
+            <div id="fileExplorerSection" class="hidden" style="margin-top: 40px;">
+                <div class="file-explorer-header">
+                    <h3>📁 Browse Processed Files</h3>
+                    <div class="explorer-controls">
+                        <button id="openResultsFolderBtn" class="btn">📂 Open in File Explorer</button>
+                        <button id="addFolderBtn" class="btn">➕ New Folder</button>
+                        <div class="view-controls">
+                            <button id="listViewBtn" class="btn view-btn active">📋 List</button>
+                            <button id="gridViewBtn" class="btn view-btn">⬜ Grid</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="breadcrumb-nav">
+                    <div id="currentPath">Home</div>
+                </div>
+                
+                <div id="fileExplorer" class="file-explorer list-view">
+                    <div class="loading">Loading files...</div>
+                </div>
+                
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2 class="settings-title">⚙️ Settings</h2>
+                <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
+            
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="apiKey" class="form-label">Claude API Key</label>
+                    <input 
+                        type="password" 
+                        id="apiKey" 
+                        name="apiKey" 
+                        class="form-input" 
+                        placeholder="sk-ant-api03-..."
+                        autocomplete="new-password"
+                    >
+                    <div class="form-help">
+                        Enter your Claude API key from Anthropic. This is used for document text extraction and fallback classification.
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="saveSettingsBtn">
+                    💾 Save Settings
+                </button>
+                
+                <div id="settingsStatus" class="status-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentSessionId = null;
+        let processingInterval = null;
+
+        // Tab functionality
+        function showTab(tabName, element) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            } else if (event && event.target) {
+                event.target.classList.add('active');
+            }
+        }
+
+        // File upload functionality
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFileSelect({ target: { files: e.dataTransfer.files } });
+        });
+
+        function handleFileSelect(event) {
+            selectedFiles = Array.from(event.target.files);
+            displayFileList();
+        }
+
+        function displayFileList() {
+            const fileList = document.getElementById('fileList');
+            const fileItems = document.getElementById('fileItems');
+            
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
+                return;
+            }
+
+            fileList.classList.remove('hidden');
+            fileItems.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <button onclick="removeFile(${index})" class="remove-btn" title="Remove file">×</button>
+                `;
+                fileItems.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileList();
+        }
+
+        function processFiles() {
+            if (selectedFiles.length === 0) {
+                alert('Please select files to process');
+                return;
+            }
+
+            // Check manual mode client info
+            const clientInfo = getClientInfo();
+            if (processingMode === 'manual' && !clientInfo) {
+                return; // Error already shown in getClientInfo
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            // Add processing mode and client info
+            formData.append('processing_mode', processingMode);
+            if (clientInfo) {
+                formData.append('client_first_name', clientInfo.firstName);
+                formData.append('client_last_name', clientInfo.lastName);
+            }
+
+            const processBtn = document.getElementById('processBtn');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<span class="loading"></span> Uploading...';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                currentSessionId = data.session_id;
+                showTab('processing');
+                startProcessingMonitor();
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                processBtn.disabled = false;
+                processBtn.innerHTML = 'Start Processing';
+            });
+        }
+
+        function startProcessingMonitor() {
+            if (!currentSessionId) return;
+
+            processingInterval = setInterval(() => {
+                fetch(`/status/${currentSessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateProcessingDisplay(data);
+                    
+                    if (data.status === 'completed' || data.status === 'error') {
+                        clearInterval(processingInterval);
+                        if (data.status === 'completed') {
+                            setTimeout(() => {
+                                loadResults();
+                            }, 500);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                    clearInterval(processingInterval);
+                });
+            }, 1000);
+        }
+
+        function updateProcessingDisplay(data) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const currentFile = document.getElementById('currentFile');
+            const currentFileName = document.getElementById('currentFileName');
+            const processingItems = document.getElementById('processingItems');
+
+            // Count completed files (including errors as they're finished processing)
+            const completedCount = data.results.filter(result => 
+                result.status === 'completed' || result.status === 'error'
+            ).length;
+            
+            // Update progress bar based on completed files only
+            const percentage = data.total > 0 ? (completedCount / data.total) * 100 : 0;
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = `${completedCount}/${data.total} documents completed (${percentage.toFixed(1)}%)`;
+
+            // Update current file being processed
+            if (data.current_file && data.status === 'processing') {
+                currentFile.classList.remove('hidden');
+                currentFileName.textContent = `Processing: ${data.current_file}`;
+            } else if (data.status === 'completed') {
+                currentFile.classList.remove('hidden');
+                currentFileName.textContent = 'All files processed!';
+            }
+
+            // Clear existing items first
+            processingItems.innerHTML = '';
+            
+            // Add file items in order with proper status
+            data.results.forEach((result, index) => {
+                const item = document.createElement('div');
+                item.className = `document-item ${result.status || 'waiting'}`;
+                
+                let statusBadge = '';
+                let statusClass = '';
+                
+                if (result.status === 'completed') {
+                    statusBadge = '<span class="status-badge status-completed">✓ Completed</span>';
+                    statusClass = 'completed';
+                } else if (result.status === 'error') {
+                    statusBadge = '<span class="status-badge status-error">✗ Error</span>';
+                    statusClass = 'error';
+                } else if (index < data.current) {
+                    // Currently processing this file
+                    statusBadge = '<span class="status-badge status-processing">⏳ Processing</span>';
+                    statusClass = 'processing';
+                } else {
+                    // Waiting to be processed
+                    statusBadge = '<span class="status-badge status-waiting">⏸ Waiting</span>';
+                    statusClass = 'waiting';
+                }
+
+                item.className = `document-item ${statusClass}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${result.original_filename}</strong>
+                        ${result.error ? `<br><small style="color: #e74c3c;">Error: ${result.error}</small>` : ''}
+                        ${result.new_filename ? `<br><small style="color: #27ae60;">→ ${result.new_filename}</small>` : ''}
+                    </div>
+                    ${statusBadge}
+                `;
+                processingItems.appendChild(item);
+            });
+        }
+
+        function loadResults() {
+            if (!currentSessionId) return;
+
+            fetch(`/results/${currentSessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data);
+                // Manually switch to results tab
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('results').classList.add('active');
+                document.querySelectorAll('.tab')[2].classList.add('active'); // Results tab is 3rd
+            })
+            .catch(error => {
+                console.error('Error loading results:', error);
+            });
+        }
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            const fileExplorerSection = document.getElementById('fileExplorerSection');
+            const stats = data.stats;
+            const results = data.results;
+
+            resultsContent.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total_documents}</div>
+                        <div class="stat-label">Total Documents</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.completed}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.unique_clients}</div>
+                        <div class="stat-label">Unique Clients</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.success_rate.toFixed(1)}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Original File</th>
+                            <th>Client Name</th>
+                            <th>Document Type</th>
+                            <th>Tax Year</th>
+                            <th>New Filename</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${results.map(result => `
+                            <tr>
+                                <td>${result.original_filename}</td>
+                                <td>${result.client_name || 'Unknown'}</td>
+                                <td>${result.document_type || 'Unknown'}</td>
+                                <td>${result.tax_year || 'Unknown'}</td>
+                                <td>${result.new_filename || '-'}</td>
+                                <td>
+                                    ${result.status === 'completed' ? 
+                                        '<span class="status-badge status-completed">✓ Complete</span>' : 
+                                        '<span class="status-badge status-error">✗ Error</span>'
+                                    }
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            // Show file explorer section
+            fileExplorerSection.classList.remove('hidden');
+            
+            // Initialize file explorer
+            initializeFileExplorer();
+            loadFileExplorer('processed');
+        }
+
+        // Reset functionality
+        function resetApp() {
+            selectedFiles = [];
+            currentSessionId = null;
+            if (processingInterval) {
+                clearInterval(processingInterval);
+            }
+            
+            document.getElementById('fileList').classList.add('hidden');
+            document.getElementById('currentFile').classList.add('hidden');
+            document.getElementById('processingItems').innerHTML = '';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Ready to process...';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('processBtn').disabled = false;
+            document.getElementById('processBtn').innerHTML = 'Start Processing';
+            
+            showTab('upload');
+        }
+
+        // Settings Modal functionality
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.add('show');
+            
+            // Load current API key (masked)
+            loadCurrentSettings();
+            
+            // Focus on API key input
+            setTimeout(() => {
+                document.getElementById('apiKey').focus();
+            }, 300);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('show');
+            
+            // Clear form
+            document.getElementById('settingsForm').reset();
+            hideSettingsStatus();
+        }
+
+        function loadCurrentSettings() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.api_key_set) {
+                        // Show masked API key
+                        const apiKeyInput = document.getElementById('apiKey');
+                        apiKeyInput.placeholder = 'API key is configured (sk-ant-api03-****...)';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading settings:', error);
+                });
+        }
+
+        function saveSettings() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            
+            if (!apiKey) {
+                showSettingsStatus('Please enter an API key', 'error');
+                return;
+            }
+
+            if (!apiKey.startsWith('sk-ant-api03-')) {
+                showSettingsStatus('Invalid API key format. Must start with "sk-ant-api03-"', 'error');
+                return;
+            }
+
+            // Disable button and show loading
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    api_key: apiKey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSettingsStatus('Settings saved successfully! ✓', 'success');
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeSettingsModal();
+                    }, 2000);
+                } else {
+                    showSettingsStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                showSettingsStatus(`Error: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Settings';
+            });
+        }
+
+        function showSettingsStatus(message, type) {
+            const statusDiv = document.getElementById('settingsStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function hideSettingsStatus() {
+            const statusDiv = document.getElementById('settingsStatus');
+            statusDiv.style.display = 'none';
+        }
+
+        // Handle settings form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsForm = document.getElementById('settingsForm');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveSettings();
+                });
+            }
+
+            // Close modal when clicking outside
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeSettingsModal();
+                    }
+                });
+            }
+
+            // Handle Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('settingsModal');
+                    if (modal.classList.contains('show')) {
+                        closeSettingsModal();
+                    }
+                }
+            });
+        });
+
+        // File Explorer functionality
+        let currentDirectory = 'processed';
+        let currentViewMode = 'list';
+
+        function initializeFileExplorer() {
+            const openFolderBtn = document.getElementById('openResultsFolderBtn');
+            const addFolderBtn = document.getElementById('addFolderBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+
+            if (openFolderBtn) {
+                openFolderBtn.onclick = () => openResultsFolder();
+            }
+
+            if (addFolderBtn) {
+                addFolderBtn.onclick = () => showAddFolderDialog();
+            }
+
+            if (listViewBtn) {
+                listViewBtn.onclick = () => setViewMode('list');
+            }
+
+            if (gridViewBtn) {
+                gridViewBtn.onclick = () => setViewMode('grid');
+            }
+        }
+
+        function loadFileExplorer(dirPath) {
+            const fileExplorer = document.getElementById('fileExplorer');
+            
+            if (fileExplorer) {
+                fileExplorer.innerHTML = '<div class="loading">Loading...</div>';
+            }
+
+            fetch(`/api/directory/${dirPath}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentDirectory = data.relativePath;
+                        updateBreadcrumb(dirPath);
+                        displayDirectoryContents(data);
+                    } else {
+                        showFileExplorerError(`Error loading directory: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading directory:', error);
+                    showFileExplorerError(`Error loading directory: ${error.message}`);
+                });
+        }
+
+        function updateBreadcrumb(dirPath) {
+            const currentPath = document.getElementById('currentPath');
+            if (!currentPath) return;
+
+            const segments = dirPath.split('/').filter(segment => segment && segment !== 'processed');
+            let breadcrumbHtml = '<a href="#" data-path="processed">Home</a>';
+            
+            let currentPathStr = 'processed';
+            segments.forEach((segment, index) => {
+                currentPathStr += `/${segment}`;
+                const displaySegment = segment.replace(/_/g, ' ');
+                if (index === segments.length - 1) {
+                    breadcrumbHtml += ` / <span>${displaySegment}</span>`;
+                } else {
+                    breadcrumbHtml += ` / <a href="#" data-path="${currentPathStr}">${displaySegment}</a>`;
+                }
+            });
+            
+            currentPath.innerHTML = breadcrumbHtml;
+            
+            // Add click listeners
+            currentPath.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const path = link.getAttribute('data-path');
+                    loadFileExplorer(path);
+                });
+            });
+        }
+
+        function displayDirectoryContents(data) {
+            const fileExplorer = document.getElementById('fileExplorer');
+            if (!fileExplorer) return;
+            
+            fileExplorer.innerHTML = '';
+            
+            // Apply view mode
+            fileExplorer.className = `file-explorer ${currentViewMode}-view`;
+            
+            if ((!data.dirs || data.dirs.length === 0) && (!data.files || data.files.length === 0)) {
+                fileExplorer.innerHTML = '<div class="empty-message">This folder is empty</div>';
+                return;
+            }
+            
+            // Display folders first
+            if (data.dirs && data.dirs.length > 0) {
+                data.dirs.forEach(folderName => {
+                    const folderItem = createFolderItem(folderName);
+                    fileExplorer.appendChild(folderItem);
+                });
+            }
+            
+            // Display files
+            if (data.files && data.files.length > 0) {
+                data.files.forEach(fileName => {
+                    const fileItem = createFileItem(fileName);
+                    fileExplorer.appendChild(fileItem);
+                });
+            }
+            
+            setupDragAndDrop();
+        }
+
+        function createFolderItem(folderName) {
+            const folderItem = document.createElement('div');
+            folderItem.className = 'folder-item';
+            folderItem.draggable = true;
+            folderItem.dataset.name = folderName;
+            folderItem.dataset.type = 'folder';
+            
+            // Clean display name by replacing underscores with spaces
+            const displayName = folderName.replace(/_/g, ' ');
+            
+            // Different content based on view mode
+            if (currentViewMode === 'list') {
+                folderItem.innerHTML = `
+                    <div class="folder-header" style="display: flex; align-items: center; width: 100%;">
+                        <span class="folder-toggle-icon">▶</span>
+                        <div class="item-icon">📁</div>
+                        <div class="item-name" style="flex: 1;">${displayName}</div>
+                        <div class="item-actions">
+                            <button class="rename-btn" title="Rename">✏️</button>
+                        </div>
+                    </div>
+                    <div class="folder-dropdown">
+                        <div class="dropdown-loading">Loading...</div>
+                    </div>
+                `;
+                
+                // Click to toggle dropdown in list mode
+                const toggleIcon = folderItem.querySelector('.folder-toggle-icon');
+                const folderNameEl = folderItem.querySelector('.item-name');
+                const folderHeader = folderItem.querySelector('.folder-header');
+                
+                const toggleDropdown = (e) => {
+                    e.stopPropagation();
+                    toggleFolderDropdown(folderItem, folderName);
+                };
+                
+                toggleIcon.addEventListener('click', toggleDropdown);
+                folderNameEl.addEventListener('click', toggleDropdown);
+                folderHeader.addEventListener('click', toggleDropdown);
+                
+            } else {
+                // Grid mode - original layout
+                folderItem.innerHTML = `
+                    <div class="item-icon">📁</div>
+                    <div class="item-name">${displayName}</div>
+                    <div class="item-actions">
+                        <button class="rename-btn" title="Rename">✏️</button>
+                    </div>
+                `;
+                
+                // Double-click to open folder in grid mode
+                folderItem.addEventListener('dblclick', () => {
+                    const newPath = currentDirectory === 'processed' ? 
+                        `processed/${folderName}` : `${currentDirectory}/${folderName}`;
+                    loadFileExplorer(newPath);
+                });
+            }
+            
+            // Rename button
+            const renameBtn = folderItem.querySelector('.rename-btn');
+            renameBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showRenameDialog('folder', folderName);
+            });
+            
+            return folderItem;
+        }
+
+        function createFileItem(fileName) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.draggable = true;
+            fileItem.dataset.name = fileName;
+            fileItem.dataset.type = 'file';
+            
+            // Determine icon based on file extension
+            const extension = fileName.split('.').pop().toLowerCase();
+            let icon = '📄';
+            if (extension === 'pdf') icon = '📕';
+            else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) icon = '🖼️';
+            else if (['doc', 'docx'].includes(extension)) icon = '📘';
+            else if (['xls', 'xlsx'].includes(extension)) icon = '📊';
+            
+            // Clean display name by replacing underscores with spaces
+            const displayFileName = fileName.replace(/_/g, ' ');
+            
+            fileItem.innerHTML = `
+                <div class="item-icon">${icon}</div>
+                <div class="item-name">${displayFileName}</div>
+                <div class="item-actions">
+                    <button class="rename-btn" title="Rename">✏️</button>
+                    <button class="preview-btn" title="Open">👁️</button>
+                </div>
+            `;
+            
+            // Rename button
+            const renameBtn = fileItem.querySelector('.rename-btn');
+            renameBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showRenameDialog('file', fileName);
+            });
+            
+            // Preview button - open file
+            const previewBtn = fileItem.querySelector('.preview-btn');
+            previewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openFile(fileName);
+            });
+            
+            return fileItem;
+        }
+
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('.folder-item, .file-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', item.dataset.name);
+                    e.dataTransfer.setData('application/type', item.dataset.type);
+                    item.classList.add('dragging');
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                });
+                
+                // Only folders can be drop targets
+                if (item.classList.contains('folder-item')) {
+                    item.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        item.classList.add('drop-target');
+                    });
+                    
+                    item.addEventListener('dragleave', () => {
+                        item.classList.remove('drop-target');
+                    });
+                    
+                    item.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        item.classList.remove('drop-target');
+                        
+                        const sourceName = e.dataTransfer.getData('text/plain');
+                        const targetName = item.dataset.name;
+                        
+                        if (sourceName === targetName) return;
+                        
+                        moveItem(sourceName, targetName);
+                    });
+                }
+            });
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            
+            const listViewBtn = document.getElementById('listViewBtn');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            
+            if (mode === 'list') {
+                listViewBtn?.classList.add('active');
+                gridViewBtn?.classList.remove('active');
+            } else {
+                gridViewBtn?.classList.add('active');
+                listViewBtn?.classList.remove('active');
+            }
+            
+            // Reload current directory with new view mode
+            loadFileExplorer(currentDirectory);
+        }
+
+        function openResultsFolder() {
+            fetch('/api/open-folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ path: currentDirectory })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Opened folder in file explorer', 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function showAddFolderDialog() {
+            const dialog = createDialog('Create New Folder', `
+                <div class="form-group">
+                    <label for="folderName">Folder Name:</label>
+                    <input type="text" id="folderName" class="form-control" placeholder="Enter folder name">
+                </div>
+            `, 'Create', () => {
+                const folderName = document.getElementById('folderName').value.trim();
+                if (!folderName) {
+                    showDialogError('Please enter a folder name');
+                    return false;
+                }
+                
+                createFolder(folderName);
+                return true;
+            });
+        }
+
+        function showRenameDialog(itemType, itemName) {
+            const dialog = createDialog(`Rename ${itemType}`, `
+                <div class="form-group">
+                    <label for="newName">New Name:</label>
+                    <input type="text" id="newName" class="form-control" value="${itemName}">
+                </div>
+            `, 'Rename', () => {
+                const newName = document.getElementById('newName').value.trim();
+                if (!newName) {
+                    showDialogError('Please enter a name');
+                    return false;
+                }
+                
+                renameItem(itemName, newName);
+                return true;
+            });
+            
+            // Select name without extension for files
+            const input = document.getElementById('newName');
+            if (itemType === 'file') {
+                const lastDotIndex = itemName.lastIndexOf('.');
+                if (lastDotIndex > 0) {
+                    input.setSelectionRange(0, lastDotIndex);
+                }
+            }
+        }
+
+        function createDialog(title, content, actionText, onAction) {
+            const dialogContainer = document.createElement('div');
+            dialogContainer.className = 'dialog-container';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'dialog';
+            
+            dialog.innerHTML = `
+                <h3>${title}</h3>
+                <div class="dialog-content">
+                    ${content}
+                </div>
+                <div class="dialog-buttons">
+                    <button class="dialog-btn cancel-btn">Cancel</button>
+                    <button class="dialog-btn create-btn">${actionText}</button>
+                </div>
+            `;
+            
+            dialogContainer.appendChild(dialog);
+            document.body.appendChild(dialogContainer);
+            
+            const cancelBtn = dialog.querySelector('.cancel-btn');
+            const actionBtn = dialog.querySelector('.create-btn');
+            
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(dialogContainer);
+            });
+            
+            actionBtn.addEventListener('click', () => {
+                if (onAction()) {
+                    document.body.removeChild(dialogContainer);
+                }
+            });
+            
+            // Focus first input
+            const firstInput = dialog.querySelector('input');
+            if (firstInput) firstInput.focus();
+            
+            return dialog;
+        }
+
+        function showDialogError(message) {
+            const existingError = document.querySelector('.dialog-error');
+            if (existingError) existingError.remove();
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'dialog-error';
+            errorDiv.textContent = message;
+            
+            const dialogContent = document.querySelector('.dialog-content');
+            if (dialogContent) {
+                dialogContent.appendChild(errorDiv);
+            }
+        }
+
+        function createFolder(folderName) {
+            fetch('/api/create-folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    path: currentDirectory, 
+                    folderName: folderName 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileExplorer(currentDirectory);
+                    showStatus('Folder created successfully', 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function renameItem(oldName, newName) {
+            const oldPath = currentDirectory === 'processed' ? oldName : `${currentDirectory}/${oldName}`;
+            
+            fetch('/api/rename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    oldPath: oldPath,
+                    newName: newName 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileExplorer(currentDirectory);
+                    showStatus('Item renamed successfully', 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function moveItem(sourceName, targetName) {
+            const sourcePath = currentDirectory === 'processed' ? sourceName : `${currentDirectory}/${sourceName}`;
+            const destinationPath = currentDirectory === 'processed' ? 
+                `${targetName}/${sourceName}` : `${currentDirectory}/${targetName}/${sourceName}`;
+            
+            fetch('/api/rename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    oldPath: sourcePath,
+                    newPath: destinationPath
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileExplorer(currentDirectory);
+                    showStatus(`Moved ${sourceName} to ${targetName}`, 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function openFile(fileName) {
+            const filePath = currentDirectory === 'processed' ? fileName : `${currentDirectory}/${fileName}`;
+            window.open(`/download/${filePath}`, '_blank');
+        }
+
+        function showFileExplorerError(message) {
+            const fileExplorer = document.getElementById('fileExplorer');
+            if (fileExplorer) {
+                fileExplorer.innerHTML = `<div class="error-message">${message}</div>`;
+            }
+        }
+
+        function showStatus(message, type = '') {
+            const statusMessage = document.getElementById('statusMessage');
+            if (!statusMessage) return;
+            
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+            
+            if (type) {
+                statusMessage.classList.add(type);
+            }
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status-message';
+                }, 5000);
+            }
+        }
+
+        // Processing mode toggle functionality
+        let processingMode = 'auto';
+
+        function toggleProcessingMode() {
+            const mode = document.querySelector('input[name="processingMode"]:checked').value;
+            processingMode = mode;
+            
+            const manualInput = document.getElementById('manualClientInput');
+            if (mode === 'manual') {
+                manualInput.classList.remove('hidden');
+            } else {
+                manualInput.classList.add('hidden');
+            }
+        }
+
+        function getClientInfo() {
+            if (processingMode === 'manual') {
+                const firstName = document.getElementById('clientFirstName').value.trim();
+                const lastName = document.getElementById('clientLastName').value.trim();
+                
+                if (!firstName || !lastName) {
+                    alert('Please enter both first name and last name for manual mode');
+                    return null;
+                }
+                
+                return { firstName, lastName };
+            }
+            return null;
+        }
+
+
+        function toggleFolderDropdown(folderItem, folderName) {
+            const isExpanded = folderItem.classList.contains('expanded');
+            
+            if (isExpanded) {
+                // Collapse
+                folderItem.classList.remove('expanded');
+            } else {
+                // Expand - first collapse any other expanded folders
+                document.querySelectorAll('.folder-item.expanded').forEach(item => {
+                    item.classList.remove('expanded');
+                });
+                
+                folderItem.classList.add('expanded');
+                loadFolderContents(folderItem, folderName);
+            }
+        }
+
+        function loadFolderContents(folderItem, folderName) {
+            const dropdown = folderItem.querySelector('.folder-dropdown');
+            if (!dropdown) return;
+            
+            dropdown.innerHTML = '<div class="dropdown-loading">Loading...</div>';
+            
+            const folderPath = currentDirectory === 'processed' ? 
+                `processed/${folderName}` : `${currentDirectory}/${folderName}`;
+            
+            fetch(`/api/directory/${folderPath}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayDropdownContents(dropdown, data.files || [], folderName);
+                    } else {
+                        dropdown.innerHTML = '<div class="dropdown-empty">Error loading contents</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading folder contents:', error);
+                    dropdown.innerHTML = '<div class="dropdown-empty">Error loading contents</div>';
+                });
+        }
+
+        function displayDropdownContents(dropdown, files, folderName) {
+            if (!files || files.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-empty">No files in this folder</div>';
+                return;
+            }
+            
+            dropdown.innerHTML = '';
+            
+            files.forEach(fileName => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'dropdown-file';
+                
+                // Determine icon based on file extension
+                const extension = fileName.split('.').pop().toLowerCase();
+                let icon = '📄';
+                if (extension === 'pdf') icon = '📕';
+                else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) icon = '🖼️';
+                else if (['doc', 'docx'].includes(extension)) icon = '📘';
+                else if (['xls', 'xlsx'].includes(extension)) icon = '📊';
+                
+                // Clean display name by replacing underscores with spaces
+                const displayFileName = fileName.replace(/_/g, ' ');
+                
+                fileDiv.innerHTML = `
+                    <span>${icon}</span>
+                    <span>${displayFileName}</span>
+                `;
+                
+                fileDiv.addEventListener('click', () => {
+                    const filePath = currentDirectory === 'processed' ? 
+                        `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
+                    window.open(`/download/${filePath}`, '_blank');
+                });
+                
+                dropdown.appendChild(fileDiv);
+            });
+        }
+
+    </script>
+</body>
+</html> 
