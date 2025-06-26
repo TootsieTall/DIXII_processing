@@ -96,11 +96,14 @@ class TaxDocumentProcessor:
             if doc_type and confidence > 0.5:  # Use donut result if confident
                 result['document_type'] = self.donut_classifier.get_human_readable_label(doc_type)
                 result['confidence'] = confidence
+                print(f"Donut classified {original_filename} as: {result['document_type']} (confidence: {confidence:.2f})")
             else:
                 # Step 1b: Use Claude for unknown documents
+                print(f"Donut classification failed for {original_filename} (confidence: {confidence:.2f}), trying Claude...")
                 claude_doc_type = self.claude_ocr.classify_unknown_document(image_path)
                 result['document_type'] = claude_doc_type
                 result['confidence'] = 0.7  # Assume moderate confidence for Claude classification
+                print(f"Claude classified {original_filename} as: {claude_doc_type}")
             
             # Step 2: Extract client info
             if manual_client_info:
@@ -111,6 +114,22 @@ class TaxDocumentProcessor:
             else:
                 # Auto mode - extract all info using Claude OCR
                 first_name, last_name, tax_year = self.claude_ocr.extract_client_info(image_path)
+                
+                # If we couldn't extract client info, try comprehensive extraction as a final attempt
+                if not first_name or not last_name:
+                    print(f"Initial extraction failed for {original_filename}, trying comprehensive extraction...")
+                    comp_first, comp_last, comp_year, comp_doc_type = self.claude_ocr.extract_comprehensive_info(image_path)
+                    
+                    # Use comprehensive results if we got better information
+                    if comp_first and not first_name:
+                        first_name = comp_first
+                    if comp_last and not last_name:
+                        last_name = comp_last
+                    if comp_year and not tax_year:
+                        tax_year = comp_year
+                    # Also update document type if comprehensive extraction found something better
+                    if comp_doc_type and comp_doc_type != "Unknown Document" and not result['document_type']:
+                        result['document_type'] = comp_doc_type
             
             # Clean up temp files
             self.clean_temp_files(temp_files)
@@ -121,7 +140,10 @@ class TaxDocumentProcessor:
                 client_folder_name = f"{first_name}_{last_name}"
                 # Create last name initial with period
                 last_initial = last_name[0].upper() + "." if last_name else ""
+                print(f"Successfully extracted client info: {first_name} {last_name}")
             else:
+                print(f"Could not extract client information for {original_filename}")
+                print(f"Extracted: first_name='{first_name}', last_name='{last_name}', tax_year='{tax_year}'")
                 result['client_name'] = "Unknown Client"
                 client_folder_name = "Unknown_Client"
                 first_name = "Unknown"

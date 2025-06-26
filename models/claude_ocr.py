@@ -205,6 +205,98 @@ class ClaudeOCR:
             print(f"Error extracting tax year with Claude: {e}")
             return None
 
+    def extract_comprehensive_info(self, image_path):
+        """
+        Comprehensive extraction that tries to get client name, document type, and tax year all at once
+        This is used as a final attempt before marking anything as unknown
+        Returns: (first_name, last_name, tax_year, document_type)
+        """
+        try:
+            # Convert image to base64
+            img_base64 = self.image_to_base64(image_path)
+            if not img_base64:
+                return None, None, None, "Unknown Document"
+            
+            prompt = """
+            Please analyze this document very carefully and extract ALL available information.
+            This is a comprehensive analysis - please look thoroughly for any identifying information.
+            
+            Extract the following:
+            1. Client's first name (any person's name on the document - taxpayer, employee, recipient, etc.)
+            2. Client's last name
+            3. Tax year (the year this document relates to)
+            4. Document type
+            
+            Look everywhere for names:
+            - Header sections with taxpayer information
+            - Employee/recipient name fields
+            - Signature areas
+            - Address sections
+            - Any person identified on the document
+            
+            Look for tax years:
+            - Form headers (e.g., "2023 Form 1040")
+            - Tax year fields
+            - Period covered dates
+            - Any 4-digit year prominently displayed
+            
+            Common document types:
+            - Form 1040, Form W-2, Form 1099 (various types)
+            - Form W-9, Form 8889, State tax returns
+            - Property tax statements, Bank statements
+            - Investment statements, Tax notices
+            
+            Return information in this EXACT format:
+            FIRST_NAME: [first name or UNKNOWN]
+            LAST_NAME: [last name or UNKNOWN]
+            TAX_YEAR: [4-digit year or UNKNOWN]
+            DOCUMENT_TYPE: [specific document type or UNKNOWN]
+            
+            Be thorough but conservative - only extract information you can clearly see.
+            If any information is unclear or not visible, use "UNKNOWN" for that field.
+            """
+            
+            # Make API call to Claude
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=300,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": img_base64
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }]
+            )
+            
+            # Parse the response
+            content = response.content[0].text
+            first_name, last_name, tax_year = self._parse_claude_response(content)
+            
+            # Extract document type
+            doc_match = re.search(r'DOCUMENT_TYPE:\s*([^\n]+)', content)
+            document_type = "Unknown Document"
+            if doc_match:
+                doc_type = doc_match.group(1).strip()
+                if doc_type.upper() != 'UNKNOWN':
+                    document_type = doc_type
+            
+            return first_name, last_name, tax_year, document_type
+            
+        except Exception as e:
+            print(f"Error in comprehensive extraction with Claude: {e}")
+            return None, None, None, "Unknown Document"
+
     def classify_unknown_document(self, image_path):
         """
         Use Claude to classify documents that donut couldn't recognize
