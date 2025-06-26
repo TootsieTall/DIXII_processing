@@ -381,6 +381,45 @@
             display: none !important;
         }
 
+        /* API Notification Styles */
+        .api-notification {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-size: 1rem;
+            color: #856404;
+        }
+
+        .notification-btn {
+            background: #ffc107 !important;
+            color: #856404 !important;
+            border: 2px solid #856404;
+            font-weight: bold;
+        }
+
+        .notification-btn:hover {
+            background: #e0a800 !important;
+            color: #6c5200 !important;
+        }
+
         .loading {
             display: inline-block;
             width: 20px;
@@ -1012,6 +1051,38 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
+        .input-with-toggle {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-with-toggle .form-input {
+            padding-right: 50px;
+        }
+
+        .toggle-visibility-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            z-index: 10;
+        }
+
+        .toggle-visibility-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-visibility-btn:focus {
+            outline: 2px solid #3498db;
+            outline-offset: 2px;
+        }
+
         .form-help {
             font-size: 0.9rem;
             color: #7f8c8d;
@@ -1111,6 +1182,18 @@
                 </div>
             </div>
 
+            <!-- API Key Status Notification -->
+            <div id="apiKeyNotification" class="api-notification hidden">
+                <div class="notification-content">
+                    <div class="notification-icon">⚠️</div>
+                    <div class="notification-text">
+                        <strong>API Key Required</strong><br>
+                        Please set your Claude API key in Settings to enable document processing.
+                    </div>
+                    <button onclick="openSettingsModal()" class="btn notification-btn">Open Settings</button>
+                </div>
+            </div>
+
             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Drop files here or click to browse</div>
@@ -1192,14 +1275,19 @@
             <form id="settingsForm">
                 <div class="form-group">
                     <label for="apiKey" class="form-label">Claude API Key</label>
-                    <input 
-                        type="password" 
-                        id="apiKey" 
-                        name="apiKey" 
-                        class="form-input" 
-                        placeholder="sk-ant-api03-..."
-                        autocomplete="new-password"
-                    >
+                    <div class="input-with-toggle">
+                        <input 
+                            type="password" 
+                            id="apiKey" 
+                            name="apiKey" 
+                            class="form-input" 
+                            placeholder="sk-ant-api03-..."
+                            autocomplete="new-password"
+                        >
+                        <button type="button" class="toggle-visibility-btn" onclick="toggleApiKeyVisibility()" title="Show/Hide API Key">
+                            <span id="eyeIcon">👁️</span>
+                        </button>
+                    </div>
                     <div class="form-help">
                         Enter your Claude API key from Anthropic. This is used for document text extraction and fallback classification.
                     </div>
@@ -1538,6 +1626,20 @@
             showTab('upload');
         }
 
+        // API Key visibility toggle
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                eyeIcon.textContent = '🙈';
+            } else {
+                apiKeyInput.type = 'password';
+                eyeIcon.textContent = '👁️';
+            }
+        }
+
         // Settings Modal functionality
         function openSettingsModal() {
             const modal = document.getElementById('settingsModal');
@@ -1546,9 +1648,37 @@
             // Load current API key (masked)
             loadCurrentSettings();
             
+            // Add input listener to clear masked value when user starts typing
+            const apiKeyInput = document.getElementById('apiKey');
+            const handleInput = function() {
+                const originalMasked = apiKeyInput.dataset.originalMasked || '';
+                if (originalMasked && apiKeyInput.value === originalMasked) {
+                    // User clicked on the masked value, clear it so they can type new key
+                    setTimeout(() => {
+                        if (apiKeyInput.value === originalMasked) {
+                            apiKeyInput.value = '';
+                        }
+                    }, 10);
+                }
+            };
+            
+            apiKeyInput.removeEventListener('input', handleInput);
+            apiKeyInput.addEventListener('input', handleInput);
+            
+            // Add focus handler to select all text (makes it easy to replace masked value)
+            const handleFocus = function() {
+                const originalMasked = apiKeyInput.dataset.originalMasked || '';
+                if (originalMasked && apiKeyInput.value === originalMasked) {
+                    apiKeyInput.select();
+                }
+            };
+            
+            apiKeyInput.removeEventListener('focus', handleFocus);
+            apiKeyInput.addEventListener('focus', handleFocus);
+            
             // Focus on API key input
             setTimeout(() => {
-                document.getElementById('apiKey').focus();
+                apiKeyInput.focus();
             }, 300);
         }
 
@@ -1556,8 +1686,10 @@
             const modal = document.getElementById('settingsModal');
             modal.classList.remove('show');
             
-            // Clear form
+            // Clear form and reset eye icon
             document.getElementById('settingsForm').reset();
+            document.getElementById('apiKey').type = 'password';
+            document.getElementById('eyeIcon').textContent = '👁️';
             hideSettingsStatus();
         }
 
@@ -1565,10 +1697,19 @@
             fetch('/api/settings')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.api_key_set) {
-                        // Show masked API key
-                        const apiKeyInput = document.getElementById('apiKey');
-                        apiKeyInput.placeholder = 'API key is configured (sk-ant-api03-****...)';
+                    const apiKeyInput = document.getElementById('apiKey');
+                    if (data.success && data.api_key_configured && data.masked_api_key) {
+                        // Show masked API key in the input field
+                        apiKeyInput.value = data.masked_api_key;
+                        apiKeyInput.placeholder = 'Enter your Claude API key';
+                        
+                        // Store the original masked value to detect changes
+                        apiKeyInput.dataset.originalMasked = data.masked_api_key;
+                    } else {
+                        // No API key configured
+                        apiKeyInput.value = '';
+                        apiKeyInput.placeholder = 'sk-ant-api03-...';
+                        apiKeyInput.dataset.originalMasked = '';
                     }
                 })
                 .catch(error => {
@@ -1577,8 +1718,16 @@
         }
 
         function saveSettings() {
-            const apiKey = document.getElementById('apiKey').value.trim();
+            const apiKeyInput = document.getElementById('apiKey');
+            const apiKey = apiKeyInput.value.trim();
             const saveBtn = document.getElementById('saveSettingsBtn');
+            
+            // Check if user hasn't changed the masked API key
+            const originalMasked = apiKeyInput.dataset.originalMasked || '';
+            if (apiKey === originalMasked) {
+                showSettingsStatus('API key unchanged. Please enter a new API key to update.', 'error');
+                return;
+            }
             
             if (!apiKey) {
                 showSettingsStatus('Please enter an API key', 'error');
@@ -1607,6 +1756,9 @@
             .then(data => {
                 if (data.success) {
                     showSettingsStatus('Settings saved successfully! ✓', 'success');
+                    
+                    // Refresh API key status
+                    checkApiKeyStatus();
                     
                     // Close modal after 2 seconds
                     setTimeout(() => {
@@ -1639,8 +1791,30 @@
             statusDiv.style.display = 'none';
         }
 
+        // Check API key status on page load
+        function checkApiKeyStatus() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    const notification = document.getElementById('apiKeyNotification');
+                    if (data.api_key_configured) {
+                        notification.classList.add('hidden');
+                    } else {
+                        notification.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking API key status:', error);
+                    // Show notification on error to be safe
+                    document.getElementById('apiKeyNotification').classList.remove('hidden');
+                });
+        }
+
         // Handle settings form submission
         document.addEventListener('DOMContentLoaded', function() {
+            // Check API key status when page loads
+            checkApiKeyStatus();
+
             const settingsForm = document.getElementById('settingsForm');
             if (settingsForm) {
                 settingsForm.addEventListener('submit', function(e) {

@@ -20,9 +20,10 @@ processor = None
 def init_processor():
     """Initialize the document processor"""
     global processor
-    if not Config.ANTHROPIC_API_KEY:
-        print("Warning: ANTHROPIC_API_KEY not set. Claude OCR will not work.")
-        return False
+    if not Config.ANTHROPIC_API_KEY or Config.ANTHROPIC_API_KEY.strip() == '':
+        print("Warning: ANTHROPIC_API_KEY not set. Document processing will be limited.")
+        processor = None
+        return True  # Allow app to start
     
     try:
         processor = TaxDocumentProcessor(
@@ -33,7 +34,8 @@ def init_processor():
         return True
     except Exception as e:
         print(f"Error initializing processor: {e}")
-        return False
+        processor = None
+        return True  # Allow app to start even if processor fails
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -109,7 +111,7 @@ def upload_files():
     global processing_status
     
     if not processor:
-        return jsonify({'error': 'Document processor not initialized. Check your API key.'}), 500
+        return jsonify({'error': 'Document processor not initialized. Please set your Claude API key in Settings.'}), 500
     
     # Check if files were uploaded
     if 'files' not in request.files:
@@ -399,12 +401,23 @@ def download_file(filename):
 def get_settings():
     """Get current settings (masked)"""
     try:
-        # Check if API key is set
-        api_key_set = bool(Config.ANTHROPIC_API_KEY and len(Config.ANTHROPIC_API_KEY) > 0)
+        # Check if API key is set and valid
+        api_key_configured = bool(Config.ANTHROPIC_API_KEY and Config.ANTHROPIC_API_KEY.strip() != '')
+        
+        # Create masked version of API key
+        masked_api_key = None
+        if api_key_configured:
+            key = Config.ANTHROPIC_API_KEY
+            if len(key) > 20:
+                masked_api_key = key[:15] + '...' + key[-4:]
+            else:
+                masked_api_key = key[:8] + '...'
         
         return jsonify({
             'success': True,
-            'api_key_set': api_key_set
+            'api_key_configured': api_key_configured,
+            'api_key_set': api_key_configured,  # Keep both for compatibility
+            'masked_api_key': masked_api_key
         })
     except Exception as e:
         return jsonify({

@@ -35,19 +35,35 @@ def check_dependencies():
     
     return True
 
+def check_or_create_env():
+    """Check if .env file exists and create it if it doesn't"""
+    env_path = Path('.env')
+    
+    if not env_path.exists():
+        print("📄 Creating .env file...")
+        with open('.env', 'w', encoding='utf-8') as f:
+            f.write("# Claude API Configuration\n")
+            f.write("ANTHROPIC_API_KEY=\n")
+            f.write("\n# Flask Configuration\n")
+            f.write("SECRET_KEY=your-secret-key-here\n")
+        print("✅ .env file created")
+        print("💡 You can set your Claude API key in the Settings panel after starting the app")
+    
+    return True
+
 def check_api_key():
     """Check if Claude API key is configured"""
     from dotenv import load_dotenv
     load_dotenv()
     
     api_key = os.getenv('ANTHROPIC_API_KEY')
-    if not api_key or api_key == 'your_claude_api_key_here':
-        print("❌ Claude API key not configured")
-        print("\n💡 Please create a .env file with your API key:")
-        print("   ANTHROPIC_API_KEY=your_actual_api_key_here")
-        print("\n🔗 Get your API key at: https://console.anthropic.com/")
-        return False
+    if not api_key or api_key.strip() == '':
+        print("⚠️  Claude API key not configured")
+        print("💡 You can set your API key in the Settings panel after starting the app")
+        print("🔗 Get your API key at: https://console.anthropic.com/")
+        return True  # Allow app to start without API key
     
+    print("✅ Claude API key configured")
     return True
 
 def check_donut_model():
@@ -79,11 +95,13 @@ def main():
         sys.exit(1)
     print("✅ Dependencies OK")
     
-    # Check API key
+    # Check or create .env file
+    print("📄 Checking .env file...")
+    check_or_create_env()
+    
+    # Check API key (but don't exit if not configured)
     print("🔑 Checking API configuration...")
-    if not check_api_key():
-        sys.exit(1)
-    print("✅ API key configured")
+    check_api_key()
     
     # Check Donut model
     print("🤖 Checking Donut model...")
@@ -105,11 +123,8 @@ def main():
     # Import and run the Flask app
     try:
         from app import app, init_processor
-        if init_processor():
-            app.run(debug=False, host='0.0.0.0', port=8080)
-        else:
-            print("❌ Failed to initialize document processor")
-            sys.exit(1)
+        init_processor()  # Always succeeds now
+        app.run(debug=False, host='0.0.0.0', port=8080)
     except KeyboardInterrupt:
         print("\n👋 Application stopped by user")
     except Exception as e:
