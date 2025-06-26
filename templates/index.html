@@ -907,11 +907,50 @@
             font-size: 13px;
             color: #333;
             margin-left: 32px;
+            justify-content: space-between;
         }
 
         .folder-dropdown .dropdown-file:hover {
             background: #e3f2fd;
             color: #1976d2;
+        }
+
+        .dropdown-file-icon {
+            flex-shrink: 0;
+        }
+
+        .dropdown-file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dropdown-file-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .dropdown-file:hover .dropdown-file-actions {
+            opacity: 1;
+        }
+
+        .dropdown-rename-btn,
+        .dropdown-open-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 3px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-rename-btn:hover,
+        .dropdown-open-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
         }
 
         .folder-dropdown .dropdown-loading {
@@ -2194,6 +2233,33 @@
             }
         }
 
+        function showRenameDialogForPath(itemType, itemName, fullPath) {
+            const dialog = createDialog(`Rename ${itemType}`, `
+                <div class="form-group">
+                    <label for="newName">New Name:</label>
+                    <input type="text" id="newName" class="form-control" value="${itemName}">
+                </div>
+            `, 'Rename', () => {
+                const newName = document.getElementById('newName').value.trim();
+                if (!newName) {
+                    showDialogError('Please enter a name');
+                    return false;
+                }
+                
+                renameItemAtPath(fullPath, newName);
+                return true;
+            });
+            
+            // Select name without extension for files
+            const input = document.getElementById('newName');
+            if (itemType === 'file') {
+                const lastDotIndex = itemName.lastIndexOf('.');
+                if (lastDotIndex > 0) {
+                    input.setSelectionRange(0, lastDotIndex);
+                }
+            }
+        }
+
         function createDialog(title, content, actionText, onAction) {
             const dialogContainer = document.createElement('div');
             dialogContainer.className = 'dialog-container';
@@ -2292,6 +2358,31 @@
                 if (data.success) {
                     loadFileExplorer(currentDirectory);
                     showStatus('Item renamed successfully', 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function renameItemAtPath(fullPath, newName) {
+            fetch('/api/rename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    oldPath: fullPath,
+                    newName: newName 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileExplorer(currentDirectory);
+                    showStatus('File renamed successfully', 'success');
                 } else {
                     showStatus(`Error: ${data.error}`, 'error');
                 }
@@ -2457,11 +2548,27 @@
                 const displayFileName = fileName.replace(/_/g, ' ');
                 
                 fileDiv.innerHTML = `
-                    <span>${icon}</span>
-                    <span>${displayFileName}</span>
+                    <span class="dropdown-file-icon">${icon}</span>
+                    <span class="dropdown-file-name">${displayFileName}</span>
+                    <div class="dropdown-file-actions">
+                        <button class="dropdown-rename-btn" title="Rename">✏️</button>
+                        <button class="dropdown-open-btn" title="Open">👁️</button>
+                    </div>
                 `;
                 
-                fileDiv.addEventListener('click', () => {
+                // Add event listeners for actions
+                const renameBtn = fileDiv.querySelector('.dropdown-rename-btn');
+                const openBtn = fileDiv.querySelector('.dropdown-open-btn');
+                
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const relativePath = currentDirectory === 'processed' ? 
+                        `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
+                    showRenameDialogForPath('file', fileName, relativePath);
+                });
+                
+                openBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const filePath = currentDirectory === 'processed' ? 
                         `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
                     window.open(`/download/${filePath}`, '_blank');
