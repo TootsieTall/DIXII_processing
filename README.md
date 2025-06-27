@@ -135,7 +135,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 
 **Port 8080 already in use?**
 ```bash
-pkill -f python3
+pkill -f python3 / ctrl + c
 python3 run.py
 ```
 
@@ -148,31 +148,4 @@ python3 run.py
 - First run downloads the Donut model (~2GB)
 - Subsequent runs are much faster
 - Ensure stable internet connection
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Hugging Face**: For the Donut model architecture
-- **Anthropic**: For the Claude API
-- **Tax Document Classification**: Built on the IRS tax forms dataset
-
-## 📞 Support
-
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/DIXII_processing/issues)
-- 📧 **Email**: your.email@example.com
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/DIXII_processing/discussions)
-
----
-
-**Made with ❤️ for tax professionals and document processing enthusiasts** 
+__
