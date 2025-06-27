@@ -308,6 +308,54 @@
             margin-bottom: 30px;
         }
 
+        .results-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .results-actions button {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .results-actions .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .results-actions .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #34495e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .results-actions .btn {
+            background: #6c757d;
+            color: white;
+            box-shadow: 0 2px 10px rgba(108, 117, 125, 0.3);
+        }
+
+        .results-actions .btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+        }
+
         .stat-card {
             background: #f8f9fa;
             padding: 20px;
@@ -1271,9 +1319,20 @@
         <!-- Results Tab -->
         <div id="results" class="tab-content">
             <div id="resultsContent">
-                <p style="text-align: center; color: #7f8c8d; font-size: 1.2rem;">
-                    No results yet. Please upload and process some documents first.
-                </p>
+                <div id="noResultsSection">
+                    <p style="text-align: center; color: #7f8c8d; font-size: 1.2rem; margin-bottom: 30px;">
+                        No results yet. Please upload and process some documents first.
+                    </p>
+                    
+                    <div class="results-actions">
+                        <button id="browseExistingFilesBtn" class="btn-primary" onclick="showExistingFiles()">
+                            📁 Browse Previous Processed Files
+                        </button>
+                        <button id="openExistingFolderBtn" class="btn" onclick="openProcessedFolder()">
+                            🗂️ Open Processed Folder
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- File Explorer Section -->
@@ -1583,8 +1642,14 @@
         function displayResults(data) {
             const resultsContent = document.getElementById('resultsContent');
             const fileExplorerSection = document.getElementById('fileExplorerSection');
+            const noResultsSection = document.getElementById('noResultsSection');
             const stats = data.stats;
             const results = data.results;
+
+            // Hide the "no results" section
+            if (noResultsSection) {
+                noResultsSection.style.display = 'none';
+            }
 
             resultsContent.innerHTML = `
                 <div class="stats-grid">
@@ -1604,6 +1669,15 @@
                         <div class="stat-number">${stats.success_rate.toFixed(1)}%</div>
                         <div class="stat-label">Success Rate</div>
                     </div>
+                </div>
+                
+                <div class="results-actions">
+                    <button id="viewProcessedFilesBtn" class="btn-primary" onclick="showProcessedFiles()">
+                        📂 View Processed Files & Folders
+                    </button>
+                    <button id="openProcessedFolderBtn" class="btn" onclick="openProcessedFolder()">
+                        🗂️ Open in File Explorer
+                    </button>
                 </div>
 
                 <table class="results-table">
@@ -1645,6 +1719,96 @@
             loadFileExplorer('processed');
         }
 
+        function showProcessedFiles() {
+            // Scroll to the file explorer section
+            const fileExplorerSection = document.getElementById('fileExplorerSection');
+            if (fileExplorerSection) {
+                // Ensure it's visible
+                fileExplorerSection.classList.remove('hidden');
+                
+                // Smooth scroll to the file explorer
+                fileExplorerSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // Refresh the file explorer to show latest files
+                loadFileExplorer('processed');
+                
+                // Add a subtle highlight effect
+                fileExplorerSection.style.border = '2px solid #3498db';
+                fileExplorerSection.style.borderRadius = '10px';
+                fileExplorerSection.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    fileExplorerSection.style.border = '';
+                    fileExplorerSection.style.borderRadius = '';
+                }, 2000);
+            }
+        }
+
+        function openProcessedFolder() {
+            // Open the processed folder in the system file explorer
+            fetch('/api/open-folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ path: 'processed' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Opened processed folder in file explorer', 'success');
+                } else {
+                    showStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        function showExistingFiles() {
+            // Show the file explorer section and load existing files
+            const fileExplorerSection = document.getElementById('fileExplorerSection');
+            const noResultsSection = document.getElementById('noResultsSection');
+            
+            if (fileExplorerSection) {
+                // Hide the "no results" section
+                if (noResultsSection) {
+                    noResultsSection.style.display = 'none';
+                }
+                
+                // Show and initialize file explorer
+                fileExplorerSection.classList.remove('hidden');
+                
+                // Initialize file explorer if not already done
+                if (typeof initializeFileExplorer === 'function') {
+                    initializeFileExplorer();
+                }
+                
+                // Load the processed folder
+                loadFileExplorer('processed');
+                
+                // Scroll to the file explorer
+                fileExplorerSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // Add a subtle highlight effect
+                fileExplorerSection.style.border = '2px solid #3498db';
+                fileExplorerSection.style.borderRadius = '10px';
+                fileExplorerSection.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    fileExplorerSection.style.border = '';
+                    fileExplorerSection.style.borderRadius = '';
+                }, 2000);
+            }
+        }
+
         // Reset functionality
         function resetApp() {
             selectedFiles = [];
@@ -1661,6 +1825,16 @@
             document.getElementById('fileInput').value = '';
             document.getElementById('processBtn').disabled = false;
             document.getElementById('processBtn').innerHTML = 'Start Processing';
+            
+            // Reset results tab to show "no results" section
+            const noResultsSection = document.getElementById('noResultsSection');
+            const fileExplorerSection = document.getElementById('fileExplorerSection');
+            if (noResultsSection) {
+                noResultsSection.style.display = 'block';
+            }
+            if (fileExplorerSection) {
+                fileExplorerSection.classList.add('hidden');
+            }
             
             showTab('upload');
         }

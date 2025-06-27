@@ -12,6 +12,7 @@ An intelligent AI-powered application that automatically classifies, extracts cl
 ### 📁 **Smart Organization**
 - **Automatic File Naming**: `FirstName L. DocumentType Year.ext`
 - **Client Folder Creation**: Organizes documents by client automatically
+- **Case-Insensitive Names**: `"John Smith"`, `"john smith"`, `"JOHN SMITH"` → same folder
 - **Duplicate Handling**: Intelligent file management and conflict resolution
 
 ### 🎯 **Dual Processing Modes**

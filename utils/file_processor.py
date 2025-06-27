@@ -5,6 +5,7 @@ import uuid
 from PIL import Image
 import pdf2image
 import re
+import unicodedata
 from models.donut_classifier import DonutTaxClassifier
 from models.claude_ocr import ClaudeOCR
 from config import Config
@@ -47,6 +48,100 @@ class TaxDocumentProcessor:
         # Remove extra spaces and trim
         filename = re.sub(r'\s+', ' ', filename).strip()
         return filename
+    
+    def normalize_client_name(self, first_name, last_name):
+        """
+        Normalize client name for case-insensitive folder organization.
+        Returns a consistent folder name regardless of case variations.
+        
+        Args:
+            first_name: Client's first name
+            last_name: Client's last name
+            
+        Returns:
+            Normalized folder name in format "FirstName_LastName"
+        """
+        if not first_name or not last_name:
+            return None
+            
+        # Clean and normalize the names
+        # Remove extra whitespace and convert to title case for consistent formatting
+        # This ensures "john smith", "JOHN SMITH", "John Smith" all become "John_Smith"
+        normalized_first = re.sub(r'\s+', ' ', first_name.strip()).title()
+        normalized_last = re.sub(r'\s+', ' ', last_name.strip()).title()
+        
+        # Handle special cases like hyphenated names, apostrophes, etc.
+        # Keep common name patterns intact
+        normalized_first = re.sub(r"([a-z])'([a-z])", r"\1'\2", normalized_first)  # Fix O'connor -> O'Connor
+        normalized_last = re.sub(r"([a-z])'([a-z])", r"\1'\2", normalized_last)
+        
+        return f"{normalized_first}_{normalized_last}"
+    
+    def normalize_for_comparison(self, text):
+        """
+        Normalize text for case-insensitive comparison.
+        Handles accented characters and case variations.
+        
+        Args:
+            text: Text to normalize
+            
+        Returns:
+            Normalized text for comparison purposes
+        """
+        if not text:
+            return ""
+            
+        # Convert to lowercase and normalize unicode (NFD = decomposed form)
+        # This converts "José" to "jose" and "García" to "garcia" for comparison
+        normalized = unicodedata.normalize('NFD', text.lower())
+        
+        # Remove diacritical marks (accents)
+        without_accents = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
+        
+        # Clean whitespace
+        clean_text = re.sub(r'\s+', ' ', without_accents.strip())
+        
+        return clean_text
+    
+    def find_existing_client_folder(self, first_name, last_name):
+        """
+        Find existing client folder with case-insensitive matching.
+        
+        Args:
+            first_name: Client's first name
+            last_name: Client's last name
+            
+        Returns:
+            Existing folder name if found, otherwise normalized folder name
+        """
+        if not first_name or not last_name:
+            return None
+            
+        # Get the normalized version
+        normalized_folder = self.normalize_client_name(first_name, last_name)
+        
+        # Check if processed folder exists
+        if not os.path.exists(self.processed_folder):
+            return normalized_folder
+            
+        # Get all existing client folders
+        try:
+            existing_folders = [d for d in os.listdir(self.processed_folder) 
+                              if os.path.isdir(os.path.join(self.processed_folder, d))]
+        except OSError:
+            return normalized_folder
+            
+        # Check for case-insensitive match with accent handling
+        normalized_comparison = self.normalize_for_comparison(normalized_folder)
+        for folder in existing_folders:
+            folder_comparison = self.normalize_for_comparison(folder)
+            if folder_comparison == normalized_comparison:
+                # Found existing folder with same name (case-insensitive and accent-insensitive)
+                print(f"Found existing client folder: {folder} (matches {normalized_folder})")
+                return folder
+                
+        # No existing folder found, return normalized name
+        return normalized_folder
     
     def process_document(self, file_path, original_filename, manual_client_info=None):
         """
@@ -137,7 +232,7 @@ class TaxDocumentProcessor:
             # Step 3: Generate new filename and organize
             if first_name and last_name:
                 result['client_name'] = f"{first_name} {last_name}"
-                client_folder_name = f"{first_name}_{last_name}"
+                client_folder_name = self.find_existing_client_folder(first_name, last_name)
                 # Create last name initial with period
                 last_initial = last_name[0].upper() + "." if last_name else ""
                 print(f"Successfully extracted client info: {first_name} {last_name}")
@@ -223,11 +318,13 @@ class TaxDocumentProcessor:
         completed = len([r for r in results if r['status'] == 'completed'])
         errors = len([r for r in results if r['status'] == 'error'])
         
-        # Count clients
+        # Count unique clients (case-insensitive and accent-insensitive)
         clients = set()
         for result in results:
             if result['status'] == 'completed' and result['client_name']:
-                clients.add(result['client_name'])
+                # Use normalized client name for counting to avoid duplicates from case and accent variations
+                normalized_name = self.normalize_for_comparison(result['client_name'])
+                clients.add(normalized_name)
         
         return {
             'total_documents': total,
