@@ -941,7 +941,8 @@
             display: block;
         }
 
-        .folder-dropdown .dropdown-file {
+        .folder-dropdown .dropdown-file,
+        .folder-dropdown .dropdown-folder {
             padding: 6px 12px;
             margin: 1px 0;
             background: rgba(255, 255, 255, 0.8);
@@ -958,9 +959,20 @@
             justify-content: space-between;
         }
 
-        .folder-dropdown .dropdown-file:hover {
+        .folder-dropdown .dropdown-file:hover,
+        .folder-dropdown .dropdown-folder:hover {
             background: #e3f2fd;
             color: #1976d2;
+        }
+
+        .folder-dropdown .dropdown-folder {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid #3498db;
+        }
+
+        .folder-dropdown .dropdown-folder:hover {
+            background: rgba(52, 152, 219, 0.2);
+            color: #2980b9;
         }
 
         .dropdown-file-icon {
@@ -2687,7 +2699,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        displayDropdownContents(dropdown, data.files || [], folderName);
+                        displayDropdownContents(dropdown, data.dirs || [], data.files || [], folderName);
                     } else {
                         dropdown.innerHTML = '<div class="dropdown-empty">Error loading contents</div>';
                     }
@@ -2698,58 +2710,99 @@
                 });
         }
 
-        function displayDropdownContents(dropdown, files, folderName) {
-            if (!files || files.length === 0) {
-                dropdown.innerHTML = '<div class="dropdown-empty">No files in this folder</div>';
+        function displayDropdownContents(dropdown, dirs, files, folderName) {
+            if ((!dirs || dirs.length === 0) && (!files || files.length === 0)) {
+                dropdown.innerHTML = '<div class="dropdown-empty">No items in this folder</div>';
                 return;
             }
             
             dropdown.innerHTML = '';
             
-            files.forEach(fileName => {
-                const fileDiv = document.createElement('div');
-                fileDiv.className = 'dropdown-file';
-                
-                // Determine icon based on file extension
-                const extension = fileName.split('.').pop().toLowerCase();
-                let icon = '📄';
-                if (extension === 'pdf') icon = '📕';
-                else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) icon = '🖼️';
-                else if (['doc', 'docx'].includes(extension)) icon = '📘';
-                else if (['xls', 'xlsx'].includes(extension)) icon = '📊';
-                
-                // Clean display name by replacing underscores with spaces
-                const displayFileName = fileName.replace(/_/g, ' ');
-                
-                fileDiv.innerHTML = `
-                    <span class="dropdown-file-icon">${icon}</span>
-                    <span class="dropdown-file-name">${displayFileName}</span>
-                    <div class="dropdown-file-actions">
-                        <button class="dropdown-rename-btn" title="Rename">✏️</button>
-                        <button class="dropdown-open-btn" title="Open">👁️</button>
-                    </div>
-                `;
-                
-                // Add event listeners for actions
-                const renameBtn = fileDiv.querySelector('.dropdown-rename-btn');
-                const openBtn = fileDiv.querySelector('.dropdown-open-btn');
-                
-                renameBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const relativePath = currentDirectory === 'processed' ? 
-                        `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
-                    showRenameDialogForPath('file', fileName, relativePath);
+            // Display subdirectories first
+            if (dirs && dirs.length > 0) {
+                dirs.forEach(dirName => {
+                    const dirDiv = document.createElement('div');
+                    dirDiv.className = 'dropdown-folder';
+                    
+                    // Clean display name by replacing underscores with spaces
+                    const displayDirName = dirName.replace(/_/g, ' ');
+                    
+                    dirDiv.innerHTML = `
+                        <span class="dropdown-file-icon">📁</span>
+                        <span class="dropdown-file-name">${displayDirName}</span>
+                        <div class="dropdown-file-actions">
+                            <button class="dropdown-open-btn" title="Browse">👁️</button>
+                        </div>
+                    `;
+                    
+                    // Add click handler to navigate into subdirectory
+                    dirDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const subFolderPath = currentDirectory === 'processed' ? 
+                            `processed/${folderName}/${dirName}` : `${currentDirectory}/${folderName}/${dirName}`;
+                        loadFileExplorer(subFolderPath);
+                    });
+                    
+                    // Add browse button handler
+                    const openBtn = dirDiv.querySelector('.dropdown-open-btn');
+                    openBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const subFolderPath = currentDirectory === 'processed' ? 
+                            `processed/${folderName}/${dirName}` : `${currentDirectory}/${folderName}/${dirName}`;
+                        loadFileExplorer(subFolderPath);
+                    });
+                    
+                    dropdown.appendChild(dirDiv);
                 });
-                
-                openBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const filePath = currentDirectory === 'processed' ? 
-                        `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
-                    window.open(`/download/${filePath}`, '_blank');
+            }
+            
+            // Display files
+            if (files && files.length > 0) {
+                files.forEach(fileName => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'dropdown-file';
+                    
+                    // Determine icon based on file extension
+                    const extension = fileName.split('.').pop().toLowerCase();
+                    let icon = '📄';
+                    if (extension === 'pdf') icon = '📕';
+                    else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) icon = '🖼️';
+                    else if (['doc', 'docx'].includes(extension)) icon = '📘';
+                    else if (['xls', 'xlsx'].includes(extension)) icon = '📊';
+                    
+                    // Clean display name by replacing underscores with spaces
+                    const displayFileName = fileName.replace(/_/g, ' ');
+                    
+                    fileDiv.innerHTML = `
+                        <span class="dropdown-file-icon">${icon}</span>
+                        <span class="dropdown-file-name">${displayFileName}</span>
+                        <div class="dropdown-file-actions">
+                            <button class="dropdown-rename-btn" title="Rename">✏️</button>
+                            <button class="dropdown-open-btn" title="Open">👁️</button>
+                        </div>
+                    `;
+                    
+                    // Add event listeners for actions
+                    const renameBtn = fileDiv.querySelector('.dropdown-rename-btn');
+                    const openBtn = fileDiv.querySelector('.dropdown-open-btn');
+                    
+                    renameBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const relativePath = currentDirectory === 'processed' ? 
+                            `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
+                        showRenameDialogForPath('file', fileName, relativePath);
+                    });
+                    
+                    openBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const filePath = currentDirectory === 'processed' ? 
+                            `${folderName}/${fileName}` : `${currentDirectory}/${folderName}/${fileName}`;
+                        window.open(`/download/${filePath}`, '_blank');
+                    });
+                    
+                    dropdown.appendChild(fileDiv);
                 });
-                
-                dropdown.appendChild(fileDiv);
-            });
+            }
         }
 
     </script>

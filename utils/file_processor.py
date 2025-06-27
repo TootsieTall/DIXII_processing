@@ -226,9 +226,6 @@ class TaxDocumentProcessor:
                     if comp_doc_type and comp_doc_type != "Unknown Document" and not result['document_type']:
                         result['document_type'] = comp_doc_type
             
-            # Clean up temp files
-            self.clean_temp_files(temp_files)
-            
             # Step 3: Generate new filename and organize
             if first_name and last_name:
                 result['client_name'] = f"{first_name} {last_name}"
@@ -258,17 +255,49 @@ class TaxDocumentProcessor:
             new_filename = self.sanitize_filename(new_filename)
             result['new_filename'] = new_filename
             
-            # Step 4: Create client folder and move file
-            client_folder_path = os.path.join(self.processed_folder, client_folder_name)
-            os.makedirs(client_folder_path, exist_ok=True)
-            result['client_folder'] = client_folder_name
+            # Step 4: Handle misc documents specially
+            is_misc_document = (result['document_type'] and 
+                              result['document_type'].lower() in ['misc', 'other_misc', 'letter'])
             
-            # Copy file to new location with new name
-            new_file_path = os.path.join(client_folder_path, new_filename)
-            counter = 1
-            original_new_file_path = new_file_path
+            if is_misc_document:
+                # For misc documents, use Claude to get a better name
+                print(f"Processing misc document {original_filename} - getting better name from Claude...")
+                better_name = self.claude_ocr.generate_misc_document_name(image_path)
+                
+                # Update the document type with the better name
+                result['document_type'] = better_name
+                doc_type_clean = better_name
+                
+                # Create filename with the better name: "John D. Better Name Year"
+                if first_name and last_name:
+                    new_filename = f"{first_name} {last_initial} {doc_type_clean} {year_str}{file_ext}"
+                else:
+                    new_filename = f"Unknown C. {doc_type_clean} {year_str}{file_ext}"
+                
+                new_filename = self.sanitize_filename(new_filename)
+                result['new_filename'] = new_filename
+                
+                # Create client folder and Misc subfolder
+                client_folder_path = os.path.join(self.processed_folder, client_folder_name)
+                misc_folder_path = os.path.join(client_folder_path, "Misc")
+                os.makedirs(misc_folder_path, exist_ok=True)
+                result['client_folder'] = f"{client_folder_name}/Misc"
+                
+                # Copy file to Misc subfolder
+                new_file_path = os.path.join(misc_folder_path, new_filename)
+                print(f"Placing misc document in: {misc_folder_path}")
+            else:
+                # Regular document processing
+                client_folder_path = os.path.join(self.processed_folder, client_folder_name)
+                os.makedirs(client_folder_path, exist_ok=True)
+                result['client_folder'] = client_folder_name
+                
+                # Copy file to client folder
+                new_file_path = os.path.join(client_folder_path, new_filename)
             
             # Handle duplicate filenames
+            counter = 1
+            original_new_file_path = new_file_path
             while os.path.exists(new_file_path):
                 base, ext = os.path.splitext(original_new_file_path)
                 new_file_path = f"{base}_{counter}{ext}"
@@ -277,6 +306,9 @@ class TaxDocumentProcessor:
             shutil.copy2(file_path, new_file_path)
             result['processed_path'] = new_file_path
             result['status'] = 'completed'
+            
+            # Clean up temp files after successful processing
+            self.clean_temp_files(temp_files)
             
         except Exception as e:
             result['status'] = 'error'

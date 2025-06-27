@@ -362,4 +362,80 @@ class ClaudeOCR:
             
         except Exception as e:
             print(f"Error classifying unknown document with Claude: {e}")
-            return "Unknown Document" 
+            return "Unknown Document"
+
+    def generate_misc_document_name(self, image_path):
+        """
+        Use Claude to generate a descriptive name for misc documents
+        Returns: short_document_name (4 words or less)
+        """
+        try:
+            # Convert image to base64
+            img_base64 = self.image_to_base64(image_path)
+            if not img_base64:
+                return "Misc Document"
+            
+            prompt = """
+            Please analyze this document and provide a short, descriptive name that captures what this document is.
+            
+            Requirements:
+            - The name should be 4 words or less
+            - Be specific but concise
+            - Use proper capitalization
+            - Focus on the document's purpose or content
+            
+            Examples of good names:
+            - "Bank Statement"
+            - "Insurance Form"
+            - "Investment Summary"
+            - "Tax Notice"
+            - "Receipt Document"
+            - "Legal Notice"
+            - "Medical Form"
+            
+            Return ONLY the document name in this format:
+            DOCUMENT_NAME: [short descriptive name]
+            
+            If you cannot determine a specific name, respond with:
+            DOCUMENT_NAME: Misc Document
+            """
+            
+            # Make API call to Claude
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=100,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": img_base64
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }]
+            )
+            
+            # Parse the response
+            content = response.content[0].text
+            name_match = re.search(r'DOCUMENT_NAME:\s*([^\n]+)', content)
+            if name_match:
+                document_name = name_match.group(1).strip()
+                # Ensure it's 4 words or less
+                words = document_name.split()
+                if len(words) > 4:
+                    document_name = ' '.join(words[:4])
+                return document_name if document_name != "Misc Document" else "Misc Document"
+            else:
+                return "Misc Document"
+            
+        except Exception as e:
+            print(f"Error generating misc document name with Claude: {e}")
+            return "Misc Document" 
