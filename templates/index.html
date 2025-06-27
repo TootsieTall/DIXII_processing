@@ -231,6 +231,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             border-left: 4px solid #3498db;
+            text-align: center;
         }
 
         .processing-list {
@@ -1337,6 +1338,9 @@
                     </p>
                     
                     <div class="results-actions">
+                        <button id="uploadNewDocumentsBtn" class="btn-success" onclick="startNewSession()">
+                            📤 Upload New Documents
+                        </button>
                         <button id="browseExistingFilesBtn" class="btn-primary" onclick="showExistingFiles()">
                             📁 Browse Previous Processed Files
                         </button>
@@ -1586,7 +1590,15 @@
                 currentFileName.textContent = `Processing: ${data.current_file}`;
             } else if (data.status === 'completed') {
                 currentFile.classList.remove('hidden');
-                currentFileName.textContent = 'All files processed!';
+                currentFileName.innerHTML = `
+                    <div style="margin-bottom: 15px;">All files processed!</div>
+                    <button class="btn btn-success" onclick="startNewSession()" style="margin-right: 10px;">
+                        📤 Process New Documents
+                    </button>
+                    <button class="btn btn-primary" onclick="showTab('results')">
+                        📊 View Results
+                    </button>
+                `;
             }
 
             // Clear existing items first
@@ -1684,6 +1696,9 @@
                 </div>
                 
                 <div class="results-actions">
+                    <button id="processNewDocumentsBtn" class="btn-success" onclick="startNewSession()">
+                        📤 Process New Documents
+                    </button>
                     <button id="viewProcessedFilesBtn" class="btn-primary" onclick="showProcessedFiles()">
                         📂 View Processed Files & Folders
                     </button>
@@ -1838,17 +1853,73 @@
             document.getElementById('processBtn').disabled = false;
             document.getElementById('processBtn').innerHTML = 'Start Processing';
             
+            // Clear client input fields for manual mode
+            document.getElementById('clientFirstName').value = '';
+            document.getElementById('clientLastName').value = '';
+            
             // Reset results tab to show "no results" section
             const noResultsSection = document.getElementById('noResultsSection');
             const fileExplorerSection = document.getElementById('fileExplorerSection');
+            const resultsContent = document.getElementById('resultsContent');
+            
             if (noResultsSection) {
                 noResultsSection.style.display = 'block';
             }
             if (fileExplorerSection) {
                 fileExplorerSection.classList.add('hidden');
             }
+            if (resultsContent) {
+                // Reset results content to show only the "no results" section
+                resultsContent.innerHTML = `
+                    <div id="noResultsSection">
+                        <p style="text-align: center; color: #7f8c8d; font-size: 1.2rem; margin-bottom: 30px;">
+                            No results yet. Please upload and process some documents first.
+                        </p>
+                        
+                        <div class="results-actions">
+                            <button id="uploadNewDocumentsBtn" class="btn-success" onclick="startNewSession()">
+                                📤 Upload New Documents
+                            </button>
+                            <button id="browseExistingFilesBtn" class="btn-primary" onclick="showExistingFiles()">
+                                📁 Browse Previous Processed Files
+                            </button>
+                            <button id="openExistingFolderBtn" class="btn" onclick="openProcessedFolder()">
+                                🗂️ Open Processed Folder
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
             
             showTab('upload');
+        }
+
+        // Start new session - user-friendly reset function
+        function startNewSession() {
+            // Add a subtle visual transition
+            const uploadTab = document.getElementById('upload');
+            
+            resetApp();
+            
+            // Add a subtle highlight animation to the upload area
+            setTimeout(() => {
+                const uploadArea = document.querySelector('.upload-area');
+                if (uploadArea) {
+                    uploadArea.style.transform = 'scale(1.02)';
+                    uploadArea.style.transition = 'all 0.3s ease';
+                    uploadArea.style.borderColor = '#27ae60';
+                    uploadArea.style.background = '#e8f5e8';
+                    
+                    setTimeout(() => {
+                        uploadArea.style.transform = '';
+                        uploadArea.style.borderColor = '';
+                        uploadArea.style.background = '';
+                    }, 1000);
+                }
+            }, 100);
+            
+            // Show a brief success message
+            showStatus('Ready for new documents! You can now upload a new batch.', 'success');
         }
 
         // API Key visibility toggle
