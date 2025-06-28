@@ -412,10 +412,9 @@
         .results-toggle-section {
             margin: 20px 0;
             text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 2px dashed #bdc3c7;
+            padding: 0;
+            background: transparent;
+            border: none;
         }
 
         .btn-toggle {
@@ -1762,16 +1761,6 @@
                     </button>
                 </div>
 
-                ${results.length > 1 ? `
-                    <div class="results-toggle-section">
-                        <button id="toggleResultsBtn" class="btn-toggle" onclick="toggleResultsTable()">
-                            📋 Show All ${results.length} Processed Documents
-                            <span class="toggle-icon">▼</span>
-                        </button>
-                        <p class="results-summary">Showing 1 of ${results.length} documents (click to expand all)</p>
-                    </div>
-                ` : ''}
-
                 <table class="results-table" id="resultsTable">
                     <thead>
                         <tr>
@@ -1816,6 +1805,15 @@
                         `).join('')}
                     </tbody>
                 </table>
+
+                ${results.length > 1 ? `
+                    <div class="results-toggle-section">
+                        <button id="toggleResultsBtn" class="btn-toggle" onclick="toggleResultsTable()">
+                            📋 Show All ${results.length} Processed Documents
+                        </button>
+                        <p class="results-summary">Showing 1 of ${results.length} documents (click to expand all)</p>
+                    </div>
+                ` : ''}
             `;
 
             // Show file explorer section
@@ -2022,7 +2020,7 @@
                 });
                 
                 toggleBtn.classList.remove('expanded');
-                toggleBtn.innerHTML = `📋 Show All ${allRows.length} Processed Documents <span class="toggle-icon">▼</span>`;
+                toggleBtn.innerHTML = `📋 Show All ${allRows.length} Processed Documents`;
                 
                 if (resultsSummary) {
                     resultsSummary.textContent = `Showing 1 of ${allRows.length} documents (click to expand all)`;
@@ -2040,7 +2038,7 @@
                 });
                 
                 toggleBtn.classList.add('expanded');
-                toggleBtn.innerHTML = `📋 Hide Extra Documents <span class="toggle-icon">▲</span>`;
+                toggleBtn.innerHTML = `📋 Hide Extra Documents`;
                 
                 if (resultsSummary) {
                     resultsSummary.textContent = `Showing all ${allRows.length} documents (click to collapse)`;
