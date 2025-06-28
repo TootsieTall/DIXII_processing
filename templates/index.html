@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tax Document Sorter</title>
+    <title>Dixii Processor</title>
     <style>
         * {
             margin: 0;
@@ -406,6 +406,61 @@
 
         .results-table tr:hover {
             background: #f8f9fa;
+        }
+
+        /* Results toggle section */
+        .results-toggle-section {
+            margin: 20px 0;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .btn-toggle {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-toggle:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .toggle-icon {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-toggle.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .results-summary {
+            margin: 0;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* Result row visibility */
+        .result-row.hidden {
+            display: none;
+        }
+
+        .result-row.visible {
+            display: table-row;
         }
 
         .error-message {
@@ -1239,7 +1294,7 @@
         <div class="header">
             <div class="header-content">
                 <div>
-                    <h1>📄 Tax Document Sorter</h1>
+                    <h1>📄 Dixii Processor</h1>
                     <p>Automatically classify, extract client information, and organize your tax documents</p>
                 </div>
                 <button class="settings-btn" onclick="openSettingsModal()" title="Settings">
@@ -1707,7 +1762,17 @@
                     </button>
                 </div>
 
-                <table class="results-table">
+                ${results.length > 1 ? `
+                    <div class="results-toggle-section">
+                        <button id="toggleResultsBtn" class="btn-toggle" onclick="toggleResultsTable()">
+                            📋 Show All ${results.length} Processed Documents
+                            <span class="toggle-icon">▼</span>
+                        </button>
+                        <p class="results-summary">Showing 1 of ${results.length} documents (click to expand all)</p>
+                    </div>
+                ` : ''}
+
+                <table class="results-table" id="resultsTable">
                     <thead>
                         <tr>
                             <th>Original File</th>
@@ -1718,9 +1783,24 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${results.map(result => `
-                            <tr>
+                    <tbody id="resultsTableBody">
+                        ${results.length > 0 ? `
+                            <tr class="result-row visible">
+                                <td>${results[0].original_filename}</td>
+                                <td>${results[0].client_name || 'Unknown'}</td>
+                                <td>${results[0].document_type || 'Unknown'}</td>
+                                <td>${results[0].tax_year || 'Unknown'}</td>
+                                <td>${results[0].new_filename || '-'}</td>
+                                <td>
+                                    ${results[0].status === 'completed' ? 
+                                        '<span class="status-badge status-completed">✓ Complete</span>' : 
+                                        '<span class="status-badge status-error">✗ Error</span>'
+                                    }
+                                </td>
+                            </tr>
+                        ` : ''}
+                        ${results.slice(1).map(result => `
+                            <tr class="result-row hidden">
                                 <td>${result.original_filename}</td>
                                 <td>${result.client_name || 'Unknown'}</td>
                                 <td>${result.document_type || 'Unknown'}</td>
@@ -1920,6 +2000,54 @@
             
             // Show a brief success message
             showStatus('Ready for new documents! You can now upload a new batch.', 'success');
+        }
+
+        // Toggle results table expansion
+        function toggleResultsTable() {
+            const toggleBtn = document.getElementById('toggleResultsBtn');
+            const allRows = document.querySelectorAll('.result-row');
+            const resultsSummary = document.querySelector('.results-summary');
+            
+            if (!toggleBtn) return;
+            
+            const isExpanded = toggleBtn.classList.contains('expanded');
+            
+            if (isExpanded) {
+                // Collapse - hide all rows except first
+                allRows.forEach((row, index) => {
+                    if (index > 0) { // Skip first row (index 0)
+                        row.classList.add('hidden');
+                        row.classList.remove('visible');
+                    }
+                });
+                
+                toggleBtn.classList.remove('expanded');
+                toggleBtn.innerHTML = `📋 Show All ${allRows.length} Processed Documents <span class="toggle-icon">▼</span>`;
+                
+                if (resultsSummary) {
+                    resultsSummary.textContent = `Showing 1 of ${allRows.length} documents (click to expand all)`;
+                }
+                
+                showStatus('Results table collapsed', 'success');
+            } else {
+                // Expand - show all rows with staggered animation
+                const hiddenRows = document.querySelectorAll('.result-row.hidden');
+                hiddenRows.forEach((row, index) => {
+                    setTimeout(() => {
+                        row.classList.remove('hidden');
+                        row.classList.add('visible');
+                    }, index * 50); // Stagger animation
+                });
+                
+                toggleBtn.classList.add('expanded');
+                toggleBtn.innerHTML = `📋 Hide Extra Documents <span class="toggle-icon">▲</span>`;
+                
+                if (resultsSummary) {
+                    resultsSummary.textContent = `Showing all ${allRows.length} documents (click to collapse)`;
+                }
+                
+                showStatus('Showing all processed documents', 'success');
+            }
         }
 
         // API Key visibility toggle
