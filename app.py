@@ -397,6 +397,51 @@ def download_file(filename):
     """Download processed files"""
     return send_from_directory(Config.PROCESSED_FOLDER, filename, as_attachment=True)
 
+@app.route('/preview/<path:filename>')
+def preview_file(filename):
+    """Serve processed files for preview (not as download)"""
+    return send_from_directory(Config.PROCESSED_FOLDER, filename, as_attachment=False)
+
+@app.route('/api/preview-files/<session_id>')
+def get_preview_files(session_id):
+    """Get list of processed files for preview from a session"""
+    global processing_status
+    
+    if session_id not in processing_status:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    status = processing_status[session_id]
+    if status['status'] != 'completed':
+        return jsonify({'error': 'Processing not completed'}), 400
+    
+    # Filter for successfully processed files that are PDFs or images
+    preview_files = []
+    for result in status['results']:
+        if (result['status'] == 'completed' and 
+            result.get('processed_path') and 
+            os.path.exists(result['processed_path'])):
+            
+            # Check if file is PDF or image
+            file_ext = os.path.splitext(result['processed_path'])[1].lower()
+            if file_ext in ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']:
+                # Get relative path from processed folder for the preview endpoint
+                rel_path = os.path.relpath(result['processed_path'], Config.PROCESSED_FOLDER)
+                preview_files.append({
+                    'original_filename': result['original_filename'],
+                    'new_filename': result['new_filename'],
+                    'processed_path': rel_path,
+                    'full_path': result['processed_path'],
+                    'document_type': result['document_type'],
+                    'client_name': result['client_name'],
+                    'tax_year': result['tax_year'],
+                    'file_type': 'pdf' if file_ext == '.pdf' else 'image'
+                })
+    
+    return jsonify({
+        'success': True,
+        'files': preview_files
+    })
+
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
     """Get current settings (masked)"""

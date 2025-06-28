@@ -417,6 +417,13 @@
             border: none;
         }
 
+        .toggle-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
         .btn-toggle {
             background: #3498db;
             color: white;
@@ -460,6 +467,246 @@
 
         .result-row.visible {
             display: table-row;
+        }
+
+        /* Document Preview Modal */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .preview-modal.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .preview-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            margin: 0 20px;
+        }
+
+        .preview-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .preview-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+        }
+
+        .document-viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .document-display {
+            max-width: 90%;
+            max-height: 90%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            background: white;
+        }
+
+        .document-display img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .pdf-container {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        .loading-indicator.show {
+            display: block;
+        }
+
+        .preview-controls {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #2980b9;
+        }
+
+        .nav-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .document-counter {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .rename-section {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .rename-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .rename-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-skip {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-skip:hover {
+            background: #5a6268;
+        }
+
+        .preview-btn {
+            background: #17a2b8 !important;
+        }
+
+        .preview-btn:hover {
+            background: #138496 !important;
+        }
+
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .close-btn:hover {
+            background: #c82333;
+        }
+
+        .document-info {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #6c757d;
+            text-align: right;
+            flex: 1;
+            margin-left: 10px;
         }
 
         .error-message {
@@ -1470,6 +1717,77 @@
         </div>
     </div>
 
+    <!-- Document Preview Modal -->
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-header">
+            <div class="document-counter">
+                <span id="previewCounter">1 / 1</span>
+            </div>
+            <h2 class="preview-title" id="previewTitle">Document Preview</h2>
+            <button class="close-btn" onclick="closePreviewModal()">✕ Exit</button>
+        </div>
+        
+        <div class="preview-content">
+            <div class="preview-sidebar">
+                <div class="rename-section">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.1rem; color: #2c3e50;">Rename Document</h3>
+                    <input type="text" id="renameInput" class="rename-input" placeholder="Enter new filename...">
+                    <div class="rename-actions">
+                        <button id="saveRenameBtn" class="btn-small btn-save" onclick="saveDocumentRename()">💾 Save</button>
+                        <button id="skipRenameBtn" class="btn-small btn-skip" onclick="skipDocumentRename()">⏭️ Skip</button>
+                    </div>
+                </div>
+                
+                <div class="document-info">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.1rem; color: #2c3e50;">Document Info</h3>
+                    <div class="info-row">
+                        <span class="info-label">Original Name:</span>
+                        <span class="info-value" id="previewOriginalName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Client:</span>
+                        <span class="info-value" id="previewClientName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Document Type:</span>
+                        <span class="info-value" id="previewDocType">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tax Year:</span>
+                        <span class="info-value" id="previewTaxYear">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">File Type:</span>
+                        <span class="info-value" id="previewFileType">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-main">
+                <div class="document-viewer">
+                    <div class="loading-indicator" id="loadingIndicator">
+                        <div class="loading"></div>
+                        <p>Loading document...</p>
+                    </div>
+                    <div class="document-display" id="documentDisplay">
+                        <!-- Document content will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="preview-controls">
+                    <div class="nav-controls">
+                        <button id="prevDocBtn" class="nav-btn" onclick="navigateDocument(-1)">⬅️ Previous</button>
+                        <button id="nextDocBtn" class="nav-btn" onclick="navigateDocument(1)">Next ➡️</button>
+                    </div>
+                    
+                    <div class="nav-controls">
+                        <button id="donePreviewBtn" class="nav-btn" onclick="finishPreview()" style="background: #28a745;">✅ Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let selectedFiles = [];
         let currentSessionId = null;
@@ -1808,9 +2126,14 @@
 
                 ${results.length > 1 ? `
                     <div class="results-toggle-section">
-                        <button id="toggleResultsBtn" class="btn-toggle" onclick="toggleResultsTable()">
-                            📋 Show All ${results.length} Processed Documents
-                        </button>
+                        <div class="toggle-buttons">
+                            <button id="toggleResultsBtn" class="btn-toggle" onclick="toggleResultsTable()">
+                                📋 Show All ${results.length} Processed Documents
+                            </button>
+                            <button id="previewAllBtn" class="btn-toggle preview-btn" onclick="startDocumentPreview()">
+                                👁️ Preview All
+                            </button>
+                        </div>
                         <p class="results-summary">Showing 1 of ${results.length} documents (click to expand all)</p>
                     </div>
                 ` : ''}
@@ -3000,6 +3323,384 @@
                     dropdown.appendChild(fileDiv);
                 });
             }
+        }
+
+        // Document Preview Functionality
+        let previewFiles = [];
+        let currentPreviewIndex = 0;
+        let previewChanges = new Map(); // Track filename changes
+        let hasUnsavedChanges = false;
+
+        function startDocumentPreview() {
+            if (!currentSessionId) {
+                showStatus('No processing session found', 'error');
+                return;
+            }
+
+            showStatus('Loading preview files...', 'info');
+            
+            // Fetch files available for preview
+            fetch(`/api/preview-files/${currentSessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.files.length > 0) {
+                        previewFiles = data.files;
+                        currentPreviewIndex = 0;
+                        previewChanges.clear();
+                        hasUnsavedChanges = false;
+                        openPreviewModal();
+                        showDocument(0);
+                    } else {
+                        showStatus('No files available for preview', 'warning');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading preview files:', error);
+                    showStatus('Error loading files for preview', 'error');
+                });
+        }
+
+        function openPreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('show');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+            
+            // Add escape key listener
+            document.addEventListener('keydown', handlePreviewKeydown);
+        }
+
+        function closePreviewModal() {
+            if (hasUnsavedChanges) {
+                const confirmClose = confirm('You have unsaved changes. Are you sure you want to exit without saving?');
+                if (!confirmClose) return;
+            }
+            
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('show');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+            
+            // Remove escape key listener
+            document.removeEventListener('keydown', handlePreviewKeydown);
+            
+            // Clean up
+            const documentDisplay = document.getElementById('documentDisplay');
+            documentDisplay.innerHTML = '';
+            previewFiles = [];
+            previewChanges.clear();
+            hasUnsavedChanges = false;
+        }
+
+        function handlePreviewKeydown(event) {
+            if (event.key === 'Escape') {
+                closePreviewModal();
+            } else if (event.key === 'ArrowLeft') {
+                navigateDocument(-1);
+            } else if (event.key === 'ArrowRight') {
+                navigateDocument(1);
+            }
+        }
+
+        function showDocument(index) {
+            if (index < 0 || index >= previewFiles.length) return;
+            
+            currentPreviewIndex = index;
+            const file = previewFiles[index];
+            
+            // Update UI
+            updatePreviewUI(file, index);
+            
+            // Show loading indicator
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const documentDisplay = document.getElementById('documentDisplay');
+            
+            loadingIndicator.classList.add('show');
+            documentDisplay.innerHTML = '';
+            
+            // Load document based on type
+            if (file.file_type === 'pdf') {
+                loadPDFDocument(file);
+            } else {
+                loadImageDocument(file);
+            }
+        }
+
+        function updatePreviewUI(file, index) {
+            // Update counter
+            document.getElementById('previewCounter').textContent = `${index + 1} / ${previewFiles.length}`;
+            
+            // Update title
+            document.getElementById('previewTitle').textContent = file.new_filename || file.original_filename;
+            
+            // Update document info
+            document.getElementById('previewOriginalName').textContent = file.original_filename;
+            document.getElementById('previewClientName').textContent = file.client_name || 'Unknown';
+            document.getElementById('previewDocType').textContent = file.document_type || 'Unknown';
+            document.getElementById('previewTaxYear').textContent = file.tax_year || 'Unknown';
+            document.getElementById('previewFileType').textContent = file.file_type.toUpperCase();
+            
+            // Update rename input
+            const currentName = previewChanges.get(file.processed_path) || file.new_filename || file.original_filename;
+            document.getElementById('renameInput').value = currentName;
+            
+            // Update navigation buttons
+            document.getElementById('prevDocBtn').disabled = index === 0;
+            document.getElementById('nextDocBtn').disabled = index === previewFiles.length - 1;
+            
+            // Update Done button text
+            const doneBtn = document.getElementById('donePreviewBtn');
+            if (index === previewFiles.length - 1) {
+                doneBtn.textContent = '✅ Finish Preview';
+                doneBtn.style.background = '#28a745';
+            } else {
+                doneBtn.textContent = '✅ Done';
+                doneBtn.style.background = '#6c757d';
+            }
+        }
+
+        function loadPDFDocument(file) {
+            const documentDisplay = document.getElementById('documentDisplay');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // Add PDF.js script if not already loaded
+            if (!window.pdfjsLib) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+                script.onload = () => {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+                    renderPDF(file);
+                };
+                document.head.appendChild(script);
+            } else {
+                renderPDF(file);
+            }
+        }
+
+        function renderPDF(file) {
+            const documentDisplay = document.getElementById('documentDisplay');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            const pdfUrl = `/preview/${file.processed_path}`;
+            
+            pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+                // Clear previous content
+                documentDisplay.innerHTML = '';
+                
+                // Create container for PDF pages
+                const pdfContainer = document.createElement('div');
+                pdfContainer.style.width = '100%';
+                pdfContainer.style.display = 'flex';
+                pdfContainer.style.flexDirection = 'column';
+                pdfContainer.style.alignItems = 'center';
+                pdfContainer.style.gap = '20px';
+                
+                // Render all pages (up to 5 for performance)
+                const maxPages = Math.min(pdf.numPages, 5);
+                const pagePromises = [];
+                
+                for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                    pagePromises.push(
+                        pdf.getPage(pageNum).then(page => {
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            
+                            // Calculate scale to fit container
+                            const viewport = page.getViewport({ scale: 1.0 });
+                            const scale = Math.min(800 / viewport.width, 1000 / viewport.height, 2.0);
+                            const scaledViewport = page.getViewport({ scale });
+                            
+                            canvas.width = scaledViewport.width;
+                            canvas.height = scaledViewport.height;
+                            canvas.style.border = '1px solid #ddd';
+                            canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                            
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: scaledViewport
+                            };
+                            
+                            return page.render(renderContext).promise.then(() => {
+                                return { canvas, pageNum };
+                            });
+                        })
+                    );
+                }
+                
+                Promise.all(pagePromises).then(pages => {
+                    pages.sort((a, b) => a.pageNum - b.pageNum);
+                    pages.forEach(({ canvas, pageNum }) => {
+                        if (pageNum > 1) {
+                            const pageLabel = document.createElement('div');
+                            pageLabel.textContent = `Page ${pageNum}`;
+                            pageLabel.style.fontSize = '0.9rem';
+                            pageLabel.style.color = '#666';
+                            pageLabel.style.marginTop = '10px';
+                            pdfContainer.appendChild(pageLabel);
+                        }
+                        pdfContainer.appendChild(canvas);
+                    });
+                    
+                    if (pdf.numPages > maxPages) {
+                        const morePages = document.createElement('div');
+                        morePages.textContent = `... and ${pdf.numPages - maxPages} more pages`;
+                        morePages.style.fontSize = '0.9rem';
+                        morePages.style.color = '#666';
+                        morePages.style.fontStyle = 'italic';
+                        morePages.style.padding = '10px';
+                        pdfContainer.appendChild(morePages);
+                    }
+                    
+                    documentDisplay.appendChild(pdfContainer);
+                    loadingIndicator.classList.remove('show');
+                });
+                
+            }).catch(error => {
+                console.error('Error loading PDF:', error);
+                documentDisplay.innerHTML = '<div style="text-align: center; color: #666; padding: 50px;">Error loading PDF document</div>';
+                loadingIndicator.classList.remove('show');
+            });
+        }
+
+        function loadImageDocument(file) {
+            const documentDisplay = document.getElementById('documentDisplay');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            const img = document.createElement('img');
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.objectFit = 'contain';
+            img.style.border = '1px solid #ddd';
+            img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            
+            img.onload = () => {
+                documentDisplay.innerHTML = '';
+                documentDisplay.appendChild(img);
+                loadingIndicator.classList.remove('show');
+            };
+            
+            img.onerror = () => {
+                documentDisplay.innerHTML = '<div style="text-align: center; color: #666; padding: 50px;">Error loading image</div>';
+                loadingIndicator.classList.remove('show');
+            };
+            
+            img.src = `/preview/${file.processed_path}`;
+        }
+
+        function navigateDocument(direction) {
+            const newIndex = currentPreviewIndex + direction;
+            if (newIndex >= 0 && newIndex < previewFiles.length) {
+                showDocument(newIndex);
+            }
+        }
+
+        function saveDocumentRename() {
+            const newName = document.getElementById('renameInput').value.trim();
+            const currentFile = previewFiles[currentPreviewIndex];
+            
+            if (!newName) {
+                alert('Please enter a filename');
+                return;
+            }
+            
+            // Ensure the filename has an extension
+            const originalExt = currentFile.new_filename.split('.').pop();
+            let finalName = newName;
+            if (!finalName.includes('.')) {
+                finalName += '.' + originalExt;
+            }
+            
+            // Track the change
+            previewChanges.set(currentFile.processed_path, finalName);
+            hasUnsavedChanges = true;
+            
+            // Update UI to show the change has been saved locally
+            showStatus('Filename saved locally (will be applied when you finish)', 'success');
+            
+            // Move to next document or finish if this is the last one
+            if (currentPreviewIndex < previewFiles.length - 1) {
+                navigateDocument(1);
+            } else {
+                finishPreview();
+            }
+        }
+
+        function skipDocumentRename() {
+            // Move to next document or finish if this is the last one
+            if (currentPreviewIndex < previewFiles.length - 1) {
+                navigateDocument(1);
+            } else {
+                finishPreview();
+            }
+        }
+
+        function finishPreview() {
+            if (previewChanges.size === 0) {
+                closePreviewModal();
+                return;
+            }
+            
+            // Apply all the rename changes
+            showStatus('Applying filename changes...', 'info');
+            
+            const renamePromises = [];
+            for (const [filePath, newName] of previewChanges) {
+                const currentFile = previewFiles.find(f => f.processed_path === filePath);
+                if (!currentFile) continue;
+                
+                const oldPath = filePath;
+                const newPath = filePath.replace(currentFile.new_filename, newName);
+                
+                renamePromises.push(
+                    fetch('/api/rename', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            oldPath: `processed/${oldPath}`,
+                            newName: newName
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.error || 'Unknown error');
+                        }
+                        return { success: true, oldName: currentFile.new_filename, newName };
+                    })
+                    .catch(error => {
+                        return { success: false, oldName: currentFile.new_filename, error: error.message };
+                    })
+                );
+            }
+            
+            Promise.all(renamePromises).then(results => {
+                const successful = results.filter(r => r.success);
+                const failed = results.filter(r => !r.success);
+                
+                let message = '';
+                if (successful.length > 0) {
+                    message += `Successfully renamed ${successful.length} file(s). `;
+                }
+                if (failed.length > 0) {
+                    message += `Failed to rename ${failed.length} file(s). `;
+                }
+                
+                showStatus(message, failed.length === 0 ? 'success' : 'warning');
+                
+                // Refresh the results and file explorer
+                if (successful.length > 0) {
+                    setTimeout(() => {
+                        loadResults(); // Refresh results table
+                        loadFileExplorer('processed'); // Refresh file explorer
+                    }, 1000);
+                }
+                
+                closePreviewModal();
+            });
         }
 
     </script>
