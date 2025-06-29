@@ -255,7 +255,7 @@ class TaxDocumentProcessor:
             new_filename = self.sanitize_filename(new_filename)
             result['new_filename'] = new_filename
             
-            # Step 4: Handle misc documents specially
+            # Step 4: Handle misc documents specially (get better name but place in main client folder)
             is_misc_document = (result['document_type'] and 
                               result['document_type'].lower() in ['misc', 'other_misc', 'letter'])
             
@@ -276,24 +276,15 @@ class TaxDocumentProcessor:
                 
                 new_filename = self.sanitize_filename(new_filename)
                 result['new_filename'] = new_filename
-                
-                # Create client folder and Misc subfolder
-                client_folder_path = os.path.join(self.processed_folder, client_folder_name)
-                misc_folder_path = os.path.join(client_folder_path, "Misc")
-                os.makedirs(misc_folder_path, exist_ok=True)
-                result['client_folder'] = f"{client_folder_name}/Misc"
-                
-                # Copy file to Misc subfolder
-                new_file_path = os.path.join(misc_folder_path, new_filename)
-                print(f"Placing misc document in: {misc_folder_path}")
-            else:
-                # Regular document processing
-                client_folder_path = os.path.join(self.processed_folder, client_folder_name)
-                os.makedirs(client_folder_path, exist_ok=True)
-                result['client_folder'] = client_folder_name
-                
-                # Copy file to client folder
-                new_file_path = os.path.join(client_folder_path, new_filename)
+            
+            # All documents (including misc) go directly into the client folder
+            client_folder_path = os.path.join(self.processed_folder, client_folder_name)
+            os.makedirs(client_folder_path, exist_ok=True)
+            result['client_folder'] = client_folder_name
+            
+            # Copy file to client folder
+            new_file_path = os.path.join(client_folder_path, new_filename)
+            print(f"Placing document in: {client_folder_path}")
             
             # Handle duplicate filenames
             counter = 1
