@@ -1,3 +1,10 @@
+"""
+⚠️  DEPRECATION WARNING ⚠️ 
+This legacy file_processor.py is deprecated and will be removed in a future version.
+Please use utils/enhanced_file_processor.py for advanced document processing.
+See MIGRATION_GUIDE.md for details.
+"""
+
 import os
 import shutil
 from pathlib import Path
@@ -6,9 +13,17 @@ from PIL import Image
 import pdf2image
 import re
 import unicodedata
+import warnings
 from models.donut_classifier import DonutTaxClassifier
 from models.claude_ocr import ClaudeOCR
 from config import Config
+
+# Issue deprecation warning
+warnings.warn(
+    "file_processor.py is deprecated. Use utils/enhanced_file_processor.py instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 class TaxDocumentProcessor:
     def __init__(self, donut_model_path, claude_api_key):

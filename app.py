@@ -1,3 +1,10 @@
+"""
+⚠️  DEPRECATION WARNING ⚠️ 
+This legacy app.py is deprecated and will be removed in a future version.
+Please migrate to the enhanced system: python enhanced_app.py
+See MIGRATION_GUIDE.md for details.
+"""
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 import uuid
@@ -8,6 +15,11 @@ import shutil
 from pathlib import Path
 from config import Config
 from utils.file_processor import TaxDocumentProcessor
+
+print("⚠️  DEPRECATION WARNING: This legacy app.py is deprecated!")
+print("📈 Please use the enhanced system: python enhanced_app.py")
+print("📖 See MIGRATION_GUIDE.md for migration instructions")
+print()
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -549,6 +561,6 @@ if __name__ == '__main__':
     # Initialize processor
     if init_processor():
         print("Starting Tax Document Sorter...")
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=True, host='0.0.0.0', port=8080)
     else:
         print("Failed to initialize. Please check your configuration and API keys.") 

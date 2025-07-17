@@ -1,9 +1,24 @@
+"""
+⚠️  DEPRECATION WARNING ⚠️ 
+This legacy claude_ocr.py is deprecated and will be removed in a future version.
+Please use models/enhanced_claude_ocr.py for advanced document processing.
+See MIGRATION_GUIDE.md for details.
+"""
+
 import anthropic
 import base64
 import os
 from PIL import Image
 import io
 import re
+import warnings
+
+# Issue deprecation warning
+warnings.warn(
+    "claude_ocr.py is deprecated. Use models/enhanced_claude_ocr.py instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 class ClaudeOCR:
     def __init__(self, api_key):

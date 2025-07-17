@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Dixii Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-area h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .logo-area .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            color: #ecf0f1;
+        }
+
+        .capabilities-badge {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.5rem;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: rotate(90deg);
+        }
+
+        .tabs {
+            display: flex;
+            background: #34495e;
+            border-bottom: 3px solid #2c3e50;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            background: #34495e;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: #3f5a70;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-icon {
+            margin-right: 8px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Enhanced Upload Tab Styles */
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .processing-options {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+        }
+
+        .options-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-label {
+            font-weight: 500;
+            color: #34495e;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .radio-option:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .manual-client-info {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-top: 15px;
+        }
+
+        .manual-client-info.show {
+            display: block;
+        }
+
+        .client-input-group {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .input-field {
+            flex: 1;
+        }
+
+        .input-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #2980b9;
+            background: #e3f2fd;
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .supported-types {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+        }
+
+        .supported-types h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .document-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .doc-type-badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-primary {
+            background: #e74c3c;
+        }
+
+        .btn-primary:hover {
+            background: #c0392b;
+        }
+
+        .file-list {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+            color: #3498db;
+        }
+
+        .file-details h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+
+        .file-size {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Enhanced Processing Tab Styles */
+        .processing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .processing-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress-container {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.5s ease;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .current-file {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .current-file-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .processing-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e9ecef;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .document-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .document-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .status-processing {
+            background: #fdeaa7;
+            color: #f39c12;
+        }
+
+        .status-waiting {
+            background: #e3f2fd;
+            color: #3498db;
+        }
+
+        .status-error {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+
+        .document-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .entity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .entity-individual {
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+
+        .entity-llc {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .entity-corporation {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .entity-trust {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .confidence-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confidence-bar {
+            width: 60px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .confidence-high {
+            background: #27ae60;
+        }
+
+        .confidence-medium {
+            background: #f39c12;
+        }
+
+        .confidence-low {
+            background: #e74c3c;
+        }
+
+        /* Results Tab Styles */
+        .results-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            text-align: center;
+        }
+
+        .summary-card.success {
+            border-color: #27ae60;
+        }
+
+        .summary-card.info {
+            border-color: #3498db;
+        }
+
+        .summary-card.warning {
+            border-color: #f39c12;
+        }
+
+        .summary-card.error {
+            border-color: #e74c3c;
+        }
+
+        .summary-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .summary-label {
+            color: #7f8c8d;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .stats-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .breakdown-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .breakdown-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .actions-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .client-input-group {
+                flex-direction: column;
+            }
+
+            .document-details {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-breakdown {
+                grid-template-columns: 1fr;
+            }
+
+            .results-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #fdf2f2;
+            color: #e74c3c;
+            border: 1px solid #f5c6cb;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <h1>Enhanced Dixii Processor</h1>
+                    <div class="subtitle">Advanced AI-Powered Tax Document Processing</div>
+                </div>
+                <div class="capabilities-badge">
+                    <div>✨ Smart Entity Recognition</div>
+                    <div>🔍 Form-Specific Extraction</div>
+                    <div>📝 Intelligent Naming</div>
+                </div>
+                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('upload')">
+                <span class="tab-icon">📤</span>Upload & Process
+            </button>
+            <button class="tab" onclick="switchTab('processing')">
+                <span class="tab-icon">⚡</span>Processing
+            </button>
+            <button class="tab" onclick="switchTab('results')">
+                <span class="tab-icon">📊</span>Results
+            </button>
+            <button class="tab" onclick="switchTab('explorer')">
+                <span class="tab-icon">📁</span>File Explorer
+            </button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload-tab" class="tab-content active">
+            <div class="upload-section">
+                <div class="processing-options">
+                    <div class="options-title">
+                        <span class="tab-icon">🎛️</span>Processing Options
+                    </div>
+                    
+                    <div class="option-group">
+                        <label class="option-label">Processing Mode:</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="processing_mode" value="auto" checked>
+                                <span>🤖 Auto Detection</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="processing_mode" value="manual">
+                                <span>👤 Manual Client Info</span>
+                            </label>
+                        </div>
+                        
+                        <div id="manual-client-info" class="manual-client-info">
+                            <div class="client-input-group">
+                                <div class="input-field">
+                                    <label for="client_first_name">First Name:</label>
+                                    <input type="text" id="client_first_name" name="client_first_name" placeholder="Enter first name">
+                                </div>
+                                <div class="input-field">
+                                    <label for="client_last_name">Last Name:</label>
+                                    <input type="text" id="client_last_name" name="client_last_name" placeholder="Enter last name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <label class="option-label">Entity Detection:</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="entity_detection" value="enabled" checked>
+                                <span>🏢 Enhanced Entity Recognition</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="entity_detection" value="basic">
+                                <span>📝 Basic Detection</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <label class="option-label">Filename Templates:</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="filename_templates" value="smart" checked>
+                                <span>🧠 Smart Templates</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="filename_templates" value="simple">
+                                <span>📄 Simple Format</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">Drop files here or click to upload</div>
+                    <div class="upload-subtext">Support for multiple tax documents with intelligent processing</div>
+                    <button type="button" class="btn" onclick="document.getElementById('file-input').click()">
+                        📁 Choose Files
+                    </button>
+                    <input type="file" id="file-input" class="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
+                    
+                    <div class="supported-types">
+                        <h4>Supported Document Types:</h4>
+                        <div class="document-types">
+                            <span class="doc-type-badge">Form 1040</span>
+                            <span class="doc-type-badge">Form W-2</span>
+                            <span class="doc-type-badge">Form 1099</span>
+                            <span class="doc-type-badge">Schedule K-1</span>
+                            <span class="doc-type-badge">Form 1098</span>
+                            <span class="doc-type-badge">Form W-9</span>
+                            <span class="doc-type-badge">State Forms</span>
+                            <span class="doc-type-badge">Property Tax</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="file-list" class="file-list hidden">
+                    <h3>Selected Files:</h3>
+                    <div id="selected-files"></div>
+                    <div class="actions-panel">
+                        <button type="button" class="btn btn-success" onclick="processFiles()">
+                            🚀 Start Enhanced Processing
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="clearFiles()">
+                            🗑️ Clear Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Tab -->
+        <div id="processing-tab" class="tab-content">
+            <div class="processing-header">
+                <h2>Enhanced Processing Status</h2>
+                <div class="processing-status">
+                    <div class="status-indicator"></div>
+                    <span>AI Processing Active</span>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span id="progress-text">Ready to process documents...</span>
+                    <span id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="processing-time" class="processing-time"></div>
+            </div>
+
+            <div id="current-file" class="current-file hidden">
+                <div class="current-file-header">
+                    <div class="processing-spinner"></div>
+                    <h3>Currently Processing:</h3>
+                </div>
+                <div id="current-file-name">No file being processed</div>
+            </div>
+
+            <div class="processing-list" id="processing-list">
+                <!-- Processing items will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results-tab" class="tab-content">
+            <div id="results-content">
+                <div class="results-summary" id="results-summary">
+                    <!-- Summary cards will be inserted here -->
+                </div>
+
+                <div class="stats-breakdown" id="stats-breakdown">
+                    <!-- Breakdown charts will be inserted here -->
+                </div>
+
+                <div class="actions-panel">
+                    <button type="button" class="btn" onclick="downloadResults()">
+                        📥 Download Results Report
+                    </button>
+                    <button type="button" class="btn" onclick="resetSession()">
+                        🔄 Start New Session
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Explorer Tab -->
+        <div id="explorer-tab" class="tab-content">
+            <div id="file-explorer">
+                <!-- File explorer content will be loaded here -->
+                <h2>File Explorer</h2>
+                <p>Browse processed documents and client folders...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <button class="close-btn" onclick="closeSettings()">&times;</button>
+            </div>
+            
+            <div id="settings-alert" class="alert hidden"></div>
+            
+            <form id="settings-form">
+                <div class="form-group">
+                    <label for="claude-api-key">Claude API Key:</label>
+                    <input type="password" id="claude-api-key" name="claude_api_key" placeholder="Enter your Claude API key">
+                    <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                        Required for enhanced document processing and entity recognition
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn">💾 Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentSessionId = null;
+        let processingInterval = null;
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Processing mode change
+        document.querySelectorAll('input[name="processing_mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const manualInfo = document.getElementById('manual-client-info');
+                if (this.value === 'manual') {
+                    manualInfo.classList.add('show');
+                } else {
+                    manualInfo.classList.remove('show');
+                }
+            });
+        });
+
+        // File handling
+        function setupFileHandling() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Click to upload
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displaySelectedFiles();
+        }
+
+        function displaySelectedFiles() {
+            const fileList = document.getElementById('file-list');
+            const selectedFilesDiv = document.getElementById('selected-files');
+            
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
+                return;
+            }
+
+            fileList.classList.remove('hidden');
+            selectedFilesDiv.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-icon">📄</div>
+                        <div class="file-details">
+                            <h4>${file.name}</h4>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="removeFile(${index})">Remove</button>
+                `;
+                selectedFilesDiv.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displaySelectedFiles();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            displaySelectedFiles();
+            document.getElementById('file-input').value = '';
+        }
+
+        function formatFileSize(bytes) {
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 Bytes';
+            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Processing
+        async function processFiles() {
+            if (selectedFiles.length === 0) {
+                alert('Please select files to process');
+                return;
+            }
+
+            // Collect processing options
+            const processingMode = document.querySelector('input[name="processing_mode"]:checked').value;
+            const entityDetection = document.querySelector('input[name="entity_detection"]:checked').value;
+            const filenameTemplates = document.querySelector('input[name="filename_templates"]:checked').value;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => formData.append('files', file));
+            formData.append('processing_mode', processingMode);
+            formData.append('entity_detection', entityDetection);
+            formData.append('filename_templates', filenameTemplates);
+
+            if (processingMode === 'manual') {
+                const firstName = document.getElementById('client_first_name').value.trim();
+                const lastName = document.getElementById('client_last_name').value.trim();
+                
+                if (!firstName || !lastName) {
+                    alert('Please enter both first and last name for manual mode');
+                    return;
+                }
+                
+                formData.append('client_first_name', firstName);
+                formData.append('client_last_name', lastName);
+            }
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                currentSessionId = result.session_id;
+                
+                // Switch to processing tab
+                switchTab('processing');
+                
+                // Start monitoring progress
+                startProgressMonitoring();
+                
+            } catch (error) {
+                alert('Error starting processing: ' + error.message);
+            }
+        }
+
+        function startProgressMonitoring() {
+            if (!currentSessionId) return;
+
+            processingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${currentSessionId}`);
+                    const status = await response.json();
+                    
+                    updateProgressDisplay(status);
+                    
+                    if (status.status === 'completed' || status.status === 'error') {
+                        clearInterval(processingInterval);
+                        if (status.status === 'completed') {
+                            await loadResults();
+                            switchTab('results');
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Error fetching status:', error);
+                }
+            }, 1000);
+        }
+
+        function updateProgressDisplay(status) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const currentFileDiv = document.getElementById('current-file');
+            const currentFileName = document.getElementById('current-file-name');
+            const processingList = document.getElementById('processing-list');
+
+            // Update progress bar
+            const percentage = status.progress_percentage || 0;
+            progressFill.style.width = percentage + '%';
+            progressPercentage.textContent = Math.round(percentage) + '%';
+
+            // Update status text
+            if (status.status === 'processing') {
+                progressText.textContent = `Processing ${status.current || 0} of ${status.total || 0} files`;
+                
+                if (status.current_file) {
+                    currentFileDiv.classList.remove('hidden');
+                    currentFileName.textContent = status.current_file;
+                } else {
+                    currentFileDiv.classList.add('hidden');
+                }
+            } else if (status.status === 'completed') {
+                progressText.textContent = 'Processing completed successfully!';
+                currentFileDiv.classList.add('hidden');
+            } else if (status.status === 'error') {
+                progressText.textContent = 'Processing failed: ' + (status.error || 'Unknown error');
+                currentFileDiv.classList.add('hidden');
+            }
+
+            // Update processing time
+            const processingTime = document.getElementById('processing-time');
+            if (status.elapsed_time) {
+                processingTime.textContent = `Elapsed time: ${Math.round(status.elapsed_time)}s`;
+            }
+
+            // Update results list
+            if (status.results) {
+                updateProcessingList(status.results);
+            }
+        }
+
+        function updateProcessingList(results) {
+            const processingList = document.getElementById('processing-list');
+            processingList.innerHTML = '';
+
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'document-item';
+                
+                const statusClass = result.status === 'completed' ? 'status-completed' :
+                                  result.status === 'processing' ? 'status-processing' :
+                                  result.status === 'error' ? 'status-error' : 'status-waiting';
+
+                const entityInfo = result.entity_info || {};
+                const extractedDetails = result.extracted_details || {};
+                
+                const entityBadge = getEntityBadge(entityInfo.entity_type);
+                const confidenceBar = getConfidenceBar(result.confidence || 0);
+
+                item.innerHTML = `
+                    <div class="document-info">
+                        <div class="document-header">
+                            <div class="document-title">${result.original_filename}</div>
+                            <span class="status-badge ${statusClass}">${result.status}</span>
+                        </div>
+                        
+                        ${result.status === 'completed' ? `
+                            <div class="document-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Client</div>
+                                    <div class="detail-value">${result.client_name || 'Unknown'} ${entityBadge}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Document Type</div>
+                                    <div class="detail-value">${result.document_type || 'Unknown'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Tax Year</div>
+                                    <div class="detail-value">${result.tax_year || 'Unknown'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">New Filename</div>
+                                    <div class="detail-value">${result.new_filename || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Confidence</div>
+                                    <div class="detail-value">${confidenceBar}</div>
+                                </div>
+                            </div>
+                        ` : result.status === 'error' ? `
+                            <div class="detail-item">
+                                <div class="detail-label">Error</div>
+                                <div class="detail-value" style="color: #e74c3c;">${result.error || 'Unknown error'}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                processingList.appendChild(item);
+            });
+        }
+
+        function getEntityBadge(entityType) {
+            if (!entityType) return '';
+            
+            const badgeClass = entityType === 'Individual' ? 'entity-individual' :
+                              entityType === 'LLC' ? 'entity-llc' :
+                              entityType === 'Corporation' ? 'entity-corporation' :
+                              entityType === 'Trust' ? 'entity-trust' : 'entity-individual';
+            
+            return `<span class="entity-badge ${badgeClass}">${entityType}</span>`;
+        }
+
+        function getConfidenceBar(confidence) {
+            const percentage = Math.round(confidence * 100);
+            const level = confidence > 0.8 ? 'high' : confidence > 0.5 ? 'medium' : 'low';
+            
+            return `
+                <div class="confidence-indicator">
+                    <div class="confidence-bar">
+                        <div class="confidence-fill confidence-${level}" style="width: ${percentage}%"></div>
+                    </div>
+                    <span>${percentage}%</span>
+                </div>
+            `;
+        }
+
+        async function loadResults() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`/results/${currentSessionId}`);
+                const data = await response.json();
+                
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error loading results:', error);
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('results-content');
+            const summary = data.processing_summary || {};
+            const stats = data.enhanced_stats || {};
+
+            // Create summary cards
+            const summaryHtml = `
+                <div class="summary-card success">
+                    <div class="summary-number">${summary.successful_extractions || 0}</div>
+                    <div class="summary-label">Successful</div>
+                </div>
+                <div class="summary-card info">
+                    <div class="summary-number">${summary.files_processed || 0}</div>
+                    <div class="summary-label">Total Processed</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="summary-number">${Math.round((summary.total_processing_time || 0))}s</div>
+                    <div class="summary-label">Processing Time</div>
+                </div>
+                <div class="summary-card error">
+                    <div class="summary-number">${summary.errors || 0}</div>
+                    <div class="summary-label">Errors</div>
+                </div>
+            `;
+
+            document.getElementById('results-summary').innerHTML = summaryHtml;
+
+            // Create breakdown charts
+            const breakdownHtml = `
+                <div class="breakdown-card">
+                    <div class="breakdown-title">Entity Types</div>
+                    ${Object.entries(stats.entity_breakdown || {}).map(([type, count]) => `
+                        <div class="breakdown-item">
+                            <span>${type}</span>
+                            <span>${count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="breakdown-card">
+                    <div class="breakdown-title">Document Types</div>
+                    ${Object.entries(stats.document_breakdown || {}).map(([type, count]) => `
+                        <div class="breakdown-item">
+                            <span>${type}</span>
+                            <span>${count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('stats-breakdown').innerHTML = breakdownHtml;
+        }
+
+        // Settings
+        function openSettings() {
+            document.getElementById('settings-modal').classList.add('show');
+            loadCurrentSettings();
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('show');
+        }
+
+        async function loadCurrentSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+                
+                // Don't populate the API key field for security
+                // Just show if it's configured
+                const apiKeyInput = document.getElementById('claude-api-key');
+                if (settings.claude_api_configured) {
+                    apiKeyInput.placeholder = 'API key is configured (enter new key to update)';
+                }
+                
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const alertDiv = document.getElementById('settings-alert');
+                alertDiv.classList.remove('hidden', 'alert-error', 'alert-success');
+                
+                if (response.ok) {
+                    alertDiv.classList.add('alert-success');
+                    alertDiv.textContent = result.message || 'Settings saved successfully';
+                } else {
+                    alertDiv.classList.add('alert-error');
+                    alertDiv.textContent = result.error || 'Error saving settings';
+                }
+                
+            } catch (error) {
+                const alertDiv = document.getElementById('settings-alert');
+                alertDiv.classList.remove('hidden', 'alert-success');
+                alertDiv.classList.add('alert-error');
+                alertDiv.textContent = 'Error saving settings: ' + error.message;
+            }
+        });
+
+        // Utility functions
+        function downloadResults() {
+            if (!currentSessionId) return;
+            
+            // Implementation for downloading results
+            window.open(`/results/${currentSessionId}`, '_blank');
+        }
+
+        function resetSession() {
+            currentSessionId = null;
+            selectedFiles = [];
+            clearFiles();
+            
+            // Clear progress display
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('progress-text').textContent = 'Ready to process documents...';
+            document.getElementById('progress-percentage').textContent = '0%';
+            document.getElementById('current-file').classList.add('hidden');
+            document.getElementById('processing-list').innerHTML = '';
+            
+            switchTab('upload');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileHandling();
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('settings-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSettings();
+            }
+        });
+    </script>
+</body>
+</html> 
