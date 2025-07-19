@@ -423,19 +423,115 @@ def download_file(filename):
 def preview_file(filename):
     """Serve processed files for preview (not as download)"""
     try:
-        print(f"Preview request for file: {filename}")
-        full_path = os.path.join(Config.PROCESSED_FOLDER, filename)
-        print(f"Full path: {full_path}")
-        print(f"File exists: {os.path.exists(full_path)}")
+        print(f"Preview request for: {filename}")
+
+        # Handle URL decoding properly
+        import urllib.parse
+        decoded_filename = urllib.parse.unquote(filename)
+
+        # Normalize path separators
+        normalized_filename = decoded_filename.replace('\\', '/')
+
+        # Construct full path
+        full_path = os.path.join(Config.PROCESSED_FOLDER, normalized_filename)
+        full_path = os.path.normpath(full_path)
+
+        # Security check - ensure path is within processed folder
+        processed_folder_abs = os.path.abspath(Config.PROCESSED_FOLDER)
+        full_path_abs = os.path.abspath(full_path)
+
+        if not full_path_abs.startswith(processed_folder_abs):
+            print(f"SECURITY ERROR: Path traversal attempt detected for {filename}")
+            return jsonify({'error': 'Invalid file path'}), 400
 
         if not os.path.exists(full_path):
             print(f"File not found: {full_path}")
-            return jsonify({'error': 'File not found'}), 404
 
-        return send_from_directory(Config.PROCESSED_FOLDER, filename, as_attachment=False)
+            # Try different decoding approaches
+            alternatives = [
+                filename,  # Use original filename as-is
+                urllib.parse.unquote_plus(filename),  # Try unquote_plus for + encoding
+                filename.replace('%20', ' ')  # Manual space replacement
+            ]
+
+            for alt_filename in alternatives:
+                alt_path = os.path.join(Config.PROCESSED_FOLDER, alt_filename)
+                alt_path = os.path.normpath(alt_path)
+                if os.path.exists(alt_path):
+                    print(f"Found file using alternative path: {alt_filename}")
+                    return send_from_directory(Config.PROCESSED_FOLDER, alt_filename, as_attachment=False)
+
+            return jsonify({'error': f'File not found: {normalized_filename}'}), 404
+
+        # Determine MIME type based on file extension
+        file_ext = os.path.splitext(full_path)[1].lower()
+
+        # Set appropriate MIME type and headers
+        if file_ext == '.pdf':
+            from flask import Response
+            try:
+                with open(full_path, 'rb') as f:
+                    file_data = f.read()
+
+                response = Response(
+                    file_data,
+                    mimetype='application/pdf',
+                    headers={
+                        'Content-Disposition': 'inline',
+                        'Content-Type': 'application/pdf',
+                        'Cache-Control': 'no-cache',
+                        'Accept-Ranges': 'bytes',
+                        'X-Frame-Options': 'SAMEORIGIN',
+                        'X-Content-Type-Options': 'nosniff'
+                    }
+                )
+                print(f"Serving PDF: {os.path.basename(full_path)} ({len(file_data)} bytes)")
+                return response
+            except Exception as pdf_error:
+                print(f"Error reading PDF file: {pdf_error}")
+                return jsonify({'error': f'Error reading PDF: {str(pdf_error)}'}), 500
+        else:
+            # For images and other files, use send_from_directory
+            try:
+                rel_path = os.path.relpath(full_path, Config.PROCESSED_FOLDER)
+                return send_from_directory(Config.PROCESSED_FOLDER, rel_path, as_attachment=False)
+            except Exception as send_error:
+                print(f"Error with send_from_directory: {send_error}")
+                # Fallback: try to serve the file manually
+                try:
+                    with open(full_path, 'rb') as f:
+                        file_data = f.read()
+
+                    # Determine MIME type for images
+                    mime_type = 'application/octet-stream'
+                    if file_ext in ['.jpg', '.jpeg']:
+                        mime_type = 'image/jpeg'
+                    elif file_ext == '.png':
+                        mime_type = 'image/png'
+                    elif file_ext == '.gif':
+                        mime_type = 'image/gif'
+                    elif file_ext in ['.tiff', '.tif']:
+                        mime_type = 'image/tiff'
+                    elif file_ext == '.bmp':
+                        mime_type = 'image/bmp'
+
+                    from flask import Response
+                    response = Response(
+                        file_data,
+                        mimetype=mime_type,
+                        headers={'Content-Disposition': 'inline'}
+                    )
+                    print(f"Serving {file_ext} file manually: {os.path.basename(full_path)} ({len(file_data)} bytes)")
+                    return response
+                except Exception as manual_error:
+                    print(f"Error serving file manually: {manual_error}")
+                    return jsonify({'error': f'Error serving file: {str(manual_error)}'}), 500
+
     except Exception as e:
         print(f"Preview error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Preview error: {str(e)}'}), 500
 
 @app.route('/api/preview-files/<session_id>')
 def get_preview_files(session_id):
@@ -456,24 +552,22 @@ def get_preview_files(session_id):
         # Filter for successfully processed files that are PDFs or images
         preview_files = []
         for i, result in enumerate(status['results']):
-            print(f"Checking result {i}: {result.get('original_filename')}")
-            print(f"  Status: {result.get('status')}")
-            print(f"  Processed path: {result.get('processed_path')}")
-
             if (result['status'] == 'completed' and
                 result.get('processed_path') and
                 os.path.exists(result['processed_path'])):
 
-                print(f"  File exists: True")
-
                 # Check if file is PDF or image
                 file_ext = os.path.splitext(result['processed_path'])[1].lower()
-                print(f"  File extension: {file_ext}")
 
                 if file_ext in ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']:
                     # Get relative path from processed folder for the preview endpoint
                     rel_path = os.path.relpath(result['processed_path'], Config.PROCESSED_FOLDER)
-                    print(f"  Relative path: {rel_path}")
+
+                    # Verify the relative path works
+                    test_full_path = os.path.join(Config.PROCESSED_FOLDER, rel_path)
+                    if not os.path.exists(test_full_path):
+                        print(f"Warning: Relative path verification failed for {result['original_filename']}")
+                        continue
 
                     preview_files.append({
                         'original_filename': result['original_filename'],
@@ -485,10 +579,6 @@ def get_preview_files(session_id):
                         'tax_year': result['tax_year'],
                         'file_type': 'pdf' if file_ext == '.pdf' else 'image'
                     })
-                else:
-                    print(f"  Skipped: unsupported file type")
-            else:
-                print(f"  File exists: {os.path.exists(result.get('processed_path', '')) if result.get('processed_path') else False}")
 
         print(f"Total preview files found: {len(preview_files)}")
         return jsonify({
@@ -687,15 +777,6 @@ def favicon():
     """Serve favicon to prevent 404 errors"""
     return '', 204
 
-def find_free_port():
-    """Find a free port to run the application"""
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        s.listen(1)
-        port = s.getsockname()[1]
-    return port
-
 def is_port_in_use(port):
     """Check if a port is in use"""
     import socket
@@ -711,13 +792,14 @@ if __name__ == '__main__':
     if init_processor():
         print("Starting Tax Document Sorter...")
 
-        # Check if port 5000 is available, otherwise find a free port
-        if is_port_in_use(5000):
-            port = find_free_port()
-            print(f"Port 5000 in use, starting on port {port}")
-            print(f"Access the application at: http://localhost:{port}")
+        # Use port 8000 consistently
+        port = 8000
+        if is_port_in_use(port):
+            print(f"Port {port} is in use. Please stop any other applications using port {port} and try again.")
+            print("Alternatively, you can kill the process using:")
+            print(f"  lsof -ti:{port} | xargs kill -9")
+            exit(1)
         else:
-            port = 5000
             print(f"Starting on port {port}")
             print(f"Access the application at: http://localhost:{port}")
 

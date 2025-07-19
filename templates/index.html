@@ -1702,7 +1702,7 @@
             align-items: center;
             position: relative;
             overflow: auto;
-            padding: var(--space-6);
+            padding: var(--space-2);
         }
 
         .loading-indicator {
@@ -1721,8 +1721,8 @@
         }
 
         .document-display {
-            max-width: 90%;
-            max-height: 90%;
+            width: 100%;
+            height: 100%;
             background: white;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-xl);
@@ -2557,7 +2557,12 @@
 
             // Fetch files available for preview
             fetch(`/api/preview-files/${currentSessionId}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success && data.files.length > 0) {
                         previewFiles = data.files;
@@ -2567,6 +2572,7 @@
                         openPreviewModal();
                         showDocument(0);
                     } else {
+                        console.warn('No files available for preview:', data);
                         showNotification('No files available for preview', 'warning');
                     }
                 })
@@ -2607,7 +2613,10 @@
         }
 
         function showDocument(index) {
-            if (index < 0 || index >= previewFiles.length) return;
+            if (index < 0 || index >= previewFiles.length) {
+                console.error('Invalid index for showDocument:', index);
+                return;
+            }
 
             currentPreviewIndex = index;
             const file = previewFiles[index];
@@ -2703,43 +2712,132 @@
                 loadingIndicator?.classList.remove('show');
             };
 
-            img.onerror = () => {
+            img.onerror = (error) => {
+                console.error('Error loading image:', img.src, error);
                 documentDisplay.innerHTML = '<div style="text-align: center; color: var(--gray-600); padding: 50px;">Error loading image</div>';
                 loadingIndicator?.classList.remove('show');
             };
 
             // Properly encode the file path for URL
-            const encodedPath = file.processed_path.split('/').map(part => encodeURIComponent(part)).join('/');
-            img.src = `/preview/${encodedPath}`;
+            const pathParts = file.processed_path.split('/');
+            const encodedParts = pathParts.map(part => encodeURIComponent(part));
+            const encodedPath = encodedParts.join('/');
+            const finalUrl = `/preview/${encodedPath}`;
+
+            img.src = finalUrl;
         }
 
         function loadPDFDocument(file) {
+            console.log('=== LOAD PDF DOCUMENT ===');
+            console.log('File:', file);
+
             const documentDisplay = document.getElementById('documentDisplay');
             const loadingIndicator = document.getElementById('loadingIndicator');
 
-            // For now, display a PDF placeholder or try to show the PDF in an iframe
-            const iframe = document.createElement('iframe');
+            // Clear any existing content
+            documentDisplay.innerHTML = '';
 
             // Properly encode the file path for URL
-            const encodedPath = file.processed_path.split('/').map(part => encodeURIComponent(part)).join('/');
-            iframe.src = `/preview/${encodedPath}`;
+            const pathParts = file.processed_path.split('/');
+            const encodedParts = pathParts.map(part => encodeURIComponent(part));
+            const encodedPath = encodedParts.join('/');
+            const finalUrl = `/preview/${encodedPath}`;
 
-            iframe.style.width = '100%';
-            iframe.style.height = '800px';
-            iframe.style.border = 'none';
-            iframe.style.borderRadius = 'var(--radius-lg)';
-            iframe.style.boxShadow = 'var(--shadow-xl)';
+            console.log('Constructed PDF URL:', finalUrl);
 
-            iframe.onload = () => {
-                documentDisplay.innerHTML = '';
-                documentDisplay.appendChild(iframe);
+            // Create container for PDF viewer
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.width = '100%';
+            pdfContainer.style.height = '100%';
+            pdfContainer.style.border = 'none';
+            pdfContainer.style.borderRadius = 'var(--radius-lg)';
+            pdfContainer.style.backgroundColor = '#f5f5f5';
+            pdfContainer.style.display = 'flex';
+            pdfContainer.style.flexDirection = 'column';
+            pdfContainer.style.overflow = 'hidden';
+
+            // Add PDF viewer using object tag (better browser support than iframe for PDFs)
+            const objectTag = document.createElement('object');
+            objectTag.data = finalUrl;
+            objectTag.type = 'application/pdf';
+            objectTag.style.width = '100%';
+            objectTag.style.height = '100%';
+            objectTag.style.border = 'none';
+            objectTag.style.minHeight = '600px';
+
+            // Fallback content for object tag
+            const fallbackContent = document.createElement('div');
+            fallbackContent.style.textAlign = 'center';
+            fallbackContent.style.padding = '50px';
+            fallbackContent.style.color = 'var(--gray-600)';
+            fallbackContent.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <p>PDF preview not supported in this browser.</p>
+                    <p><a href="${finalUrl}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Click here to open PDF in new tab</a></p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button onclick="window.open('${finalUrl}', '_blank')"
+                            style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Open PDF
+                    </button>
+                </div>
+            `;
+
+            objectTag.appendChild(fallbackContent);
+            pdfContainer.appendChild(objectTag);
+            documentDisplay.appendChild(pdfContainer);
+
+            // Track loading
+            let loadCompleted = false;
+
+            const timeoutId = setTimeout(() => {
+                if (!loadCompleted) {
+                    console.warn('PDF loading timeout for:', finalUrl);
+                    // Show fallback with direct link
+                    documentDisplay.innerHTML = `
+                        <div style="text-align: center; padding: 50px; color: var(--gray-600);">
+                            <div style="margin-bottom: 20px;">
+                                <h3>PDF Loading Issue</h3>
+                                <p>The PDF couldn't be displayed inline.</p>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <a href="${finalUrl}" target="_blank"
+                                   style="display: inline-block; padding: 12px 24px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                    Open PDF in New Tab
+                                </a>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <a href="${finalUrl}" download
+                                   style="display: inline-block; padding: 8px 16px; border: 2px solid var(--primary-color); color: var(--primary-color); text-decoration: none; border-radius: 5px;">
+                                    Download PDF
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    loadingIndicator?.classList.remove('show');
+                }
+            }, 3000); // Reduced timeout to 3 seconds
+
+            objectTag.onload = () => {
+                console.log('PDF object loaded successfully for:', finalUrl);
+                loadCompleted = true;
+                clearTimeout(timeoutId);
                 loadingIndicator?.classList.remove('show');
             };
 
-            iframe.onerror = () => {
-                documentDisplay.innerHTML = '<div style="text-align: center; color: var(--gray-600); padding: 50px;">Error loading PDF document</div>';
+            objectTag.onerror = (error) => {
+                console.error('Error loading PDF object:', finalUrl, error);
+                loadCompleted = true;
+                clearTimeout(timeoutId);
                 loadingIndicator?.classList.remove('show');
             };
+
+            // Also hide loading after a short delay regardless
+            setTimeout(() => {
+                loadingIndicator?.classList.remove('show');
+            }, 1000);
+
+            console.log('PDF object created and configured');
         }
 
         function navigateDocument(direction) {
