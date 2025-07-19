@@ -1,0 +1,3228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dixii Processor - Modern Tax Document Processing</title>
+
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        /* ===== MODERN DESIGN SYSTEM ===== */
+        :root {
+            /* Color Palette - Contemporary 2024/2025 */
+            --primary: #0f172a;        /* Deep Navy */
+            --primary-light: #1e293b;  /* Navy Light */
+            --secondary: #6366f1;      /* Electric Indigo */
+            --secondary-light: #818cf8;
+            --accent: #06d6a0;         /* Emerald */
+            --accent-light: #34d399;
+
+            /* Neutrals */
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+
+            /* Status Colors */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+
+            /* Background Gradients */
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-gradient: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+
+            /* Spacing Scale */
+            --space-1: 0.25rem;  /* 4px */
+            --space-2: 0.5rem;   /* 8px */
+            --space-3: 0.75rem;  /* 12px */
+            --space-4: 1rem;     /* 16px */
+            --space-5: 1.25rem;  /* 20px */
+            --space-6: 1.5rem;   /* 24px */
+            --space-8: 2rem;     /* 32px */
+            --space-10: 2.5rem;  /* 40px */
+            --space-12: 3rem;    /* 48px */
+            --space-16: 4rem;    /* 64px */
+
+            /* Typography Scale */
+            --text-xs: 0.75rem;     /* 12px */
+            --text-sm: 0.875rem;    /* 14px */
+            --text-base: 1rem;      /* 16px */
+            --text-lg: 1.125rem;    /* 18px */
+            --text-xl: 1.25rem;     /* 20px */
+            --text-2xl: 1.5rem;     /* 24px */
+            --text-3xl: 1.875rem;   /* 30px */
+            --text-4xl: 2.25rem;    /* 36px */
+            --text-5xl: 3rem;       /* 48px */
+
+            /* Border Radius */
+            --radius-sm: 0.375rem;  /* 6px */
+            --radius-md: 0.5rem;    /* 8px */
+            --radius-lg: 0.75rem;   /* 12px */
+            --radius-xl: 1rem;      /* 16px */
+            --radius-2xl: 1.5rem;   /* 24px */
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+            /* Animations */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== RESET & BASE STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--gray-700);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== LAYOUT COMPONENTS ===== */
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--space-6);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .content-card {
+            background: var(--card-gradient);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== MODERN HEADER ===== */
+        .modern-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: var(--space-8) var(--space-10);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            pointer-events: none;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-2xl);
+            box-shadow: var(--shadow-lg);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .brand-text h1 {
+            font-size: var(--text-4xl);
+            font-weight: 700;
+            color: white;
+            margin-bottom: var(--space-1);
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-text p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: var(--text-lg);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--space-4);
+            align-items: center;
+        }
+
+        .settings-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left var(--transition-slow);
+        }
+
+        .settings-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .settings-button:hover::before {
+            left: 100%;
+        }
+
+        /* ===== MODERN TAB SYSTEM ===== */
+        .modern-tabs {
+            background: var(--gray-100);
+            padding: var(--space-2);
+            border-radius: var(--radius-xl);
+            margin: var(--space-8) var(--space-10) 0;
+            display: flex;
+            gap: var(--space-2);
+            position: relative;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: var(--space-4) var(--space-6);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            z-index: 2;
+        }
+
+        .tab-button:hover {
+            color: var(--gray-800);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            background: white;
+            box-shadow: var(--shadow-md);
+            font-weight: 600;
+        }
+
+        .tab-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content {
+            display: none;
+            padding: var(--space-10);
+            animation: fadeInSlide 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== MODERN COMPONENTS ===== */
+        .card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-normal);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transition: width 0.6s, height 0.6s;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-1px);
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--space-4);
+            }
+
+            .modern-header {
+                padding: var(--space-6) var(--space-6);
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: var(--space-4);
+                text-align: center;
+            }
+
+            .brand-text h1 {
+                font-size: var(--text-3xl);
+            }
+
+            .modern-tabs {
+                margin: var(--space-6) var(--space-6) 0;
+                flex-direction: column;
+            }
+
+            .tab-content {
+                padding: var(--space-6);
+            }
+        }
+
+        /* ===== LOADING ANIMATIONS ===== */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray-300);
+            border-top: 2px solid var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="main-content">
+            <div class="content-card">
+                <!-- Modern Header -->
+                <header class="modern-header">
+                    <div class="header-content">
+                        <div class="brand-section">
+                            <div class="logo">
+                                📄
+                            </div>
+                            <div class="brand-text">
+                                <h1>Dixii Processor</h1>
+                                <p>Intelligent tax document processing & organization</p>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="settings-button" onclick="openSettingsModal()" title="Settings">
+                                <i data-lucide="settings" class="tab-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Modern Tab Navigation -->
+                <nav class="modern-tabs">
+                    <button class="tab-button active" onclick="showTab('upload', this)">
+                        <i data-lucide="upload" class="tab-icon"></i>
+                        Upload
+                    </button>
+                    <button class="tab-button" onclick="showTab('processing', this)">
+                        <i data-lucide="cpu" class="tab-icon"></i>
+                        Processing
+                    </button>
+                    <button class="tab-button" onclick="showTab('results', this)">
+                        <i data-lucide="bar-chart-3" class="tab-icon"></i>
+                        Results
+                    </button>
+                </nav>
+
+                                <!-- Upload Tab -->
+                <div id="upload" class="tab-content active">
+                    <!-- Processing Mode Toggle -->
+                    <div class="mode-selector">
+                        <h3 class="section-title">
+                            <i data-lucide="brain" class="section-icon"></i>
+                            Processing Mode
+                        </h3>
+                        <div class="toggle-group">
+                            <label class="toggle-option">
+                                <input type="radio" name="processingMode" value="auto" checked onchange="toggleProcessingMode()">
+                                <div class="toggle-card">
+                                    <div class="toggle-icon">🤖</div>
+                                    <div class="toggle-content">
+                                        <h4>Auto Mode</h4>
+                                        <p>AI extracts client names automatically</p>
+                                    </div>
+                                    <div class="toggle-indicator"></div>
+                                </div>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="radio" name="processingMode" value="manual" onchange="toggleProcessingMode()">
+                                <div class="toggle-card">
+                                    <div class="toggle-icon">✏️</div>
+                                    <div class="toggle-content">
+                                        <h4>Manual Mode</h4>
+                                        <p>Specify client name manually</p>
+                                    </div>
+                                    <div class="toggle-indicator"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Manual Client Input -->
+                    <div id="manualClientInput" class="manual-input-section hidden">
+                        <div class="input-card">
+                            <h4 class="input-title">
+                                <i data-lucide="user" class="section-icon"></i>
+                                Client Information
+                            </h4>
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="clientFirstName">First Name</label>
+                                    <input type="text" id="clientFirstName" placeholder="Enter first name" class="modern-input">
+                                </div>
+                                <div class="input-group">
+                                    <label for="clientLastName">Last Name</label>
+                                    <input type="text" id="clientLastName" placeholder="Enter last name" class="modern-input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Key Notification -->
+                    <div id="apiKeyNotification" class="notification-card warning hidden">
+                        <div class="notification-content">
+                            <div class="notification-icon">
+                                <i data-lucide="alert-triangle"></i>
+                            </div>
+                            <div class="notification-text">
+                                <h4>API Key Required</h4>
+                                <p>Please configure your Claude API key to enable document processing.</p>
+                            </div>
+                            <button onclick="openSettingsModal()" class="btn btn-primary">
+                                <i data-lucide="settings"></i>
+                                Configure
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modern Upload Area -->
+                    <div class="upload-container">
+                        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-content">
+                                <div class="upload-icon-container">
+                                    <i data-lucide="cloud-upload" class="upload-icon"></i>
+                                    <div class="upload-pulse"></div>
+                                </div>
+                                <h3 class="upload-title">Drop files here or click to browse</h3>
+                                <p class="upload-subtitle">Supports PDF, PNG, JPG, JPEG, TIFF, BMP files (max 16MB each)</p>
+                                <div class="upload-features">
+                                    <div class="feature-item">
+                                        <i data-lucide="shield-check"></i>
+                                        Secure Processing
+                                    </div>
+                                    <div class="feature-item">
+                                        <i data-lucide="zap"></i>
+                                        AI-Powered
+                                    </div>
+                                    <div class="feature-item">
+                                        <i data-lucide="file-text"></i>
+                                        Auto-Organize
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
+                        </div>
+                    </div>
+
+                    <!-- File List -->
+                    <div id="fileList" class="file-list-section hidden">
+                        <div class="file-list-header">
+                            <h3 class="section-title">
+                                <i data-lucide="files" class="section-icon"></i>
+                                Selected Files
+                            </h3>
+                            <div class="file-count-badge">
+                                <span id="fileCount">0</span> files
+                            </div>
+                        </div>
+                        <div id="fileItems" class="file-grid"></div>
+                        <div class="action-bar">
+                            <button id="processBtn" class="btn btn-success btn-large" onclick="processFiles()">
+                                <i data-lucide="play"></i>
+                                Start Processing
+                                <div class="btn-shine"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Tab -->
+                <div id="processing" class="tab-content">
+                    <div class="processing-container">
+                        <!-- Progress Section -->
+                        <div class="progress-section">
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <h3 class="section-title">
+                                        <i data-lucide="activity" class="section-icon"></i>
+                                        Processing Progress
+                                    </h3>
+                                    <div class="progress-stats">
+                                        <span id="progressText" class="progress-text">Ready to process...</span>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar">
+                                        <div id="progressFill" class="progress-fill" style="width: 0%">
+                                            <div class="progress-shimmer"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current File -->
+                        <div id="currentFile" class="current-file-section hidden">
+                            <div class="current-file-card">
+                                <div class="current-file-icon">
+                                    <i data-lucide="file-text" class="processing-icon"></i>
+                                </div>
+                                <div class="current-file-content">
+                                    <h4>Currently Processing</h4>
+                                    <div id="currentFileName" class="current-filename">-</div>
+                                </div>
+                                <div class="processing-spinner">
+                                    <div class="loading-spinner"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Processing List -->
+                        <div class="processing-list">
+                            <div id="processingItems" class="processing-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="results" class="tab-content">
+                    <div id="resultsContent">
+                        <div id="noResultsSection" class="empty-state">
+                            <div class="empty-icon">
+                                <i data-lucide="file-search"></i>
+                            </div>
+                            <h3>No results yet</h3>
+                            <p>Upload and process some documents to see results here.</p>
+                            <div class="empty-actions">
+                                <button class="btn btn-success" onclick="startNewSession()">
+                                    <i data-lucide="upload"></i>
+                                    Upload Documents
+                                </button>
+                                <button class="btn btn-secondary" onclick="showExistingFiles()">
+                                    <i data-lucide="folder"></i>
+                                    Browse Existing
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Explorer Section -->
+                    <div id="fileExplorerSection" class="file-explorer-section hidden">
+                        <!-- Will be populated with file explorer content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS for new components continues... -->
+    <style>
+        /* ===== UPLOAD TAB STYLES ===== */
+        .mode-selector {
+            margin-bottom: var(--space-8);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--text-xl);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-6);
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--secondary);
+        }
+
+        .toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+
+        .toggle-option {
+            cursor: pointer;
+        }
+
+        .toggle-option input[type="radio"] {
+            display: none;
+        }
+
+        .toggle-card {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toggle-card:hover {
+            border-color: var(--secondary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .toggle-option input:checked + .toggle-card {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toggle-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-3);
+        }
+
+        .toggle-content h4 {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+
+        .toggle-content p {
+            font-size: var(--text-sm);
+            opacity: 0.8;
+        }
+
+        .toggle-indicator {
+            position: absolute;
+            top: var(--space-4);
+            right: var(--space-4);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            transition: all var(--transition-normal);
+        }
+
+        .toggle-option input:checked + .toggle-card .toggle-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: currentColor;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Manual Input Section */
+        .manual-input-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .input-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--warning);
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .input-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-6);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .input-group label {
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .modern-input {
+            padding: var(--space-4);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            transition: all var(--transition-normal);
+            background: white;
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Notification Card */
+        .notification-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-8);
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--warning);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--warning) 0%, #f59e0b 100%);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            flex: 1;
+        }
+
+        .notification-text h4 {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-1);
+        }
+
+        .notification-text p {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+        }
+
+        /* Upload Container */
+        .upload-container {
+            margin-bottom: var(--space-8);
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--gray-300);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-12);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.1) 100%);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .upload-icon-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: var(--space-6);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            color: var(--secondary);
+            position: relative;
+            z-index: 2;
+        }
+
+        .upload-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--secondary-light);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .upload-title {
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+
+        .upload-subtitle {
+            color: var(--gray-600);
+            font-size: var(--text-base);
+            margin-bottom: var(--space-6);
+        }
+
+        .upload-features {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .feature-item i {
+            width: 16px;
+            height: 16px;
+            color: var(--accent);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* File List Section */
+        .file-list-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+        }
+
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .file-count-badge {
+            background: var(--secondary);
+            color: white;
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .file-grid {
+            display: grid;
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn-large {
+            padding: var(--space-4) var(--space-8);
+            font-size: var(--text-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left var(--transition-slow);
+        }
+
+        .btn:hover .btn-shine {
+            left: 100%;
+        }
+
+        /* Processing Tab Styles */
+        .processing-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .progress-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .progress-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .progress-text {
+            font-size: var(--text-base);
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--gray-200);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+            border-radius: var(--radius-lg);
+            transition: width var(--transition-slow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-shimmer {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Current File Section */
+        .current-file-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .current-file-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .current-file-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .current-file-content {
+            flex: 1;
+        }
+
+        .current-file-content h4 {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-1);
+        }
+
+        .current-filename {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+        }
+
+        .processing-spinner {
+            flex-shrink: 0;
+        }
+
+        /* Results Tab */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-16) var(--space-8);
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto var(--space-6);
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-300) 100%);
+            border-radius: var(--radius-2xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+        }
+
+        .empty-icon i {
+            width: 40px;
+            height: 40px;
+        }
+
+        .empty-state h3 {
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+
+        .empty-state p {
+            color: var(--gray-600);
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-8);
+        }
+
+        .empty-actions {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .toggle-group {
+                grid-template-columns: 1fr;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-features {
+                gap: var(--space-4);
+            }
+
+            .empty-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modern-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i data-lucide="settings" class="modal-icon"></i>
+                    Settings
+                </h2>
+                <button class="modal-close" onclick="closeSettingsModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="settingsForm" class="modal-body">
+                <div class="form-section">
+                    <label for="apiKey" class="form-label">Claude API Key</label>
+                    <div class="input-with-icon">
+                        <input
+                            type="password"
+                            id="apiKey"
+                            name="apiKey"
+                            class="form-input"
+                            placeholder="sk-ant-api03-..."
+                            autocomplete="new-password"
+                        >
+                        <button type="button" class="input-action" onclick="toggleApiKeyVisibility()">
+                            <i data-lucide="eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    <p class="form-help">
+                        Enter your Claude API key from Anthropic for document text extraction and classification.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-large" id="saveSettingsBtn">
+                        <i data-lucide="save"></i>
+                        Save Settings
+                    </button>
+                </div>
+
+                <div id="settingsStatus" class="status-message hidden"></div>
+            </form>
+        </div>
+    </div>
+
+        <!-- Document Preview Modal (Hidden by default) -->
+    <div id="previewModal" class="preview-modal" style="display: none;">
+        <div class="preview-header">
+            <div class="preview-nav">
+                <span id="previewCounter" class="counter-badge">1 / 1</span>
+            </div>
+            <h2 id="previewTitle" class="preview-title">Document Preview</h2>
+            <button class="modal-close" onclick="closePreviewModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="preview-body">
+            <div class="preview-sidebar">
+                <div class="rename-section">
+                    <h4 class="sidebar-title">
+                        <i data-lucide="edit-3"></i>
+                        Rename Document
+                    </h4>
+                    <div class="rename-controls">
+                        <input type="text" id="renameInput" class="form-input" placeholder="Enter new filename...">
+                        <div class="rename-actions">
+                            <button id="saveRenameBtn" class="btn btn-success" onclick="saveDocumentRename()">
+                                <i data-lucide="save"></i>
+                                Save
+                            </button>
+                            <button id="skipRenameBtn" class="btn btn-secondary" onclick="skipDocumentRename()">
+                                <i data-lucide="skip-forward"></i>
+                                Skip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="document-info-section">
+                    <h4 class="sidebar-title">
+                        <i data-lucide="info"></i>
+                        Document Info
+                    </h4>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Original Name:</span>
+                            <span class="info-value" id="previewOriginalName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Client:</span>
+                            <span class="info-value" id="previewClientName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Document Type:</span>
+                            <span class="info-value" id="previewDocType">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tax Year:</span>
+                            <span class="info-value" id="previewTaxYear">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">File Type:</span>
+                            <span class="info-value" id="previewFileType">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-main">
+                <div class="document-viewer">
+                    <div class="loading-indicator" id="loadingIndicator">
+                        <div class="loading-spinner"></div>
+                        <p>Loading document...</p>
+                    </div>
+                    <div class="document-display" id="documentDisplay"></div>
+                </div>
+
+                <div class="preview-controls">
+                    <div class="nav-buttons">
+                        <button id="prevDocBtn" class="btn btn-secondary" onclick="navigateDocument(-1)">
+                            <i data-lucide="chevron-left"></i>
+                            Previous
+                        </button>
+                        <button id="nextDocBtn" class="btn btn-secondary" onclick="navigateDocument(1)">
+                            Next
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <button id="donePreviewBtn" class="btn btn-success" onclick="finishPreview()">
+                        <i data-lucide="check"></i>
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Styles for Modals and Components -->
+    <style>
+        /* ===== MODAL STYLES ===== */
+        .modern-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modern-modal.show {
+            display: flex;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: var(--space-6) var(--space-8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--text-xl);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: var(--space-8);
+        }
+
+        .form-section {
+            margin-bottom: var(--space-6);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-3);
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-4);
+            padding-right: var(--space-12);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            transition: all var(--transition-normal);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-action {
+            position: absolute;
+            right: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-500);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-normal);
+        }
+
+        .input-action:hover {
+            color: var(--secondary);
+            background: var(--gray-100);
+        }
+
+        .form-help {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            margin-top: var(--space-2);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .status-message {
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-4);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* ===== PREVIEW MODAL STYLES ===== */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1001;
+            flex-direction: column;
+        }
+
+        .preview-modal.show {
+            display: flex !important;
+        }
+
+        .preview-header {
+            background: var(--primary);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .counter-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .preview-title {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .preview-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .preview-sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid var(--gray-300);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-4);
+        }
+
+        .rename-section {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .rename-controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .rename-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .rename-actions .btn {
+            flex: 1;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-sm);
+        }
+
+        .document-info-section {
+            padding: var(--space-6);
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--text-sm);
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .info-value {
+            color: var(--gray-600);
+            text-align: right;
+            font-weight: 400;
+        }
+
+        .preview-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--gray-100);
+        }
+
+        .document-viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            padding: var(--space-6);
+        }
+
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            color: var(--gray-600);
+        }
+
+        .loading-indicator.show {
+            display: block;
+        }
+
+        .loading-indicator p {
+            margin-top: var(--space-3);
+            font-size: var(--text-base);
+        }
+
+        .document-display {
+            max-width: 90%;
+            max-height: 90%;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            overflow: auto;
+        }
+
+        .document-display img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: var(--radius-lg);
+        }
+
+        .preview-controls {
+            background: white;
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--gray-300);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: var(--space-3);
+        }
+
+        /* Additional component styles continue in script section... */
+    </style>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Global variables
+        let selectedFiles = [];
+        let currentSessionId = null;
+        let processingInterval = null;
+        let processingMode = 'auto';
+        let previewFiles = [];
+        let currentPreviewIndex = 0;
+        let previewChanges = new Map();
+        let hasUnsavedChanges = false;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Check API key status
+            checkApiKeyStatus();
+            setupFileHandlers();
+            setupModalHandlers();
+            setupFormHandlers();
+        });
+
+        // File handling functions
+        function setupFileHandlers() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadZone = document.querySelector('.upload-zone');
+
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileSelect);
+            }
+
+            if (uploadZone) {
+                uploadZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
+                });
+
+                uploadZone.addEventListener('dragleave', () => {
+                    uploadZone.classList.remove('dragover');
+                });
+
+                uploadZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                    handleFileSelect({ target: { files: e.dataTransfer.files } });
+                });
+            }
+        }
+
+        function handleFileSelect(event) {
+            selectedFiles = Array.from(event.target.files);
+            displayFileList();
+            updateFileCount();
+        }
+
+        function displayFileList() {
+            const fileList = document.getElementById('fileList');
+            const fileItems = document.getElementById('fileItems');
+
+            if (selectedFiles.length === 0) {
+                fileList?.classList.add('hidden');
+                return;
+            }
+
+            fileList?.classList.remove('hidden');
+            if (fileItems) {
+                fileItems.innerHTML = '';
+                selectedFiles.forEach((file, index) => {
+                    const fileCard = createFileCard(file, index);
+                    fileItems.appendChild(fileCard);
+                });
+            }
+        }
+
+        function createFileCard(file, index) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+
+            const extension = file.name.split('.').pop().toLowerCase();
+            let icon = 'file-text';
+            if (extension === 'pdf') icon = 'file-text';
+            else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) icon = 'image';
+
+            card.innerHTML = `
+                <div class="file-card-content">
+                    <div class="file-icon">
+                        <i data-lucide="${icon}"></i>
+                    </div>
+                    <div class="file-details">
+                        <h4 class="file-name">${file.name}</h4>
+                        <p class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <button onclick="removeFile(${index})" class="remove-file-btn" title="Remove">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+            `;
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons(card);
+            }
+            return card;
+        }
+
+        function updateFileCount() {
+            const fileCountElement = document.getElementById('fileCount');
+            if (fileCountElement) {
+                fileCountElement.textContent = selectedFiles.length;
+            }
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileList();
+            updateFileCount();
+        }
+
+        // Tab functionality
+        function showTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabName)?.classList.add('active');
+            element?.classList.add('active');
+
+            setTimeout(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }, 100);
+        }
+
+        // Processing mode toggle
+        function toggleProcessingMode() {
+            const mode = document.querySelector('input[name="processingMode"]:checked')?.value;
+            processingMode = mode;
+
+            const manualInput = document.getElementById('manualClientInput');
+            if (mode === 'manual') {
+                manualInput?.classList.remove('hidden');
+            } else {
+                manualInput?.classList.add('hidden');
+            }
+        }
+
+        function getClientInfo() {
+            if (processingMode === 'manual') {
+                const firstName = document.getElementById('clientFirstName')?.value.trim();
+                const lastName = document.getElementById('clientLastName')?.value.trim();
+
+                if (!firstName || !lastName) {
+                    showNotification('Please enter both first name and last name for manual mode', 'error');
+                    return null;
+                }
+
+                return { firstName, lastName };
+            }
+            return null;
+        }
+
+        // Process files function - keep all the original functionality
+        function processFiles() {
+            if (selectedFiles.length === 0) {
+                showNotification('Please select files to process', 'error');
+                return;
+            }
+
+            const clientInfo = getClientInfo();
+            if (processingMode === 'manual' && !clientInfo) {
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            formData.append('processing_mode', processingMode);
+            if (clientInfo) {
+                formData.append('client_first_name', clientInfo.firstName);
+                formData.append('client_last_name', clientInfo.lastName);
+            }
+
+            const processBtn = document.getElementById('processBtn');
+            if (processBtn) {
+                processBtn.disabled = true;
+                processBtn.innerHTML = '<div class="loading-spinner"></div> Uploading...';
+            }
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                currentSessionId = data.session_id;
+                showTab('processing', document.querySelectorAll('.tab-button')[1]);
+                startProcessingMonitor();
+            })
+            .catch(error => {
+                showNotification('Error: ' + error.message, 'error');
+                if (processBtn) {
+                    processBtn.disabled = false;
+                    processBtn.innerHTML = '<i data-lucide="play"></i> Start Processing <div class="btn-shine"></div>';
+                    lucide.createIcons(processBtn);
+                }
+            });
+        }
+
+        // Keep all the original functions but ensure they work with new UI
+        function startProcessingMonitor() {
+            if (!currentSessionId) return;
+
+            processingInterval = setInterval(() => {
+                fetch(`/status/${currentSessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateProcessingDisplay(data);
+
+                    if (data.status === 'completed' || data.status === 'error') {
+                        clearInterval(processingInterval);
+                        if (data.status === 'completed') {
+                            setTimeout(() => {
+                                loadResults();
+                            }, 500);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                    clearInterval(processingInterval);
+                });
+            }, 1000);
+        }
+
+        function updateProcessingDisplay(data) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const currentFile = document.getElementById('currentFile');
+            const currentFileName = document.getElementById('currentFileName');
+            const processingItems = document.getElementById('processingItems');
+
+            const completedCount = data.results.filter(result =>
+                result.status === 'completed' || result.status === 'error'
+            ).length;
+
+            const percentage = data.total > 0 ? (completedCount / data.total) * 100 : 0;
+
+            if (progressFill) {
+                progressFill.style.width = percentage + '%';
+            }
+            if (progressText) {
+                progressText.textContent = `${completedCount}/${data.total} documents completed (${percentage.toFixed(1)}%)`;
+            }
+
+            if (data.current_file && data.status === 'processing') {
+                currentFile?.classList.remove('hidden');
+                if (currentFileName) {
+                    currentFileName.textContent = data.current_file;
+                }
+            } else if (data.status === 'completed') {
+                currentFile?.classList.remove('hidden');
+                if (currentFileName) {
+                    currentFileName.innerHTML = `
+                        <div style="text-align: center;">
+                            <h4 style="color: var(--success); margin-bottom: 1rem;">✅ All files processed successfully!</h4>
+                            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn btn-success" onclick="startNewSession()">
+                                    <i data-lucide="upload"></i>
+                                    Process New Documents
+                                </button>
+                                <button class="btn btn-primary" onclick="showTab('results', document.querySelectorAll('.tab-button')[2])">
+                                    <i data-lucide="bar-chart-3"></i>
+                                    View Results
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons(currentFileName);
+                }
+            }
+
+            if (processingItems) {
+                processingItems.innerHTML = '';
+                data.results.forEach((result, index) => {
+                    const item = createProcessingItem(result, index, data.current);
+                    processingItems.appendChild(item);
+                });
+            }
+        }
+
+        function createProcessingItem(result, index, currentIndex) {
+            const item = document.createElement('div');
+
+            let statusClass = 'waiting';
+            let statusIcon = 'clock';
+            let statusText = 'Waiting';
+
+            if (result.status === 'completed') {
+                statusClass = 'completed';
+                statusIcon = 'check';
+                statusText = 'Completed';
+            } else if (result.status === 'error') {
+                statusClass = 'error';
+                statusIcon = 'x';
+                statusText = 'Error';
+            } else if (index < currentIndex) {
+                statusClass = 'processing';
+                statusIcon = 'loader';
+                statusText = 'Processing';
+            }
+
+            item.className = `processing-item ${statusClass}`;
+            item.innerHTML = `
+                <div class="processing-item-content">
+                    <div class="processing-status">
+                        <i data-lucide="${statusIcon}" class="status-icon ${statusClass}"></i>
+                        <span class="status-text">${statusText}</span>
+                    </div>
+                    <div class="processing-details">
+                        <h4 class="processing-filename">${result.original_filename}</h4>
+                        ${result.error ? `<p class="processing-error">Error: ${result.error}</p>` : ''}
+                        ${result.new_filename ? `<p class="processing-result">→ ${result.new_filename}</p>` : ''}
+                    </div>
+                </div>
+            `;
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons(item);
+            }
+            return item;
+        }
+
+        // Settings and other functions - maintain original functionality
+        function setupModalHandlers() {
+            const settingsModal = document.getElementById('settingsModal');
+            const previewModal = document.getElementById('previewModal');
+
+            if (settingsModal) {
+                settingsModal.addEventListener('click', function(e) {
+                    if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
+                        closeSettingsModal();
+                    }
+                });
+            }
+
+            if (previewModal) {
+                previewModal.addEventListener('click', function(e) {
+                    if (e.target === previewModal) {
+                        closePreviewModal();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (settingsModal?.classList.contains('show')) closeSettingsModal();
+                    if (previewModal?.classList.contains('show')) closePreviewModal();
+                } else if (previewModal?.classList.contains('show')) {
+                    if (e.key === 'ArrowLeft') {
+                        navigateDocument(-1);
+                    } else if (e.key === 'ArrowRight') {
+                        navigateDocument(1);
+                    }
+                }
+            });
+        }
+
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal?.classList.add('show');
+            loadCurrentSettings();
+
+            setTimeout(() => {
+                document.getElementById('apiKey')?.focus();
+            }, 300);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal?.classList.remove('show');
+
+            document.getElementById('settingsForm')?.reset();
+            document.getElementById('apiKey').type = 'password';
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (eyeIcon) {
+                eyeIcon.setAttribute('data-lucide', 'eye');
+                lucide.createIcons(eyeIcon.parentElement);
+            }
+            hideSettingsStatus();
+        }
+
+        function loadCurrentSettings() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    const apiKeyInput = document.getElementById('apiKey');
+                    if (data.success && data.api_key_configured && data.masked_api_key) {
+                        apiKeyInput.value = data.masked_api_key;
+                        apiKeyInput.dataset.originalMasked = data.masked_api_key;
+                    } else {
+                        apiKeyInput.value = '';
+                        apiKeyInput.dataset.originalMasked = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading settings:', error);
+                });
+        }
+
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                apiKeyInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+
+            lucide.createIcons(eyeIcon.parentElement);
+        }
+
+        function setupFormHandlers() {
+            const settingsForm = document.getElementById('settingsForm');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveSettings();
+                });
+            }
+        }
+
+        function saveSettings() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const apiKey = apiKeyInput.value.trim();
+            const saveBtn = document.getElementById('saveSettingsBtn');
+
+            const originalMasked = apiKeyInput.dataset.originalMasked || '';
+            if (apiKey === originalMasked) {
+                showSettingsStatus('API key unchanged. Please enter a new API key to update.', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showSettingsStatus('Please enter an API key', 'error');
+                return;
+            }
+
+            if (!apiKey.startsWith('sk-ant-api03-')) {
+                showSettingsStatus('Invalid API key format. Must start with "sk-ant-api03-"', 'error');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<div class="loading-spinner"></div> Saving...';
+
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    api_key: apiKey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSettingsStatus('Settings saved successfully! ✓', 'success');
+                    checkApiKeyStatus();
+
+                    setTimeout(() => {
+                        closeSettingsModal();
+                    }, 2000);
+                } else {
+                    showSettingsStatus(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                showSettingsStatus(`Error: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i data-lucide="save"></i> Save Settings';
+                lucide.createIcons(saveBtn);
+            });
+        }
+
+        function showSettingsStatus(message, type) {
+            const statusDiv = document.getElementById('settingsStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.classList.remove('hidden');
+        }
+
+        function hideSettingsStatus() {
+            const statusDiv = document.getElementById('settingsStatus');
+            statusDiv.classList.add('hidden');
+        }
+
+        function checkApiKeyStatus() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(data => {
+                    const notification = document.getElementById('apiKeyNotification');
+                    if (data.api_key_configured) {
+                        notification?.classList.add('hidden');
+                    } else {
+                        notification?.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking API key status:', error);
+                    document.getElementById('apiKeyNotification')?.classList.remove('hidden');
+                });
+        }
+
+        // Keep all original functions for results, file explorer, preview etc
+        function loadResults() {
+            if (!currentSessionId) return;
+
+            fetch(`/results/${currentSessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data);
+                showTab('results', document.querySelectorAll('.tab-button')[2]);
+            })
+            .catch(error => {
+                console.error('Error loading results:', error);
+            });
+        }
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            const noResultsSection = document.getElementById('noResultsSection');
+
+            if (noResultsSection) {
+                noResultsSection.style.display = 'none';
+            }
+
+            if (resultsContent) {
+                resultsContent.innerHTML = createResultsHTML(data);
+                setTimeout(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons(resultsContent);
+                    }
+                }, 100);
+            }
+
+            const fileExplorerSection = document.getElementById('fileExplorerSection');
+            fileExplorerSection?.classList.remove('hidden');
+        }
+
+        function createResultsHTML(data) {
+            const stats = data.stats;
+            const results = data.results;
+
+            return `
+                <div class="results-summary">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i data-lucide="file-text"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.total_documents}</div>
+                                <div class="stat-label">Total Documents</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i data-lucide="check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.completed}</div>
+                                <div class="stat-label">Completed</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon accent">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.unique_clients}</div>
+                                <div class="stat-label">Unique Clients</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.success_rate.toFixed(1)}%</div>
+                                <div class="stat-label">Success Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                                         <div class="results-actions">
+                         <button class="btn btn-success" onclick="startNewSession()">
+                             <i data-lucide="upload"></i>
+                             Process New Documents
+                         </button>
+                         <button class="btn btn-primary" onclick="showExistingFiles()">
+                             <i data-lucide="folder"></i>
+                             Browse Existing Files
+                         </button>
+                         <button class="btn btn-secondary" onclick="openProcessedFolder()">
+                             <i data-lucide="external-link"></i>
+                             Open in File Explorer
+                         </button>
+                         ${results.length > 0 ? `
+                             <button class="btn btn-secondary" onclick="startDocumentPreview()">
+                                 <i data-lucide="eye"></i>
+                                 Preview & Edit Documents
+                             </button>
+                         ` : ''}
+                     </div>
+                </div>
+
+                <div class="results-table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Original File</th>
+                                <th>Client Name</th>
+                                <th>Document Type</th>
+                                <th>Tax Year</th>
+                                <th>New Filename</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(result => `
+                                <tr class="table-row">
+                                    <td class="file-cell">
+                                        <div class="file-info">
+                                            <i data-lucide="file-text" class="file-icon"></i>
+                                            <span>${result.original_filename}</span>
+                                        </div>
+                                    </td>
+                                    <td>${result.client_name || 'Unknown'}</td>
+                                    <td>
+                                        <span class="doc-type-badge">${result.document_type || 'Unknown'}</span>
+                                    </td>
+                                    <td>${result.tax_year || 'Unknown'}</td>
+                                    <td class="filename-cell">${result.new_filename || '-'}</td>
+                                    <td>
+                                        <span class="status-badge ${result.status === 'completed' ? 'success' : 'error'}">
+                                            <i data-lucide="${result.status === 'completed' ? 'check' : 'x'}"></i>
+                                            ${result.status === 'completed' ? 'Complete' : 'Error'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i data-lucide="${type === 'success' ? 'check' : type === 'error' ? 'x' : 'info'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons(toast);
+            }
+
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 4000);
+        }
+
+        function startNewSession() {
+            selectedFiles = [];
+            currentSessionId = null;
+            if (processingInterval) {
+                clearInterval(processingInterval);
+            }
+
+            // Reset UI elements
+            const elements = {
+                fileList: document.getElementById('fileList'),
+                currentFile: document.getElementById('currentFile'),
+                processingItems: document.getElementById('processingItems'),
+                progressFill: document.getElementById('progressFill'),
+                progressText: document.getElementById('progressText'),
+                fileInput: document.getElementById('fileInput'),
+                processBtn: document.getElementById('processBtn'),
+                clientFirstName: document.getElementById('clientFirstName'),
+                clientLastName: document.getElementById('clientLastName'),
+                noResultsSection: document.getElementById('noResultsSection'),
+                resultsContent: document.getElementById('resultsContent'),
+                fileExplorerSection: document.getElementById('fileExplorerSection')
+            };
+
+            if (elements.fileList) elements.fileList.classList.add('hidden');
+            if (elements.currentFile) elements.currentFile.classList.add('hidden');
+            if (elements.processingItems) elements.processingItems.innerHTML = '';
+            if (elements.progressFill) elements.progressFill.style.width = '0%';
+            if (elements.progressText) elements.progressText.textContent = 'Ready to process...';
+            if (elements.fileInput) elements.fileInput.value = '';
+            if (elements.clientFirstName) elements.clientFirstName.value = '';
+            if (elements.clientLastName) elements.clientLastName.value = '';
+            if (elements.noResultsSection) elements.noResultsSection.style.display = 'block';
+            if (elements.fileExplorerSection) elements.fileExplorerSection.classList.add('hidden');
+
+            if (elements.processBtn) {
+                elements.processBtn.disabled = false;
+                elements.processBtn.innerHTML = '<i data-lucide="play"></i> Start Processing <div class="btn-shine"></div>';
+                lucide.createIcons(elements.processBtn);
+            }
+
+            if (elements.resultsContent) {
+                elements.resultsContent.innerHTML = `
+                    <div id="noResultsSection" class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="file-search"></i>
+                        </div>
+                        <h3>No results yet</h3>
+                        <p>Upload and process some documents to see results here.</p>
+                        <div class="empty-actions">
+                            <button class="btn btn-success" onclick="startNewSession()">
+                                <i data-lucide="upload"></i>
+                                Upload Documents
+                            </button>
+                            <button class="btn btn-secondary" onclick="showExistingFiles()">
+                                <i data-lucide="folder"></i>
+                                Browse Existing
+                            </button>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons(elements.resultsContent);
+            }
+
+            showTab('upload', document.querySelectorAll('.tab-button')[0]);
+            showNotification('Ready for new documents!', 'success');
+        }
+
+        // Preview and file management functions
+        function showExistingFiles() {
+            showNotification('File explorer functionality available in full version', 'info');
+        }
+
+        function openProcessedFolder() {
+            fetch('/api/open-folder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: 'processed' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Opened processed folder', 'success');
+                } else {
+                    showNotification(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification(`Error: ${error.message}`, 'error');
+            });
+        }
+
+        // Document Preview Functions
+        function startDocumentPreview() {
+            if (!currentSessionId) {
+                showNotification('No processing session found', 'error');
+                return;
+            }
+
+            showNotification('Loading preview files...', 'info');
+
+            // Fetch files available for preview
+            fetch(`/api/preview-files/${currentSessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.files.length > 0) {
+                        previewFiles = data.files;
+                        currentPreviewIndex = 0;
+                        previewChanges.clear();
+                        hasUnsavedChanges = false;
+                        openPreviewModal();
+                        showDocument(0);
+                    } else {
+                        showNotification('No files available for preview', 'warning');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading preview files:', error);
+                    showNotification('Error loading files for preview', 'error');
+                });
+        }
+
+        function openPreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal?.classList.add('show');
+            modal.style.display = 'flex';
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreviewModal() {
+            if (hasUnsavedChanges) {
+                const confirmClose = confirm('You have unsaved changes. Are you sure you want to exit without saving?');
+                if (!confirmClose) return;
+            }
+
+            const modal = document.getElementById('previewModal');
+            modal?.classList.remove('show');
+            modal.style.display = 'none';
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+
+            // Clean up
+            const documentDisplay = document.getElementById('documentDisplay');
+            documentDisplay.innerHTML = '';
+            previewFiles = [];
+            previewChanges.clear();
+            hasUnsavedChanges = false;
+        }
+
+        function showDocument(index) {
+            if (index < 0 || index >= previewFiles.length) return;
+
+            currentPreviewIndex = index;
+            const file = previewFiles[index];
+
+            // Update UI
+            updatePreviewUI(file, index);
+
+            // Show loading indicator
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const documentDisplay = document.getElementById('documentDisplay');
+
+            loadingIndicator?.classList.add('show');
+            documentDisplay.innerHTML = '';
+
+            // Load document based on type
+            if (file.file_type === 'pdf') {
+                loadPDFDocument(file);
+            } else {
+                loadImageDocument(file);
+            }
+        }
+
+        function updatePreviewUI(file, index) {
+            // Update counter
+            const counter = document.getElementById('previewCounter');
+            if (counter) {
+                counter.textContent = `${index + 1} / ${previewFiles.length}`;
+            }
+
+            // Update title
+            const title = document.getElementById('previewTitle');
+            if (title) {
+                title.textContent = file.new_filename || file.original_filename;
+            }
+
+            // Update document info
+            const elements = {
+                previewOriginalName: document.getElementById('previewOriginalName'),
+                previewClientName: document.getElementById('previewClientName'),
+                previewDocType: document.getElementById('previewDocType'),
+                previewTaxYear: document.getElementById('previewTaxYear'),
+                previewFileType: document.getElementById('previewFileType')
+            };
+
+            if (elements.previewOriginalName) elements.previewOriginalName.textContent = file.original_filename;
+            if (elements.previewClientName) elements.previewClientName.textContent = file.client_name || 'Unknown';
+            if (elements.previewDocType) elements.previewDocType.textContent = file.document_type || 'Unknown';
+            if (elements.previewTaxYear) elements.previewTaxYear.textContent = file.tax_year || 'Unknown';
+            if (elements.previewFileType) elements.previewFileType.textContent = file.file_type?.toUpperCase() || 'Unknown';
+
+            // Update rename input
+            const renameInput = document.getElementById('renameInput');
+            if (renameInput) {
+                const currentName = previewChanges.get(file.processed_path) || file.new_filename || file.original_filename;
+                renameInput.value = currentName;
+            }
+
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevDocBtn');
+            const nextBtn = document.getElementById('nextDocBtn');
+            if (prevBtn) prevBtn.disabled = index === 0;
+            if (nextBtn) nextBtn.disabled = index === previewFiles.length - 1;
+
+            // Update Done button text
+            const doneBtn = document.getElementById('donePreviewBtn');
+            if (doneBtn) {
+                if (index === previewFiles.length - 1) {
+                    doneBtn.innerHTML = '<i data-lucide="check"></i> Finish Preview';
+                    doneBtn.classList.add('btn-success');
+                } else {
+                    doneBtn.innerHTML = '<i data-lucide="check"></i> Done';
+                    doneBtn.classList.remove('btn-success');
+                }
+                lucide.createIcons(doneBtn);
+            }
+        }
+
+        function loadImageDocument(file) {
+            const documentDisplay = document.getElementById('documentDisplay');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            const img = document.createElement('img');
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.objectFit = 'contain';
+            img.style.border = '1px solid var(--gray-300)';
+            img.style.borderRadius = 'var(--radius-lg)';
+            img.style.boxShadow = 'var(--shadow-xl)';
+
+            img.onload = () => {
+                documentDisplay.innerHTML = '';
+                documentDisplay.appendChild(img);
+                loadingIndicator?.classList.remove('show');
+            };
+
+            img.onerror = () => {
+                documentDisplay.innerHTML = '<div style="text-align: center; color: var(--gray-600); padding: 50px;">Error loading image</div>';
+                loadingIndicator?.classList.remove('show');
+            };
+
+            // Properly encode the file path for URL
+            const encodedPath = file.processed_path.split('/').map(part => encodeURIComponent(part)).join('/');
+            img.src = `/preview/${encodedPath}`;
+        }
+
+        function loadPDFDocument(file) {
+            const documentDisplay = document.getElementById('documentDisplay');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            // For now, display a PDF placeholder or try to show the PDF in an iframe
+            const iframe = document.createElement('iframe');
+
+            // Properly encode the file path for URL
+            const encodedPath = file.processed_path.split('/').map(part => encodeURIComponent(part)).join('/');
+            iframe.src = `/preview/${encodedPath}`;
+
+            iframe.style.width = '100%';
+            iframe.style.height = '800px';
+            iframe.style.border = 'none';
+            iframe.style.borderRadius = 'var(--radius-lg)';
+            iframe.style.boxShadow = 'var(--shadow-xl)';
+
+            iframe.onload = () => {
+                documentDisplay.innerHTML = '';
+                documentDisplay.appendChild(iframe);
+                loadingIndicator?.classList.remove('show');
+            };
+
+            iframe.onerror = () => {
+                documentDisplay.innerHTML = '<div style="text-align: center; color: var(--gray-600); padding: 50px;">Error loading PDF document</div>';
+                loadingIndicator?.classList.remove('show');
+            };
+        }
+
+        function navigateDocument(direction) {
+            const newIndex = currentPreviewIndex + direction;
+            if (newIndex >= 0 && newIndex < previewFiles.length) {
+                showDocument(newIndex);
+            }
+        }
+
+        function saveDocumentRename() {
+            const renameInput = document.getElementById('renameInput');
+            const newName = renameInput?.value.trim();
+            const currentFile = previewFiles[currentPreviewIndex];
+
+            if (!newName) {
+                showNotification('Please enter a filename', 'error');
+                return;
+            }
+
+            // Ensure the filename has an extension
+            const originalExt = currentFile.new_filename.split('.').pop();
+            let finalName = newName;
+            if (!finalName.includes('.')) {
+                finalName += '.' + originalExt;
+            }
+
+            // Track the change
+            previewChanges.set(currentFile.processed_path, finalName);
+            hasUnsavedChanges = true;
+
+            // Update UI to show the change has been saved locally
+            showNotification('Filename saved locally (will be applied when you finish)', 'success');
+
+            // Move to next document or finish if this is the last one
+            if (currentPreviewIndex < previewFiles.length - 1) {
+                navigateDocument(1);
+            } else {
+                finishPreview();
+            }
+        }
+
+        function skipDocumentRename() {
+            // Move to next document or finish if this is the last one
+            if (currentPreviewIndex < previewFiles.length - 1) {
+                navigateDocument(1);
+            } else {
+                finishPreview();
+            }
+        }
+
+        function finishPreview() {
+            if (previewChanges.size === 0) {
+                closePreviewModal();
+                return;
+            }
+
+            // Apply all the rename changes
+            showNotification('Applying filename changes...', 'info');
+
+            const renamePromises = [];
+            for (const [filePath, newName] of previewChanges) {
+                const currentFile = previewFiles.find(f => f.processed_path === filePath);
+                if (!currentFile) continue;
+
+                renamePromises.push(
+                    fetch('/api/rename', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            oldPath: `processed/${filePath}`,
+                            newName: newName
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.error || 'Unknown error');
+                        }
+                        return { success: true, oldName: currentFile.new_filename, newName };
+                    })
+                    .catch(error => {
+                        return { success: false, oldName: currentFile.new_filename, error: error.message };
+                    })
+                );
+            }
+
+            Promise.all(renamePromises).then(results => {
+                const successful = results.filter(r => r.success);
+                const failed = results.filter(r => !r.success);
+
+                let message = '';
+                if (successful.length > 0) {
+                    message += `Successfully renamed ${successful.length} file(s). `;
+                }
+                if (failed.length > 0) {
+                    message += `Failed to rename ${failed.length} file(s). `;
+                }
+
+                showNotification(message, failed.length === 0 ? 'success' : 'warning');
+
+                // Refresh the results
+                if (successful.length > 0) {
+                    setTimeout(() => {
+                        loadResults(); // Refresh results table
+                    }, 1000);
+                }
+
+                closePreviewModal();
+            });
+        }
+    </script>
+
+    <!-- Additional styles for new components -->
+    <style>
+        /* ===== FILE CARD STYLES ===== */
+        .file-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+            transition: all var(--transition-normal);
+        }
+
+        .file-card:hover {
+            border-color: var(--secondary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .file-card-content {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: var(--text-base);
+            font-weight: 500;
+            color: var(--gray-800);
+            margin: 0 0 var(--space-1) 0;
+        }
+
+        .file-size {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        .remove-file-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            flex-shrink: 0;
+        }
+
+        .remove-file-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        /* ===== PROCESSING STYLES ===== */
+        .processing-grid {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .processing-item {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--gray-300);
+            transition: all var(--transition-normal);
+        }
+
+        .processing-item.completed {
+            border-left-color: var(--success);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .processing-item.processing {
+            border-left-color: var(--secondary);
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+        }
+
+        .processing-item.error {
+            border-left-color: var(--error);
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .processing-item-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-4);
+        }
+
+        .processing-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-icon.completed { color: var(--success); }
+        .status-icon.processing { color: var(--secondary); animation: spin 1s linear infinite; }
+        .status-icon.error { color: var(--error); }
+
+        .status-text {
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .processing-details { flex: 1; }
+
+        .processing-filename {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 0 0 var(--space-1) 0;
+        }
+
+        .processing-error {
+            font-size: var(--text-sm);
+            color: var(--error);
+            margin: var(--space-1) 0 0 0;
+        }
+
+        .processing-result {
+            font-size: var(--text-sm);
+            color: var(--success);
+            margin: var(--space-1) 0 0 0;
+        }
+
+        /* ===== RESULTS STYLES ===== */
+        .results-summary { margin-bottom: var(--space-8); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            transition: all var(--transition-normal);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+        }
+
+        .stat-icon.success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); }
+        .stat-icon.accent { background: linear-gradient(135deg, var(--accent) 0%, #059669 100%); }
+        .stat-icon.primary { background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%); }
+
+        .stat-content { flex: 1; }
+
+        .stat-number {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--gray-800);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            margin-top: var(--space-1);
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: var(--space-6);
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            border: 2px dashed var(--gray-300);
+        }
+
+        /* ===== TABLE STYLES ===== */
+        .results-table-container {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: var(--space-4) var(--space-6);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: middle;
+        }
+
+        .modern-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: var(--text-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table-row:hover { background: var(--gray-50); }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--secondary);
+        }
+
+        .doc-type-badge {
+            background: var(--secondary);
+            color: white;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-md);
+            font-size: var(--text-xs);
+            font-weight: 500;
+        }
+
+        .filename-cell {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-md);
+            font-size: var(--text-xs);
+            font-weight: 500;
+        }
+
+        .status-badge.success { background: var(--success); color: white; }
+        .status-badge.error { background: var(--error); color: white; }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast {
+            position: fixed;
+            top: var(--space-6);
+            right: var(--space-6);
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-4) var(--space-6);
+            border-left: 4px solid var(--secondary);
+            transform: translateX(100%);
+            transition: transform var(--transition-normal);
+            z-index: 1002;
+            max-width: 400px;
+        }
+
+        .toast.show { transform: translateX(0); }
+        .toast.toast-success { border-left-color: var(--success); }
+        .toast.toast-error { border-left-color: var(--error); }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .toast-content i {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .results-actions { flex-direction: column; align-items: center; }
+            .modern-table { font-size: var(--text-sm); }
+            .modern-table th, .modern-table td { padding: var(--space-3) var(--space-4); }
+            .toast { right: var(--space-4); left: var(--space-4); max-width: none; }
+
+            /* Preview Modal Responsive */
+            .preview-sidebar {
+                width: 100%;
+                max-height: 40vh;
+            }
+
+            .preview-body {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: var(--space-4);
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+                gap: var(--space-2);
+            }
+
+            .preview-controls {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+        }
+    </style>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        // Final icon initialization
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
