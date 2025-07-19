@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Management - Tax Document Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav a {
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .client-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .client-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .client-info {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .client-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Client Management</h1>
+        <div class="nav">
+            <a href="/">Upload Documents</a>
+            <a href="/documents">Browse Documents</a>
+            <a href="/clients" class="active">Manage Clients</a>
+            <a href="/statistics">Analytics</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="clientsContainer">
+            <div class="loading">Loading clients...</div>
+        </div>
+    </div>
+
+    <script>
+        // Load and display clients
+        function loadClients() {
+            fetch('/api/clients')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayClients(data.clients);
+                    } else {
+                        document.getElementById('clientsContainer').innerHTML =
+                            `<div class="error">Error: ${data.error}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading clients:', error);
+                    document.getElementById('clientsContainer').innerHTML =
+                        '<div class="error">Failed to load clients</div>';
+                });
+        }
+
+        // Display clients in cards
+        function displayClients(clients) {
+            const container = document.getElementById('clientsContainer');
+
+            if (clients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Clients Found</h3>
+                        <p>Upload some documents to get started!</p>
+                        <a href="/" class="btn btn-primary">Upload Documents</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const clientsHtml = `
+                <div class="clients-grid">
+                    ${clients.map(client => `
+                        <div class="client-card">
+                            <div class="client-name">${client.full_name}</div>
+                            <div class="client-info">
+                                ${client.email ? `📧 ${client.email}<br>` : ''}
+                                ${client.phone ? `📞 ${client.phone}<br>` : ''}
+                                📅 Client since ${formatDate(client.created_at)}
+                            </div>
+                            <div class="client-stats">
+                                <div class="stat">
+                                    <div class="stat-number">${client.total_documents}</div>
+                                    <div class="stat-label">Documents</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-number">${client.unique_tax_years}</div>
+                                    <div class="stat-label">Tax Years</div>
+                                </div>
+                            </div>
+                            <div class="client-actions">
+                                <button class="btn btn-primary" onclick="viewClientDocuments(${client.id})">
+                                    View Documents
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            container.innerHTML = clientsHtml;
+        }
+
+        // View client documents
+        function viewClientDocuments(clientId) {
+            window.location.href = `/documents?client_id=${clientId}`;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClients();
+        });
+    </script>
+</body>
+</html>

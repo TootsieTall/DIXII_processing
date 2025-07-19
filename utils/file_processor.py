@@ -15,23 +15,23 @@ class TaxDocumentProcessor:
         self.donut_classifier = DonutTaxClassifier(donut_model_path)
         self.claude_ocr = ClaudeOCR(claude_api_key)
         self.processed_folder = Config.PROCESSED_FOLDER
-        
+
     def convert_pdf_to_images(self, pdf_path):
         """Convert PDF to images for processing"""
         try:
             images = pdf2image.convert_from_path(pdf_path, dpi=200)
             temp_images = []
-            
+
             for i, image in enumerate(images):
                 temp_path = f"temp_{uuid.uuid4()}_{i}.jpg"
                 image.save(temp_path, 'JPEG')
                 temp_images.append(temp_path)
-            
+
             return temp_images
         except Exception as e:
             print(f"Error converting PDF to images: {e}")
             return []
-    
+
     def clean_temp_files(self, temp_files):
         """Clean up temporary files"""
         for temp_file in temp_files:
@@ -40,7 +40,7 @@ class TaxDocumentProcessor:
                     os.remove(temp_file)
             except Exception as e:
                 print(f"Error cleaning temp file {temp_file}: {e}")
-    
+
     def sanitize_filename(self, filename):
         """Remove invalid characters from filename"""
         # Replace invalid characters with space
@@ -48,89 +48,89 @@ class TaxDocumentProcessor:
         # Remove extra spaces and trim
         filename = re.sub(r'\s+', ' ', filename).strip()
         return filename
-    
+
     def normalize_client_name(self, first_name, last_name):
         """
         Normalize client name for case-insensitive folder organization.
         Returns a consistent folder name regardless of case variations.
-        
+
         Args:
             first_name: Client's first name
             last_name: Client's last name
-            
+
         Returns:
             Normalized folder name in format "FirstName_LastName"
         """
         if not first_name or not last_name:
             return None
-            
+
         # Clean and normalize the names
         # Remove extra whitespace and convert to title case for consistent formatting
         # This ensures "john smith", "JOHN SMITH", "John Smith" all become "John_Smith"
         normalized_first = re.sub(r'\s+', ' ', first_name.strip()).title()
         normalized_last = re.sub(r'\s+', ' ', last_name.strip()).title()
-        
+
         # Handle special cases like hyphenated names, apostrophes, etc.
         # Keep common name patterns intact
         normalized_first = re.sub(r"([a-z])'([a-z])", r"\1'\2", normalized_first)  # Fix O'connor -> O'Connor
         normalized_last = re.sub(r"([a-z])'([a-z])", r"\1'\2", normalized_last)
-        
+
         return f"{normalized_first}_{normalized_last}"
-    
+
     def normalize_for_comparison(self, text):
         """
         Normalize text for case-insensitive comparison.
         Handles accented characters and case variations.
-        
+
         Args:
             text: Text to normalize
-            
+
         Returns:
             Normalized text for comparison purposes
         """
         if not text:
             return ""
-            
+
         # Convert to lowercase and normalize unicode (NFD = decomposed form)
         # This converts "José" to "jose" and "García" to "garcia" for comparison
         normalized = unicodedata.normalize('NFD', text.lower())
-        
+
         # Remove diacritical marks (accents)
         without_accents = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
-        
+
         # Clean whitespace
         clean_text = re.sub(r'\s+', ' ', without_accents.strip())
-        
+
         return clean_text
-    
+
     def find_existing_client_folder(self, first_name, last_name):
         """
         Find existing client folder with case-insensitive matching.
-        
+
         Args:
             first_name: Client's first name
             last_name: Client's last name
-            
+
         Returns:
             Existing folder name if found, otherwise normalized folder name
         """
         if not first_name or not last_name:
             return None
-            
+
         # Get the normalized version
         normalized_folder = self.normalize_client_name(first_name, last_name)
-        
+
         # Check if processed folder exists
         if not os.path.exists(self.processed_folder):
             return normalized_folder
-            
+
         # Get all existing client folders
         try:
-            existing_folders = [d for d in os.listdir(self.processed_folder) 
+            existing_folders = [d for d in os.listdir(self.processed_folder)
                               if os.path.isdir(os.path.join(self.processed_folder, d))]
         except OSError:
             return normalized_folder
-            
+
         # Check for case-insensitive match with accent handling
         normalized_comparison = self.normalize_for_comparison(normalized_folder)
         for folder in existing_folders:
@@ -139,10 +139,10 @@ class TaxDocumentProcessor:
                 # Found existing folder with same name (case-insensitive and accent-insensitive)
                 print(f"Found existing client folder: {folder} (matches {normalized_folder})")
                 return folder
-                
+
         # No existing folder found, return normalized name
         return normalized_folder
-    
+
     def process_document(self, file_path, original_filename, manual_client_info=None):
         """
         Process a single document and return processing results
@@ -152,6 +152,9 @@ class TaxDocumentProcessor:
             manual_client_info: Dict with 'first_name' and 'last_name' for manual mode
         Returns: dict with processing information
         """
+        import time
+        start_time = time.time()
+
         result = {
             'original_filename': original_filename,
             'status': 'processing',
@@ -162,44 +165,55 @@ class TaxDocumentProcessor:
             'confidence': 0.0,
             'new_filename': None,
             'client_folder': None,
-            'processed_path': None
+            'processed_path': None,
+            'file_size_bytes': None,
+            'processing_time_seconds': None
         }
-        
+
         try:
+            # Get file size
+            if os.path.exists(file_path):
+                result['file_size_bytes'] = os.path.getsize(file_path)
+
             # Determine if file is PDF or image
             file_ext = Path(file_path).suffix.lower()
+
+            # Convert PDF to image if needed
             temp_files = []
-            
             if file_ext == '.pdf':
-                # Convert PDF to images
+                print(f"Converting PDF to image: {original_filename}")
                 temp_images = self.convert_pdf_to_images(file_path)
                 if not temp_images:
-                    result['status'] = 'error'
-                    result['error'] = 'Failed to convert PDF to images'
-                    return result
-                
+                    raise Exception("Failed to convert PDF to images")
+                image_path = temp_images[0]  # Use first page
                 temp_files = temp_images
-                # Use first page for classification and OCR
-                image_path = temp_images[0]
             else:
-                # Direct image file
                 image_path = file_path
-            
+
             # Step 1: Classify document type using Donut
-            doc_type, confidence = self.donut_classifier.classify_document(image_path)
-            
-            if doc_type and confidence > 0.5:  # Use donut result if confident
-                result['document_type'] = self.donut_classifier.get_human_readable_label(doc_type)
-                result['confidence'] = confidence
-                print(f"Donut classified {original_filename} as: {result['document_type']} (confidence: {confidence:.2f})")
+            print(f"Classifying document type for: {original_filename}")
+            donut_result = self.donut_classifier.classify_document(image_path)
+            if donut_result and donut_result[0]:
+                donut_doc_type, donut_confidence = donut_result
+                # Convert to human-readable format
+                donut_doc_type = self.donut_classifier.get_human_readable_label(donut_doc_type)
+                result['document_type'] = donut_doc_type
+                result['confidence'] = float(donut_confidence)
+                print(f"Donut classified {original_filename} as: {donut_doc_type} (confidence: {donut_confidence:.3f})")
             else:
-                # Step 1b: Use Claude for unknown documents
-                print(f"Donut classification failed for {original_filename} (confidence: {confidence:.2f}), trying Claude...")
-                claude_doc_type = self.claude_ocr.classify_unknown_document(image_path)
-                result['document_type'] = claude_doc_type
-                result['confidence'] = 0.7  # Assume moderate confidence for Claude classification
-                print(f"Claude classified {original_filename} as: {claude_doc_type}")
-            
+                donut_doc_type = None
+                result['confidence'] = 0.0
+                print(f"Donut classification failed for: {original_filename}")
+
+            # If Donut couldn't classify, try Claude
+            if not donut_doc_type or donut_doc_type == "Unknown Document":
+                print(f"Donut classification unclear, using Claude for {original_filename}")
+                claude_doc_type = self.claude_ocr.classify_document(image_path)
+                if claude_doc_type:
+                    result['document_type'] = claude_doc_type
+                    result['confidence'] = 0.7  # Assume moderate confidence for Claude classification
+                    print(f"Claude classified {original_filename} as: {claude_doc_type}")
+
             # Step 2: Extract client info
             if manual_client_info:
                 # Manual mode - use provided client info, only extract tax year
@@ -209,12 +223,12 @@ class TaxDocumentProcessor:
             else:
                 # Auto mode - extract all info using Claude OCR
                 first_name, last_name, tax_year = self.claude_ocr.extract_client_info(image_path)
-                
+
                 # If we couldn't extract client info, try comprehensive extraction as a final attempt
                 if not first_name or not last_name:
                     print(f"Initial extraction failed for {original_filename}, trying comprehensive extraction...")
                     comp_first, comp_last, comp_year, comp_doc_type = self.claude_ocr.extract_comprehensive_info(image_path)
-                    
+
                     # Use comprehensive results if we got better information
                     if comp_first and not first_name:
                         first_name = comp_first
@@ -225,7 +239,7 @@ class TaxDocumentProcessor:
                     # Also update document type if comprehensive extraction found something better
                     if comp_doc_type and comp_doc_type != "Unknown Document" and not result['document_type']:
                         result['document_type'] = comp_doc_type
-            
+
             # Step 3: Generate new filename and organize
             if first_name and last_name:
                 result['client_name'] = f"{first_name} {last_name}"
@@ -240,52 +254,52 @@ class TaxDocumentProcessor:
                 client_folder_name = "Unknown_Client"
                 first_name = "Unknown"
                 last_initial = "C."
-            
+
             result['tax_year'] = tax_year if tax_year else "Unknown Year"
-            
+
             # Create sanitized filename with short document type
             year_str = str(tax_year) if tax_year else "Unknown Year"
             doc_type_clean = self._get_short_document_type(result['document_type'])
-            
+
             if first_name and last_name:
                 new_filename = f"{first_name} {last_initial} {doc_type_clean} {year_str}{file_ext}"
             else:
                 new_filename = f"Unknown C. {doc_type_clean} {year_str}{file_ext}"
-            
+
             new_filename = self.sanitize_filename(new_filename)
             result['new_filename'] = new_filename
-            
+
             # Step 4: Handle misc documents specially (get better name but place in main client folder)
-            is_misc_document = (result['document_type'] and 
+            is_misc_document = (result['document_type'] and
                               result['document_type'].lower() in ['misc', 'other_misc', 'letter'])
-            
+
             if is_misc_document:
                 # For misc documents, use Claude to get a better name
                 print(f"Processing misc document {original_filename} - getting better name from Claude...")
                 better_name = self.claude_ocr.generate_misc_document_name(image_path)
-                
+
                 # Update the document type with the better name
                 result['document_type'] = better_name
                 doc_type_clean = better_name
-                
+
                 # Create filename with the better name: "John D. Better Name Year"
                 if first_name and last_name:
                     new_filename = f"{first_name} {last_initial} {doc_type_clean} {year_str}{file_ext}"
                 else:
                     new_filename = f"Unknown C. {doc_type_clean} {year_str}{file_ext}"
-                
+
                 new_filename = self.sanitize_filename(new_filename)
                 result['new_filename'] = new_filename
-            
+
             # All documents (including misc) go directly into the client folder
             client_folder_path = os.path.join(self.processed_folder, client_folder_name)
             os.makedirs(client_folder_path, exist_ok=True)
             result['client_folder'] = client_folder_name
-            
+
             # Copy file to client folder
             new_file_path = os.path.join(client_folder_path, new_filename)
             print(f"Placing document in: {client_folder_path}")
-            
+
             # Handle duplicate filenames
             counter = 1
             original_new_file_path = new_file_path
@@ -293,28 +307,46 @@ class TaxDocumentProcessor:
                 base, ext = os.path.splitext(original_new_file_path)
                 new_file_path = f"{base}_{counter}{ext}"
                 counter += 1
-            
+
             shutil.copy2(file_path, new_file_path)
             result['processed_path'] = new_file_path
             result['status'] = 'completed'
-            
+
+            print(f"✅ File saved successfully: {new_file_path}")
+            print(f"✅ File exists check: {os.path.exists(new_file_path)}")
+
+            # Calculate processing time
+            processing_time = int(time.time() - start_time)
+            result['processing_time_seconds'] = processing_time
+
+            print(f"✅ Processing completed for {original_filename}")
+            print(f"📄 Final result: {result}")
+
             # Clean up temp files after successful processing
             self.clean_temp_files(temp_files)
-            
+
         except Exception as e:
             result['status'] = 'error'
             result['error'] = str(e)
+            result['processing_time_seconds'] = int(time.time() - start_time)
+
+            print(f"❌ ERROR processing {original_filename}: {e}")
+            print(f"❌ Error type: {type(e).__name__}")
+            import traceback
+            print(f"❌ Traceback: {traceback.format_exc()}")
+
             # Clean up temp files in case of error
             if 'temp_files' in locals():
                 self.clean_temp_files(temp_files)
-        
+
+        print(f"🔄 Returning result for {original_filename}: {result}")
         return result
-    
+
     def _get_short_document_type(self, document_type):
         """Convert document type to short form for filename"""
         if not document_type:
             return "Unknown"
-        
+
         # Handle Claude-classified documents
         doc_lower = document_type.lower()
         if 'w-9' in doc_lower or 'w9' in doc_lower:
@@ -331,16 +363,16 @@ class TaxDocumentProcessor:
             return "State Tax"
         elif 'property tax' in doc_lower:
             return "Property Tax"
-        
+
         # For Donut classifications, they're already short
         return document_type
-    
+
     def get_processing_stats(self, results):
         """Generate statistics from processing results"""
         total = len(results)
         completed = len([r for r in results if r['status'] == 'completed'])
         errors = len([r for r in results if r['status'] == 'error'])
-        
+
         # Count unique clients (case-insensitive and accent-insensitive)
         clients = set()
         for result in results:
@@ -348,11 +380,11 @@ class TaxDocumentProcessor:
                 # Use normalized client name for counting to avoid duplicates from case and accent variations
                 normalized_name = self.normalize_for_comparison(result['client_name'])
                 clients.add(normalized_name)
-        
+
         return {
             'total_documents': total,
             'completed': completed,
             'errors': errors,
             'unique_clients': len(clients),
             'success_rate': (completed / total * 100) if total > 0 else 0
-        } 
+        }

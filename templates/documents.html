@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Management - Tax Document Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav a {
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #555;
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .documents-grid {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .documents-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .document-item:hover {
+            background: #f8f9fa;
+        }
+
+        .document-item:last-child {
+            border-bottom: none;
+        }
+
+        .document-name {
+            font-weight: 500;
+        }
+
+        .document-client {
+            color: #666;
+        }
+
+        .document-type {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .document-year {
+            text-align: center;
+        }
+
+        .document-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 12px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card p {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Document Management System</h1>
+        <div class="nav">
+            <a href="/" >Upload Documents</a>
+            <a href="/documents" class="active">Browse Documents</a>
+            <a href="/clients">Manage Clients</a>
+            <a href="/statistics">Analytics</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Summary Cards -->
+        <div class="summary-cards" id="summaryCards">
+            <div class="summary-card">
+                <h3 id="totalDocs">-</h3>
+                <p>Total Documents</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="completedDocs">-</h3>
+                <p>Successfully Processed</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="uniqueClients">-</h3>
+                <p>Unique Clients</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="successRate">-</h3>
+                <p>Success Rate</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="clientName">Client Name</label>
+                    <input type="text" id="clientName" placeholder="Search by client name...">
+                </div>
+                <div class="filter-group">
+                    <label for="documentType">Document Type</label>
+                    <select id="documentType">
+                        <option value="">All Types</option>
+                        <option value="W-2">W-2</option>
+                        <option value="W-9">W-9</option>
+                        <option value="1099">1099 Forms</option>
+                        <option value="State Tax">State Tax</option>
+                        <option value="Property Tax">Property Tax</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="taxYear">Tax Year</label>
+                    <select id="taxYear">
+                        <option value="">All Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="">All Status</option>
+                        <option value="completed">Completed</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="sortBy">Sort By</label>
+                    <select id="sortBy">
+                        <option value="created_at">Date Added</option>
+                        <option value="client_name">Client Name</option>
+                        <option value="document_type">Document Type</option>
+                        <option value="tax_year">Tax Year</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortOrder">Order</label>
+                    <select id="sortOrder">
+                        <option value="desc">Newest First</option>
+                        <option value="asc">Oldest First</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="loadDocuments(1)">Apply Filters</button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" onclick="clearFilters()">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents List -->
+        <div class="documents-grid">
+            <div class="documents-header">
+                <h2>Documents</h2>
+                <span id="documentsCount">Loading...</span>
+            </div>
+            <div id="documentsContainer">
+                <div class="loading">Loading documents...</div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="btn btn-secondary" id="prevBtn" onclick="changePage(-1)">Previous</button>
+            <span id="pageInfo">Page 1 of 1</span>
+            <button class="btn btn-secondary" id="nextBtn" onclick="changePage(1)">Next</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Load summary data
+        function loadSummary() {
+            fetch('/api/documents/summary')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalDocs').textContent = data.summary.total_documents;
+                        document.getElementById('completedDocs').textContent = data.summary.completed_documents;
+                        document.getElementById('uniqueClients').textContent = data.summary.unique_clients;
+                        document.getElementById('successRate').textContent = data.summary.success_rate.toFixed(1) + '%';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading summary:', error);
+                });
+        }
+
+        // Load documents with filters
+        function loadDocuments(page = 1) {
+            currentPage = page;
+
+            const params = new URLSearchParams({
+                page: page,
+                per_page: 20,
+                client_name: document.getElementById('clientName').value,
+                document_type: document.getElementById('documentType').value,
+                tax_year: document.getElementById('taxYear').value,
+                status: document.getElementById('status').value,
+                sort_by: document.getElementById('sortBy').value,
+                sort_order: document.getElementById('sortOrder').value
+            });
+
+            // Remove empty parameters
+            for (let [key, value] of [...params]) {
+                if (!value) params.delete(key);
+            }
+
+            document.getElementById('documentsContainer').innerHTML = '<div class="loading">Loading documents...</div>';
+
+            fetch(`/api/documents?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayDocuments(data.documents);
+                        updatePagination(data.pagination);
+                        document.getElementById('documentsCount').textContent =
+                            `${data.pagination.total_count} documents found`;
+                    } else {
+                        document.getElementById('documentsContainer').innerHTML =
+                            `<div class="error">Error: ${data.error}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading documents:', error);
+                    document.getElementById('documentsContainer').innerHTML =
+                        '<div class="error">Failed to load documents</div>';
+                });
+        }
+
+        // Display documents in the grid
+        function displayDocuments(documents) {
+            const container = document.getElementById('documentsContainer');
+
+            if (documents.length === 0) {
+                container.innerHTML = '<div class="loading">No documents found</div>';
+                return;
+            }
+
+            const documentsHtml = documents.map(doc => `
+                <div class="document-item">
+                    <div>
+                        <div class="document-name">${doc.new_filename || doc.original_filename}</div>
+                        <div class="document-client">${doc.client_name || 'Unknown Client'}</div>
+                    </div>
+                    <div class="document-type">${doc.document_type || 'Unknown'}</div>
+                    <div class="document-year">${doc.tax_year || 'N/A'}</div>
+                    <div class="document-status status-${doc.status}">${doc.status}</div>
+                    <div>${formatFileSize(doc.file_size_bytes)}</div>
+                    <div class="document-actions">
+                        ${doc.file_available ?
+                            `<button class="btn btn-primary btn-small" onclick="previewDocument('${doc.preview_url}')">Preview</button>
+                             <button class="btn btn-secondary btn-small" onclick="downloadDocument('${doc.download_url}')">Download</button>`
+                            : '<span style="color: #999;">File unavailable</span>'
+                        }
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = documentsHtml;
+        }
+
+        // Update pagination controls
+        function updatePagination(pagination) {
+            totalPages = pagination.total_pages;
+            document.getElementById('pageInfo').textContent =
+                `Page ${pagination.page} of ${pagination.total_pages}`;
+
+            document.getElementById('prevBtn').disabled = !pagination.has_prev;
+            document.getElementById('nextBtn').disabled = !pagination.has_next;
+
+            document.getElementById('pagination').style.display =
+                pagination.total_pages > 1 ? 'flex' : 'none';
+        }
+
+        // Change page
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                loadDocuments(newPage);
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('clientName').value = '';
+            document.getElementById('documentType').value = '';
+            document.getElementById('taxYear').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('sortBy').value = 'created_at';
+            document.getElementById('sortOrder').value = 'desc';
+            loadDocuments(1);
+        }
+
+        // Preview document
+        function previewDocument(url) {
+            window.open(url, '_blank');
+        }
+
+        // Download document
+        function downloadDocument(url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (!bytes) return 'N/A';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSummary();
+            loadDocuments(1);
+
+            // Add event listeners for real-time filtering
+            document.getElementById('clientName').addEventListener('input', debounce(() => loadDocuments(1), 500));
+        });
+
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>
