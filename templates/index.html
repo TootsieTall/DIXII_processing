@@ -465,9 +465,152 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        /* ===== ENTERPRISE NAVIGATION STYLES ===== */
+        .enterprise-nav {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-6);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .enterprise-nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-6);
+        }
+
+        .nav-section {
+            flex: 1;
+        }
+
+        .nav-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: white;
+            font-size: var(--text-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+
+        .nav-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: var(--text-sm);
+            margin: 0;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: var(--space-4);
+        }
+
+        .enterprise-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-2);
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .enterprise-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .enterprise-btn i {
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-1);
+        }
+
+        .enterprise-btn span {
+            font-weight: 600;
+            font-size: var(--text-base);
+            margin-bottom: var(--space-1);
+        }
+
+        .enterprise-btn small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: var(--text-xs);
+            line-height: 1.3;
+        }
+
+        /* Responsive design for enterprise nav */
+        @media (max-width: 768px) {
+            .enterprise-nav-content {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--space-4);
+            }
+
+            .nav-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .enterprise-btn {
+                width: 100%;
+                text-align: center;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body>
+        <!-- ===== TOKEN CLEANUP & SESSION MANAGEMENT ===== -->
+    {% if user %}
+    <script type="application/json" id="user-data">{{ user | tojson | safe }}</script>
+    {% endif %}
+    <script>
+        // Handle token from query parameter and clean up URL
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (token) {
+                console.log('Token found in URL, storing in session...');
+
+                // Get user data from script tag
+                const userDataElement = document.getElementById('user-data');
+                const userData = userDataElement ? JSON.parse(userDataElement.textContent) : null;
+
+                // Store token in localStorage (simulating session from auth page)
+                const sessionData = {
+                    access_token: token,
+                    user: userData,
+                    timestamp: new Date().toISOString()
+                };
+
+                const rememberMe = localStorage.getItem('rememberMe') === 'true';
+                if (rememberMe) {
+                    localStorage.setItem('supabase_session', JSON.stringify(sessionData));
+                } else {
+                    sessionStorage.setItem('supabase_session', JSON.stringify(sessionData));
+                }
+
+                // Clean up URL by removing token parameter
+                urlParams.delete('token');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, '', newUrl);
+
+                console.log('Token stored and URL cleaned');
+            }
+        })();
+    </script>
+
     <div class="app-container">
         <div class="main-content">
             <div class="content-card">
@@ -490,6 +633,31 @@
                         </div>
                     </div>
                 </header>
+
+                <!-- Enterprise Navigation -->
+                <div class="enterprise-nav">
+                    <div class="enterprise-nav-content">
+                        <div class="nav-section">
+                            <h3 class="nav-title">
+                                <i data-lucide="briefcase"></i>
+                                Enterprise Features
+                            </h3>
+                            <p class="nav-subtitle">Access advanced document management tools</p>
+                        </div>
+                        <div class="nav-actions">
+                            <button class="enterprise-btn" onclick="showExistingFiles()">
+                                <i data-lucide="search"></i>
+                                <span>Advanced Document Search</span>
+                                <small>Multi-field search, annotations, bulk operations</small>
+                            </button>
+                            <button class="enterprise-btn" onclick="showClientDashboard()">
+                                <i data-lucide="users"></i>
+                                <span>Client Management</span>
+                                <small>Profiles, communications, compliance tracking</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Modern Tab Navigation -->
                 <nav class="modern-tabs">
@@ -691,9 +859,13 @@
                                     <i data-lucide="upload"></i>
                                     Upload Documents
                                 </button>
-                                <button class="btn btn-secondary" onclick="showExistingFiles()">
-                                    <i data-lucide="folder"></i>
-                                    Browse Existing
+                                <button class="btn btn-primary" onclick="showExistingFiles()">
+                                    <i data-lucide="search"></i>
+                                    Advanced Document Search
+                                </button>
+                                <button class="btn btn-secondary" onclick="showClientDashboard()">
+                                    <i data-lucide="users"></i>
+                                    Client Management
                                 </button>
                             </div>
                         </div>
@@ -1265,36 +1437,123 @@
                 </button>
             </div>
 
-            <form id="settingsForm" class="modal-body">
-                <div class="form-section">
-                    <label for="apiKey" class="form-label">Claude API Key</label>
-                    <div class="input-with-icon">
-                        <input
-                            type="password"
-                            id="apiKey"
-                            name="apiKey"
-                            class="form-input"
-                            placeholder="sk-ant-api03-..."
-                            autocomplete="new-password"
-                        >
-                        <button type="button" class="input-action" onclick="toggleApiKeyVisibility()">
-                            <i data-lucide="eye" id="eyeIcon"></i>
-                        </button>
+            <div class="modal-body">
+                <!-- User Information Section -->
+                <div class="settings-section">
+                    <h3 class="section-title">
+                        <i data-lucide="user" class="section-icon"></i>
+                        User Information
+                    </h3>
+                    <div class="user-info-card">
+                        <div class="user-avatar">
+                            <i data-lucide="user-circle" class="avatar-icon"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" id="userName">{{ user.email if user else 'Not signed in' }}</div>
+                            <div class="user-email" id="userEmail">
+                                {% if user %}
+                                    Joined {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}
+                                {% else %}
+                                    Please sign in to access your account
+                                {% endif %}
+                            </div>
+                            <div class="user-status">
+                                <span class="status-badge status-active">
+                                    <i data-lucide="check-circle" class="status-icon"></i>
+                                    Active
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <p class="form-help">
-                        Enter your Claude API key from Anthropic for document text extraction and classification.
-                    </p>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btn-large" id="saveSettingsBtn">
-                        <i data-lucide="save"></i>
-                        Save Settings
-                    </button>
+                <!-- Account Management Section -->
+                <div class="settings-section">
+                    <h3 class="section-title">
+                        <i data-lucide="shield" class="section-icon"></i>
+                        Account Management
+                    </h3>
+                    <div class="settings-grid">
+                        <button class="settings-action-btn" onclick="showChangePasswordModal()">
+                            <div class="action-icon">
+                                <i data-lucide="key"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Change Password</div>
+                                <div class="action-description">Update your account password</div>
+                            </div>
+                            <i data-lucide="chevron-right" class="action-arrow"></i>
+                        </button>
+
+                        <button class="settings-action-btn" onclick="showChangeEmailModal()">
+                            <div class="action-icon">
+                                <i data-lucide="mail"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Change Email</div>
+                                <div class="action-description">Update your email address</div>
+                            </div>
+                            <i data-lucide="chevron-right" class="action-arrow"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- API Configuration Section -->
+                <div class="settings-section">
+                    <h3 class="section-title">
+                        <i data-lucide="settings" class="section-icon"></i>
+                        API Configuration
+                    </h3>
+                    <form id="settingsForm">
+                        <div class="form-section">
+                            <label for="apiKey" class="form-label">Claude API Key</label>
+                            <div class="input-with-icon">
+                                <input
+                                    type="password"
+                                    id="apiKey"
+                                    name="apiKey"
+                                    class="form-input"
+                                    placeholder="sk-ant-api03-..."
+                                    autocomplete="new-password"
+                                >
+                                <button type="button" class="input-action" onclick="toggleApiKeyVisibility()">
+                                    <i data-lucide="eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                            <p class="form-help">
+                                Enter your Claude API key from Anthropic for document text extraction and classification.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="saveSettingsBtn">
+                            <i data-lucide="save"></i>
+                            Save API Settings
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Session Management Section -->
+                <div class="settings-section">
+                    <h3 class="section-title">
+                        <i data-lucide="log-out" class="section-icon"></i>
+                        Session Management
+                    </h3>
+                    <div class="danger-zone">
+                        <div class="danger-content">
+                            <div class="danger-title">Sign Out</div>
+                            <div class="danger-description">
+                                Sign out of your account. You'll need to log in again to access your documents.
+                            </div>
+                        </div>
+                        <button class="btn btn-danger" onclick="signOut()">
+                            <i data-lucide="log-out"></i>
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
 
                 <div id="settingsStatus" class="status-message hidden"></div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -1490,6 +1749,200 @@
             padding: var(--space-8);
         }
 
+        /* ===== SETTINGS SECTIONS ===== */
+        .settings-section {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+        }
+
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--secondary);
+        }
+
+        /* User Info Card */
+        .user-info-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-5);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: var(--secondary);
+            border-radius: 50%;
+            color: white;
+        }
+
+        .avatar-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-1);
+        }
+
+        .user-email {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: var(--space-2);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: var(--space-1) var(--space-2);
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            gap: var(--space-3);
+        }
+
+        .settings-action-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            width: 100%;
+            padding: var(--space-4);
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .settings-action-btn:hover {
+            border-color: var(--secondary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .action-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--secondary-light);
+            color: var(--secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .action-icon i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-content {
+            flex: 1;
+        }
+
+        .action-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-1);
+        }
+
+        .action-description {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .action-arrow {
+            width: 16px;
+            height: 16px;
+            color: var(--gray-400);
+        }
+
+        /* Danger Zone */
+        .danger-zone {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-5);
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius-lg);
+        }
+
+        .danger-content {
+            flex: 1;
+        }
+
+        .danger-title {
+            font-weight: 600;
+            color: var(--error);
+            margin-bottom: var(--space-1);
+        }
+
+        .danger-description {
+            font-size: 0.875rem;
+            color: #991b1b;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
         .form-section {
             margin-bottom: var(--space-6);
         }
@@ -1572,6 +2025,26 @@
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #fecaca;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        /* Loading Animation */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* ===== PREVIEW MODAL STYLES ===== */
@@ -2147,13 +2620,24 @@
             const modal = document.getElementById('settingsModal');
             modal?.classList.remove('show');
 
-            document.getElementById('settingsForm')?.reset();
-            document.getElementById('apiKey').type = 'password';
+            // Reset the API settings form
+            const settingsForm = document.getElementById('settingsForm');
+            if (settingsForm) {
+                settingsForm.reset();
+            }
+
+            // Reset API key field visibility
+            const apiKeyField = document.getElementById('apiKey');
+            if (apiKeyField) {
+                apiKeyField.type = 'password';
+            }
+
             const eyeIcon = document.getElementById('eyeIcon');
             if (eyeIcon) {
                 eyeIcon.setAttribute('data-lucide', 'eye');
                 lucide.createIcons(eyeIcon.parentElement);
             }
+
             hideSettingsStatus();
         }
 
@@ -2269,6 +2753,57 @@
             statusDiv.classList.add('hidden');
         }
 
+        // ===== USER MANAGEMENT FUNCTIONS =====
+
+        function signOut() {
+            if (confirm('Are you sure you want to sign out? You will need to log in again to access your documents.')) {
+                // Show loading state
+                const signOutBtn = event.target;
+                const originalText = signOutBtn.innerHTML;
+                signOutBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Signing out...';
+                signOutBtn.disabled = true;
+
+                // Clear local storage
+                localStorage.removeItem('supabase_session');
+                sessionStorage.removeItem('supabase_session');
+                localStorage.removeItem('rememberMe');
+
+                // Call sign out API
+                fetch('/api/auth/signout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Redirect to auth page regardless of API response
+                    window.location.href = '/auth';
+                })
+                .catch(error => {
+                    console.error('Sign out error:', error);
+                    // Still redirect to auth page even if API call fails
+                    window.location.href = '/auth';
+                });
+            }
+        }
+
+        function showChangePasswordModal() {
+            // Placeholder for future implementation
+            showSettingsStatus('Change password functionality coming soon!', 'info');
+
+            // For now, show a simple alert
+            alert('Change Password feature is coming soon!\n\nFor now, you can:\n• Sign out and use "Forgot Password" on the login page\n• Contact support for password assistance');
+        }
+
+        function showChangeEmailModal() {
+            // Placeholder for future implementation
+            showSettingsStatus('Change email functionality coming soon!', 'info');
+
+            // For now, show a simple alert
+            alert('Change Email feature is coming soon!\n\nFor now, you can:\n• Contact support to update your email\n• Create a new account with your desired email');
+        }
+
         function checkApiKeyStatus() {
             fetch('/api/settings')
                 .then(response => response.json())
@@ -2372,10 +2907,10 @@
                              <i data-lucide="upload"></i>
                              Process New Documents
                          </button>
-                         <button class="btn btn-primary" onclick="showExistingFiles()">
-                             <i data-lucide="folder"></i>
-                             Browse Existing Files
-                         </button>
+                                                         <button class="btn btn-primary" onclick="showExistingFiles()">
+                                    <i data-lucide="search"></i>
+                                    Advanced Document Search
+                                </button>
                          <button class="btn btn-secondary" onclick="openProcessedFolder()">
                              <i data-lucide="external-link"></i>
                              Open in File Explorer
@@ -2508,10 +3043,10 @@
                                 <i data-lucide="upload"></i>
                                 Upload Documents
                             </button>
-                            <button class="btn btn-secondary" onclick="showExistingFiles()">
-                                <i data-lucide="folder"></i>
-                                Browse Existing
-                            </button>
+                                                            <button class="btn btn-secondary" onclick="showExistingFiles()">
+                                    <i data-lucide="search"></i>
+                                    Advanced Document Search
+                                </button>
                         </div>
                     </div>
                 `;
@@ -2524,7 +3059,13 @@
 
         // Preview and file management functions
         function showExistingFiles() {
-            showNotification('File explorer functionality available in full version', 'info');
+            // Redirect to the enhanced documents page
+            window.location.href = '/documents/advanced';
+        }
+
+        function showClientDashboard() {
+            // Redirect to the client management dashboard
+            window.location.href = '/clients/dashboard';
         }
 
         function openProcessedFolder() {

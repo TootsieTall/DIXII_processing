@@ -1,6 +1,9 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, send_file, g
+from flask_cors import CORS
 import os
 import uuid
+import io
+import zipfile
 from werkzeug.utils import secure_filename
 import threading
 import time
@@ -13,6 +16,10 @@ from database.models import (
     ClientDAO, ProcessingSessionDAO, DocumentResultDAO, StatisticsDAO,
     Client, ProcessingSession, DocumentResult
 )
+from auth import (
+    require_auth, optional_auth, get_auth_service, get_current_user_id,
+    get_current_user, AuthError, validate_user_file_access
+)
 import logging
 
 # Set up logging
@@ -22,6 +29,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 Config.init_app(app)
+
+# Enable CORS for frontend authentication
+CORS(app, origins=['http://localhost:5000'], supports_credentials=True)
 
 # Global variables for processing - keep as fallback for when DB is unavailable
 processing_status = {}
@@ -82,7 +92,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
 
-def process_documents_background(session_id, file_paths):
+def process_documents_background(session_id, file_paths, user_id=None):
     """Background function to process documents"""
     global processing_status, processor, database_available
 
@@ -111,8 +121,9 @@ def process_documents_background(session_id, file_paths):
 
         # Create or get database session
         db_session = None
-        if database_available:
+        if database_available and user_id:
             db_session = ProcessingSessionDAO.create_session(
+                user_id=user_id,
                 session_id=session_id,
                 processing_mode=processing_mode,
                 total_files=total_files,
@@ -138,9 +149,10 @@ def process_documents_background(session_id, file_paths):
 
         # Create database document results if database is available
         document_results = []
-        if database_available and db_session:
+        if database_available and db_session and user_id:
             for _, original_filename in file_paths:
                 doc_result = DocumentResultDAO.create_document_result(
+                    user_id=user_id,
                     session_uuid=session_id,  # Use the UUID string
                     original_filename=original_filename
                 )
@@ -190,12 +202,12 @@ def process_documents_background(session_id, file_paths):
                     }
 
                     # Link to client if we have client info
-                    if result.get('client_name') and result.get('status') == 'completed':
+                    if result.get('client_name') and result.get('status') == 'completed' and user_id:
                         # Extract first and last name from client_name
                         name_parts = result['client_name'].split(' ', 1)
                         if len(name_parts) == 2:
                             first_name, last_name = name_parts
-                            client = ClientDAO.find_or_create(first_name, last_name)
+                            client = ClientDAO.find_or_create(user_id, first_name, last_name)
                             if client:
                                 update_data['client_id'] = client.id
 
@@ -269,10 +281,161 @@ def process_documents_background(session_id, file_paths):
                 error_message=error_msg
             )
 
+# =============================================
+# AUTHENTICATION ENDPOINTS
+# =============================================
+
+@app.route('/api/auth/signup', methods=['POST'])
+def auth_signup():
+    """User signup endpoint"""
+    try:
+        data = request.get_json()
+
+        if not data or 'email' not in data or 'password' not in data:
+            return jsonify({'error': 'Email and password are required'}), 400
+
+        email = data['email'].strip()
+        password = data['password']
+
+        if len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters long'}), 400
+
+        # Optional user metadata
+        user_metadata = {}
+        if 'first_name' in data:
+            user_metadata['first_name'] = data['first_name'].strip()
+        if 'last_name' in data:
+            user_metadata['last_name'] = data['last_name'].strip()
+
+        auth_service = get_auth_service()
+        result = auth_service.sign_up(email, password, user_metadata)
+
+        return jsonify({
+            'success': True,
+            'user': result['user'],
+            'session': result['session'],
+            'message': 'Account created successfully! Please check your email to verify your account.'
+        })
+
+    except AuthError as e:
+        return jsonify({'error': e.message}), e.status_code
+    except Exception as e:
+        logger.error(f"Signup error: {e}")
+        return jsonify({'error': 'Account creation failed. Please try again.'}), 500
+
+@app.route('/api/auth/signin', methods=['POST'])
+def auth_signin():
+    """User signin endpoint"""
+    try:
+        data = request.get_json()
+
+        if not data or 'email' not in data or 'password' not in data:
+            return jsonify({'error': 'Email and password are required'}), 400
+
+        email = data['email'].strip()
+        password = data['password']
+
+        auth_service = get_auth_service()
+        result = auth_service.sign_in(email, password)
+
+        return jsonify({
+            'success': True,
+            'user': result['user'],
+            'session': result['session'],
+            'message': 'Signed in successfully!'
+        })
+
+    except AuthError as e:
+        return jsonify({'error': e.message}), e.status_code
+    except Exception as e:
+        logger.error(f"Signin error: {e}")
+        return jsonify({'error': 'Sign in failed. Please check your credentials.'}), 500
+
+@app.route('/api/auth/signout', methods=['POST'])
+@require_auth
+def auth_signout():
+    """User signout endpoint"""
+    try:
+        auth_token = getattr(g, 'auth_token', None)
+
+        if auth_token:
+            auth_service = get_auth_service()
+            auth_service.sign_out(auth_token)
+
+        return jsonify({
+            'success': True,
+            'message': 'Signed out successfully!'
+        })
+
+    except Exception as e:
+        logger.error(f"Signout error: {e}")
+        return jsonify({'error': 'Sign out failed'}), 500
+
+@app.route('/api/auth/user', methods=['GET'])
+@require_auth
+def auth_user():
+    """Get current user information"""
+    try:
+        user = get_current_user()
+
+        return jsonify({
+            'success': True,
+            'user': user
+        })
+
+    except Exception as e:
+        logger.error(f"Get user error: {e}")
+        return jsonify({'error': 'Failed to get user information'}), 500
+
+@app.route('/api/auth/refresh', methods=['POST'])
+def auth_refresh():
+    """Refresh user session"""
+    try:
+        data = request.get_json()
+
+        if not data or 'refresh_token' not in data:
+            return jsonify({'error': 'Refresh token is required'}), 400
+
+        refresh_token = data['refresh_token']
+
+        auth_service = get_auth_service()
+        result = auth_service.refresh_session(refresh_token)
+
+        return jsonify({
+            'success': True,
+            'session': result,
+            'message': 'Session refreshed successfully!'
+        })
+
+    except AuthError as e:
+        return jsonify({'error': e.message}), e.status_code
+    except Exception as e:
+        logger.error(f"Refresh session error: {e}")
+        return jsonify({'error': 'Session refresh failed'}), 500
+
+# =============================================
+# MAIN APPLICATION ROUTES
+# =============================================
+
+@app.route('/auth')
+def auth_page():
+    """Authentication page"""
+    return render_template('auth.html')
+
+@app.route('/test')
+def test_page():
+    """Test page without authentication"""
+    return "<h1>Test Page - Flask is Working!</h1><p>If you see this, the Flask app is running correctly.</p><a href='/auth'>Go to Auth Page</a>"
+
 @app.route('/')
+@optional_auth
 def index():
     """Main page with upload interface"""
-    return render_template('index.html')
+    user = get_current_user()
+    if not user:
+        # Redirect unauthenticated users to auth page
+        return render_template('auth.html')
+    return render_template('index.html', user=user)
 
 @app.route('/documents')
 def documents_page():
@@ -285,9 +448,13 @@ def clients_page():
     return render_template('clients.html')
 
 @app.route('/upload', methods=['POST'])
+@require_auth
 def upload_files():
     """Handle file upload and start processing"""
     global processing_status, processor, processor_initializing
+
+    # Get authenticated user ID
+    user_id = get_current_user_id()
 
     if processor_initializing:
         return jsonify({'error': 'Document processor is still initializing. Please wait a moment and try again.'}), 503
@@ -350,7 +517,7 @@ def upload_files():
     # Start background processing
     thread = threading.Thread(
         target=process_documents_background,
-        args=(session_id, file_paths)
+        args=(session_id, file_paths, user_id)
     )
     thread.daemon = True
     thread.start()
@@ -492,15 +659,17 @@ def get_results(session_id):
 
 # New Database API Endpoints
 @app.route('/api/clients')
+@require_auth
 def get_clients():
     """Get all clients with document counts"""
     global database_available
 
+    user_id = get_current_user_id()
     if not database_available:
         return jsonify({'error': 'Database not available'}), 503
 
     try:
-        clients = ClientDAO.get_all_with_stats()
+        clients = ClientDAO.get_all_with_stats(user_id)
         client_list = []
 
         for client in clients:
@@ -1780,6 +1949,866 @@ def bulk_delete_documents():
     except Exception as e:
         logger.error(f"Error bulk deleting documents: {e}")
         return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# ENTERPRISE API ENDPOINTS - Enhanced functionality for document management
+# =============================================================================
+
+@app.route('/api/documents/advanced-search', methods=['POST'])
+def advanced_document_search():
+    """Advanced multi-field document search with filters, sorting, pagination"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        data = request.json
+        search_query = data.get('searchQuery', '')
+        client_id = data.get('clientId')
+        document_type = data.get('documentType')
+        tax_year = data.get('taxYear')
+        status = data.get('status')
+        date_from = data.get('dateFrom')
+        date_to = data.get('dateTo')
+        has_annotations = data.get('hasAnnotations')
+        confidence_min = data.get('confidenceMin')
+        sort_by = data.get('sortBy', 'created_at')
+        sort_order = data.get('sortOrder', 'desc')
+        page = int(data.get('page', 1))
+        page_size = int(data.get('pageSize', 20))
+
+        supabase = get_supabase()
+
+        # Convert parameters for the database function
+        client_id_param = int(client_id) if client_id and client_id != '' else None
+        tax_year_param = int(tax_year) if tax_year and tax_year != '' else None
+        confidence_min_param = float(confidence_min) if confidence_min and confidence_min != '' else None
+        date_from_param = date_from if date_from and date_from != '' else None
+        date_to_param = date_to if date_to and date_to != '' else None
+        has_annotations_param = has_annotations if has_annotations and has_annotations != '' else None
+        status_param = status if status and status != '' else None
+        document_type_param = document_type if document_type and document_type != '' else None
+
+        # Calculate offset
+        offset = (page - 1) * page_size
+
+        # Call the enhanced search function
+        result = supabase.rpc('advanced_document_search', {
+            'search_query': search_query,
+            'client_id_filter': client_id_param,
+            'document_type_filter': document_type_param,
+            'tax_year_filter': tax_year_param,
+            'status_filter': status_param,
+            'date_from': date_from_param,
+            'date_to': date_to_param,
+            'has_annotations': has_annotations_param,
+            'confidence_min': confidence_min_param,
+            'sort_by': sort_by,
+            'sort_order': sort_order.upper(),
+            'limit_count': page_size,
+            'offset_count': offset
+        }).execute()
+
+        documents = []
+        for doc_data in result.data:
+            doc = {
+                'id': doc_data['id'],
+                'session_id': doc_data['session_id'],
+                'client_id': doc_data['client_id'],
+                'original_filename': doc_data['original_filename'],
+                'new_filename': doc_data.get('new_filename'),
+                'document_type': doc_data.get('document_type'),
+                'tax_year': doc_data.get('tax_year'),
+                'client_name': doc_data.get('client_name'),
+                'status': doc_data['status'],
+                'confidence': doc_data.get('confidence'),
+                'file_size_bytes': doc_data.get('file_size_bytes'),
+                'annotation_count': doc_data.get('annotation_count', 0),
+                'created_at': doc_data['created_at'],
+                'client_full_name': doc_data.get('client_full_name'),
+                'business_type': doc_data.get('business_type')
+            }
+            documents.append(doc)
+
+        # Get total count for pagination (simplified approach)
+        total_items = len(documents) if len(documents) < page_size else (page * page_size) + 1
+        total_pages = (total_items + page_size - 1) // page_size
+
+        pagination = {
+            'currentPage': page,
+            'pageSize': page_size,
+            'totalPages': total_pages,
+            'totalItems': total_items
+        }
+
+        return jsonify({
+            'success': True,
+            'data': documents,
+            'pagination': pagination
+        })
+
+    except Exception as e:
+        logger.error(f"Error in advanced document search: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/<int:doc_id>/annotations', methods=['GET', 'POST'])
+def document_annotations(doc_id):
+    """CRUD operations for document annotations"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        if request.method == 'GET':
+            # Get all annotations for a document
+            result = supabase.table('document_annotations')\
+                .select('*')\
+                .eq('document_id', doc_id)\
+                .order('created_at', desc=True)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'data': result.data
+            })
+
+        elif request.method == 'POST':
+            # Create new annotation
+            data = request.json
+            annotation_data = {
+                'document_id': doc_id,
+                'annotation_type': data.get('annotation_type', 'note'),
+                'content': data.get('content', ''),
+                'position_data': data.get('position_data'),
+                'created_by': data.get('created_by', 'System')
+            }
+
+            result = supabase.table('document_annotations')\
+                .insert(annotation_data)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'data': result.data[0] if result.data else None
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling document annotations: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/<int:doc_id>/annotations/<int:annotation_id>', methods=['DELETE'])
+def delete_annotation(doc_id, annotation_id):
+    """Delete a specific annotation"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        result = supabase.table('document_annotations')\
+            .delete()\
+            .eq('id', annotation_id)\
+            .eq('document_id', doc_id)\
+            .execute()
+
+        return jsonify({
+            'success': True,
+            'message': 'Annotation deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting annotation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clients/dashboard')
+def clients_dashboard_data():
+    """Get comprehensive client data for dashboard"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        # Use the client dashboard view
+        result = supabase.table('client_dashboard_data')\
+            .select('*')\
+            .order('total_documents', desc=True)\
+            .execute()
+
+        return jsonify({
+            'success': True,
+            'data': result.data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting client dashboard data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clients/<int:client_id>/dashboard')
+def client_dashboard_data(client_id):
+    """Get comprehensive client data for individual client dashboard"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        # Get client with profile data
+        client_result = supabase.table('client_dashboard_data')\
+            .select('*')\
+            .eq('id', client_id)\
+            .execute()
+
+        if not client_result.data:
+            return jsonify({'error': 'Client not found'}), 404
+
+        client_data = client_result.data[0]
+
+        # Get recent documents
+        recent_docs_result = supabase.table('document_results')\
+            .select('*')\
+            .eq('client_id', client_id)\
+            .order('created_at', desc=True)\
+            .limit(10)\
+            .execute()
+
+        # Get document summary by type
+        doc_types_result = supabase.table('document_results')\
+            .select('document_type')\
+            .eq('client_id', client_id)\
+            .execute()
+
+        doc_type_counts = {}
+        for doc in doc_types_result.data:
+            doc_type = doc.get('document_type') or 'Unknown'
+            doc_type_counts[doc_type] = doc_type_counts.get(doc_type, 0) + 1
+
+        client_data['recent_documents'] = recent_docs_result.data
+        client_data['document_type_summary'] = doc_type_counts
+
+        return jsonify({
+            'success': True,
+            'data': client_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting client dashboard data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clients/<int:client_id>/full')
+def get_client_full_data(client_id):
+    """Get full client data including profile"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        # Get client with profile
+        client_result = supabase.table('clients')\
+            .select('*, client_profiles(*)')\
+            .eq('id', client_id)\
+            .execute()
+
+        if not client_result.data:
+            return jsonify({'error': 'Client not found'}), 404
+
+        client_data = client_result.data[0]
+
+        # Flatten profile data
+        if client_data.get('client_profiles'):
+            profile = client_data['client_profiles'][0] if client_data['client_profiles'] else {}
+            client_data.update({
+                'business_type': profile.get('business_type'),
+                'tax_id': profile.get('tax_id'),
+                'preferred_contact': profile.get('preferred_contact'),
+                'filing_frequency': profile.get('filing_frequency'),
+                'portal_access': profile.get('portal_access'),
+                'compliance_status': profile.get('compliance_status'),
+                'profile_notes': profile.get('notes')
+            })
+            del client_data['client_profiles']
+
+        return jsonify({
+            'success': True,
+            'data': client_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting full client data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clients/<int:client_id>/communications', methods=['GET', 'POST'])
+def client_communications(client_id):
+    """Handle client communications"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        if request.method == 'GET':
+            # Get all communications for client
+            result = supabase.table('client_communications')\
+                .select('*')\
+                .eq('client_id', client_id)\
+                .order('communication_date', desc=True)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'data': result.data
+            })
+
+        elif request.method == 'POST':
+            # Create new communication
+            data = request.json
+            comm_data = {
+                'client_id': client_id,
+                'communication_type': data.get('communication_type'),
+                'subject': data.get('subject'),
+                'content': data.get('content'),
+                'communication_date': data.get('communication_date'),
+                'created_by': data.get('created_by', 'System')
+            }
+
+            result = supabase.table('client_communications')\
+                .insert(comm_data)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'data': result.data[0] if result.data else None
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling client communications: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/<int:doc_id>/related')
+def get_related_documents(doc_id):
+    """Find related documents (same client, year, type)"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+        filter_type = request.args.get('filter', 'all')
+
+        # Get the base document
+        base_doc_result = supabase.table('document_results')\
+            .select('*')\
+            .eq('id', doc_id)\
+            .execute()
+
+        if not base_doc_result.data:
+            return jsonify({'error': 'Document not found'}), 404
+
+        base_doc = base_doc_result.data[0]
+
+        # Build query based on filter type
+        query = supabase.table('document_results').select('*')
+
+        if filter_type == 'client':
+            query = query.eq('client_id', base_doc['client_id'])
+        elif filter_type == 'year':
+            if base_doc.get('tax_year'):
+                query = query.eq('tax_year', base_doc['tax_year'])
+        elif filter_type == 'type':
+            if base_doc.get('document_type'):
+                query = query.eq('document_type', base_doc['document_type'])
+        else:  # 'all' - related by any criteria
+            query = query.or_(f"client_id.eq.{base_doc['client_id']}")
+            if base_doc.get('tax_year'):
+                query = query.or_(f"tax_year.eq.{base_doc['tax_year']}")
+            if base_doc.get('document_type'):
+                query = query.or_(f"document_type.eq.{base_doc['document_type']}")
+
+        # Exclude the current document and execute
+        result = query.neq('id', doc_id)\
+            .order('created_at', desc=True)\
+            .limit(20)\
+            .execute()
+
+        return jsonify({
+            'success': True,
+            'data': result.data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting related documents: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/<int:doc_id>/full')
+def get_document_full_data(doc_id):
+    """Get complete document data including metadata"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        # Get document with client info
+        doc_result = supabase.table('document_results')\
+            .select('*, clients(name, email, phone)')\
+            .eq('id', doc_id)\
+            .execute()
+
+        if not doc_result.data:
+            return jsonify({'error': 'Document not found'}), 404
+
+        doc_data = doc_result.data[0]
+
+        # Format client info
+        if doc_data.get('clients'):
+            doc_data['client_info'] = doc_data['clients']
+            del doc_data['clients']
+
+        return jsonify({
+            'success': True,
+            'data': doc_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting full document data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/types')
+def get_document_types():
+    """Get list of available document types"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        result = supabase.table('document_results')\
+            .select('document_type')\
+            .execute()
+
+        # Get unique document types
+        types = set()
+        for doc in result.data:
+            if doc.get('document_type'):
+                types.add(doc['document_type'])
+
+        return jsonify(sorted(list(types)))
+
+    except Exception as e:
+        logger.error(f"Error getting document types: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/years')
+def get_tax_years():
+    """Get list of available tax years"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        result = supabase.table('document_results')\
+            .select('tax_year')\
+            .execute()
+
+        # Get unique tax years
+        years = set()
+        for doc in result.data:
+            if doc.get('tax_year'):
+                years.add(doc['tax_year'])
+
+        return jsonify(sorted(list(years), reverse=True))
+
+    except Exception as e:
+        logger.error(f"Error getting tax years: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/saved-searches', methods=['GET', 'POST'])
+def saved_searches():
+    """Handle saved search queries"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        if request.method == 'GET':
+            # Get all saved searches
+            result = supabase.table('saved_searches')\
+                .select('*')\
+                .order('created_at', desc=True)\
+                .execute()
+
+            return jsonify(result.data)
+
+        elif request.method == 'POST':
+            # Create new saved search
+            data = request.json
+            search_data = {
+                'search_name': data.get('search_name'),
+                'search_criteria': data.get('search_criteria'),
+                'user_id': data.get('user_id', 'default'),
+                'is_shared': data.get('is_shared', False)
+            }
+
+            result = supabase.table('saved_searches')\
+                .insert(search_data)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'data': result.data[0] if result.data else None
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling saved searches: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/saved-searches/<int:search_id>', methods=['DELETE'])
+def delete_saved_search(search_id):
+    """Delete a saved search"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        result = supabase.table('saved_searches')\
+            .delete()\
+            .eq('id', search_id)\
+            .execute()
+
+        return jsonify({
+            'success': True,
+            'message': 'Saved search deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting saved search: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/overview')
+def analytics_overview():
+    """High-level analytics for admin dashboard"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        # Get processing statistics
+        processing_stats = supabase.table('processing_statistics')\
+            .select('*')\
+            .order('processing_date', desc=True)\
+            .limit(30)\
+            .execute()
+
+        # Get document type analytics
+        doc_type_stats = supabase.table('document_type_analytics')\
+            .select('*')\
+            .limit(10)\
+            .execute()
+
+        # Get recent activity
+        recent_activity = supabase.table('recent_activity_enhanced')\
+            .select('*')\
+            .limit(20)\
+            .execute()
+
+        # Calculate totals
+        total_clients = supabase.table('clients').select('id', count='exact').execute()
+        total_documents = supabase.table('document_results').select('id', count='exact').execute()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'processing_statistics': processing_stats.data,
+                'document_type_analytics': doc_type_stats.data,
+                'recent_activity': recent_activity.data,
+                'totals': {
+                    'clients': total_clients.count,
+                    'documents': total_documents.count
+                }
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting analytics overview: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/download-multiple', methods=['POST'])
+def download_multiple_documents():
+    """Download multiple documents as a ZIP file"""
+    import zipfile
+    import io
+
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        data = request.json
+        document_ids = data.get('documentIds', [])
+
+        if not document_ids:
+            return jsonify({'error': 'No documents specified'}), 400
+
+        supabase = get_supabase()
+
+        # Get document paths
+        docs_result = supabase.table('document_results')\
+            .select('original_filename, processed_path')\
+            .in_('id', document_ids)\
+            .execute()
+
+        # Create ZIP file in memory
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for doc in docs_result.data:
+                file_path = doc.get('processed_path')
+                if file_path and os.path.exists(file_path):
+                    zip_file.write(file_path, doc['original_filename'])
+
+        zip_buffer.seek(0)
+
+        return send_file(
+            io.BytesIO(zip_buffer.read()),
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'documents_{len(document_ids)}_files.zip'
+        )
+
+    except Exception as e:
+        logger.error(f"Error creating document archive: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents/delete-multiple', methods=['POST'])
+def delete_multiple_documents():
+    """Delete multiple documents"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        data = request.json
+        document_ids = data.get('documentIds', [])
+
+        if not document_ids:
+            return jsonify({'error': 'No documents specified'}), 400
+
+        supabase = get_supabase()
+
+        # Get document paths for file cleanup
+        docs_result = supabase.table('document_results')\
+            .select('processed_path')\
+            .in_('id', document_ids)\
+            .execute()
+
+        # Delete files from filesystem
+        deleted_files = 0
+        for doc in docs_result.data:
+            file_path = doc.get('processed_path')
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    deleted_files += 1
+                except Exception as e:
+                    logger.warning(f"Could not delete file {file_path}: {e}")
+
+        # Delete from database
+        result = supabase.table('document_results')\
+            .delete()\
+            .in_('id', document_ids)\
+            .execute()
+
+        return jsonify({
+            'success': True,
+            'deleted_count': len(result.data) if result.data else 0,
+            'deleted_files': deleted_files
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting multiple documents: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Add client CRUD operations
+@app.route('/api/clients', methods=['GET', 'POST'])
+def clients_api():
+    """Handle client operations"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        if request.method == 'GET':
+            # Get all clients
+            result = supabase.table('clients')\
+                .select('*')\
+                .order('name')\
+                .execute()
+
+            return jsonify(result.data)
+
+        elif request.method == 'POST':
+            # Create new client
+            data = request.json
+
+            # Create client record
+            client_data = {
+                'first_name': data.get('first_name'),
+                'last_name': data.get('last_name'),
+                'email': data.get('email'),
+                'phone': data.get('phone')
+            }
+
+            client_result = supabase.table('clients')\
+                .insert(client_data)\
+                .execute()
+
+            if client_result.data:
+                client_id = client_result.data[0]['id']
+
+                # Create client profile
+                profile_data = {
+                    'client_id': client_id,
+                    'business_type': data.get('business_type', 'individual'),
+                    'tax_id': data.get('tax_id'),
+                    'preferred_contact': data.get('preferred_contact', 'email'),
+                    'filing_frequency': data.get('filing_frequency', 'annual'),
+                    'portal_access': data.get('portal_access', False),
+                    'notes': data.get('notes')
+                }
+
+                supabase.table('client_profiles')\
+                    .insert(profile_data)\
+                    .execute()
+
+            return jsonify({
+                'success': True,
+                'data': client_result.data[0] if client_result.data else None
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling clients: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clients/<int:client_id>', methods=['PUT', 'DELETE'])
+def client_operations(client_id):
+    """Handle individual client operations"""
+    global database_available
+
+    if not database_available:
+        return jsonify({'error': 'Database not available'}), 503
+
+    try:
+        supabase = get_supabase()
+
+        if request.method == 'PUT':
+            # Update client
+            data = request.json
+
+            # Update client record
+            client_data = {
+                'first_name': data.get('first_name'),
+                'last_name': data.get('last_name'),
+                'email': data.get('email'),
+                'phone': data.get('phone')
+            }
+
+            client_result = supabase.table('clients')\
+                .update(client_data)\
+                .eq('id', client_id)\
+                .execute()
+
+            # Update or create profile
+            profile_data = {
+                'business_type': data.get('business_type'),
+                'tax_id': data.get('tax_id'),
+                'preferred_contact': data.get('preferred_contact'),
+                'filing_frequency': data.get('filing_frequency'),
+                'portal_access': data.get('portal_access'),
+                'notes': data.get('notes')
+            }
+
+            # Try to update existing profile first
+            profile_result = supabase.table('client_profiles')\
+                .update(profile_data)\
+                .eq('client_id', client_id)\
+                .execute()
+
+            # If no profile exists, create one
+            if not profile_result.data:
+                profile_data['client_id'] = client_id
+                supabase.table('client_profiles')\
+                    .insert(profile_data)\
+                    .execute()
+
+            return jsonify({
+                'success': True,
+                'data': client_result.data[0] if client_result.data else None
+            })
+
+        elif request.method == 'DELETE':
+            # Delete client (cascading deletes will handle related records)
+            result = supabase.table('clients')\
+                .delete()\
+                .eq('id', client_id)\
+                .execute()
+
+            return jsonify({
+                'success': True,
+                'message': 'Client deleted successfully'
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling client operations: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Enhanced route for documents page
+@app.route('/documents/advanced')
+def documents_advanced():
+    """Render the enhanced documents page"""
+    return render_template('documents_advanced.html')
+
+# Enhanced route for client dashboard
+@app.route('/clients/dashboard')
+def client_dashboard():
+    """Render the client dashboard page"""
+    return render_template('client_dashboard.html')
 
 if __name__ == '__main__':
     # Initialize processor

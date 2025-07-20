@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Document Processing - Authentication</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .auth-form {
+            padding: 40px 30px;
+        }
+
+        .form-toggle {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .form-toggle button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-toggle button.active {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2563eb;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        .auth-button.loading .loading-spinner {
+            display: inline-block;
+        }
+
+        .auth-button.loading .button-text {
+            opacity: 0.8;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border-left: 4px solid #dc2626;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border-left: 4px solid #16a34a;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .forgot-password a {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .signup-form {
+            display: none;
+        }
+
+        .signup-form.active {
+            display: block;
+        }
+
+        .signin-form.active {
+            display: block;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+
+            .auth-header {
+                padding: 30px 20px 20px;
+            }
+
+            .auth-header h1 {
+                font-size: 24px;
+            }
+
+            .auth-form {
+                padding: 30px 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-content .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1><i class="fas fa-file-invoice"></i> Tax Documents</h1>
+            <p>Secure document processing platform</p>
+        </div>
+
+        <div class="auth-form">
+            <div class="form-toggle">
+                <button type="button" id="signin-tab" class="active">Sign In</button>
+                <button type="button" id="signup-tab">Sign Up</button>
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+
+            <!-- Sign In Form -->
+            <div class="form-section signin-form active" id="signin-form">
+                <form id="signin-form-element">
+                    <div class="form-group">
+                        <label for="signin-email">Email Address</label>
+                        <input type="email" id="signin-email" name="email" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <div class="password-field">
+                            <input type="password" id="signin-password" name="password" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('signin-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remember-me" name="remember">
+                        <label for="remember-me">Remember me for 30 days</label>
+                    </div>
+
+                    <button type="submit" class="auth-button" id="signin-button">
+                        <div class="loading-spinner"></div>
+                        <span class="button-text">Sign In</span>
+                    </button>
+                </form>
+
+                <div class="forgot-password">
+                    <a href="#" onclick="showForgotPassword()">Forgot your password?</a>
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="form-section signup-form" id="signup-form">
+                <form id="signup-form-element">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="signup-first-name">First Name</label>
+                            <input type="text" id="signup-first-name" name="first_name" required autocomplete="given-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-last-name">Last Name</label>
+                            <input type="text" id="signup-last-name" name="last_name" required autocomplete="family-name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" name="email" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <div class="password-field">
+                            <input type="password" id="signup-password" name="password" required autocomplete="new-password" minlength="6">
+                            <button type="button" class="password-toggle" onclick="togglePassword('signup-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
+                            Minimum 6 characters required
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirm Password</label>
+                        <div class="password-field">
+                            <input type="password" id="signup-confirm-password" name="confirm_password" required autocomplete="new-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms-agreement" name="terms" required>
+                        <label for="terms-agreement">I agree to the Terms of Service and Privacy Policy</label>
+                    </div>
+
+                    <button type="submit" class="auth-button" id="signup-button">
+                        <div class="loading-spinner"></div>
+                        <span class="button-text">Create Account</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+
+        <script>
+
+        // Authentication state management
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.session = null;
+                this.isRedirecting = false;
+                this.init();
+            }
+
+                        async init() {
+                // Check for existing session in storage
+                const savedSession = this.getSavedSession();
+
+                if (savedSession && savedSession.access_token) {
+                    // Validate session with backend before redirecting
+                    const isValid = await this.validateSession(savedSession.access_token);
+
+                    if (isValid) {
+                        this.session = savedSession;
+                        this.currentUser = savedSession.user;
+                        this.redirectToApp();
+                    } else {
+                        // Session is invalid, clear it
+                        this.clearSession();
+                    }
+                }
+            }
+
+            async validateSession(accessToken) {
+                try {
+                    const response = await fetch('/api/auth/user', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+                    return response.ok;
+                } catch (error) {
+                    console.error('Session validation error:', error);
+                    return false;
+                }
+            }
+
+            getSavedSession() {
+                // Try localStorage first (remember me), then sessionStorage
+                const stored = localStorage.getItem('auth_session') || sessionStorage.getItem('auth_session');
+                return stored ? JSON.parse(stored) : null;
+            }
+
+            saveSession(session, remember = false) {
+                // Save session to localStorage for persistence
+                const sessionData = {
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token,
+                    expires_at: session.expires_at,
+                    user: session.user
+                };
+
+                if (remember || document.getElementById('remember-me')?.checked) {
+                    localStorage.setItem('auth_session', JSON.stringify(sessionData));
+                } else {
+                    sessionStorage.setItem('auth_session', JSON.stringify(sessionData));
+                }
+
+                // Update instance variables
+                this.session = sessionData;
+                this.currentUser = sessionData.user;
+            }
+
+            clearSession() {
+                localStorage.removeItem('auth_session');
+                sessionStorage.removeItem('auth_session');
+                this.session = null;
+                this.currentUser = null;
+            }
+
+                                                redirectToApp() {
+                // Prevent multiple redirects
+                if (this.isRedirecting) {
+                    return;
+                }
+
+                this.isRedirecting = true;
+
+                // Redirect with token as query parameter
+                const token = this.session.access_token;
+                window.location.href = `/?token=${encodeURIComponent(token)}`;
+            }
+
+            async signIn(email, password) {
+                try {
+                    const response = await fetch('/api/auth/signin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Sign in failed');
+                    }
+
+                    return data;
+                } catch (error) {
+                    throw new Error(error.message || 'Network error during sign in');
+                }
+            }
+
+            async signUp(email, password, metadata = {}) {
+                try {
+                    const response = await fetch('/api/auth/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                            first_name: metadata.first_name,
+                            last_name: metadata.last_name
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Sign up failed');
+                    }
+
+                    return data;
+                } catch (error) {
+                    throw new Error(error.message || 'Network error during sign up');
+                }
+            }
+
+            async signOut() {
+                // Call Flask signout endpoint if we have a session
+                if (this.session?.access_token) {
+                    try {
+                        await fetch('/api/auth/signout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${this.session.access_token}`
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Signout API error:', error);
+                    }
+                }
+                this.clearSession();
+            }
+        }
+
+        // Initialize auth manager
+        const authManager = new AuthManager();
+
+        // Form toggle functionality
+        document.getElementById('signin-tab').addEventListener('click', () => {
+            showSignInForm();
+        });
+
+        document.getElementById('signup-tab').addEventListener('click', () => {
+            showSignUpForm();
+        });
+
+        function showSignInForm() {
+            document.getElementById('signin-tab').classList.add('active');
+            document.getElementById('signup-tab').classList.remove('active');
+            document.getElementById('signin-form').classList.add('active');
+            document.getElementById('signup-form').classList.remove('active');
+            clearMessages();
+        }
+
+        function showSignUpForm() {
+            document.getElementById('signup-tab').classList.add('active');
+            document.getElementById('signin-tab').classList.remove('active');
+            document.getElementById('signup-form').classList.add('active');
+            document.getElementById('signin-form').classList.remove('active');
+            clearMessages();
+        }
+
+        // Password toggle functionality
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            const icon = button.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Message handling
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        function clearMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // Loading states
+        function setLoading(formType, isLoading) {
+            const button = document.getElementById(`${formType}-button`);
+            const form = document.getElementById(`${formType}-form-element`);
+
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+                form.querySelectorAll('input').forEach(input => input.disabled = true);
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+                form.querySelectorAll('input').forEach(input => input.disabled = false);
+            }
+        }
+
+        // Sign In Form Handler
+        document.getElementById('signin-form-element').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+
+            if (!email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            setLoading('signin', true);
+            clearMessages();
+
+            try {
+                const result = await authManager.signIn(email, password);
+
+                if (result.success && result.session) {
+                    // Save session
+                    const remember = document.getElementById('remember-me').checked;
+                    authManager.saveSession(result.session, remember);
+
+                    showSuccess('Signed in successfully! Redirecting...');
+
+                    // Redirect after a brief delay
+                    setTimeout(() => {
+                        authManager.redirectToApp();
+                    }, 1500);
+                } else {
+                    showError('Sign in failed. Please check your credentials.');
+                }
+
+            } catch (error) {
+                console.error('Sign in error:', error);
+                showError(error.message || 'Sign in failed. Please check your credentials.');
+            } finally {
+                setLoading('signin', false);
+            }
+        });
+
+        // Sign Up Form Handler
+        document.getElementById('signup-form-element').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const firstName = document.getElementById('signup-first-name').value;
+            const lastName = document.getElementById('signup-last-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const termsAccepted = document.getElementById('terms-agreement').checked;
+
+            // Validation
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+
+            if (!termsAccepted) {
+                showError('Please accept the Terms of Service');
+                return;
+            }
+
+            setLoading('signup', true);
+            clearMessages();
+
+            try {
+                const result = await authManager.signUp(email, password, {
+                    first_name: firstName,
+                    last_name: lastName
+                });
+
+                if (result.success) {
+                    if (result.session) {
+                        // Signed in immediately
+                        authManager.saveSession(result.session, false);
+                        showSuccess('Account created and signed in successfully! Redirecting...');
+                        setTimeout(() => {
+                            authManager.redirectToApp();
+                        }, 1500);
+                    } else {
+                        // Email confirmation required or account created without session
+                        showSuccess('Account created! Please check your email to verify your account before signing in.');
+
+                        // Switch to sign in form after delay
+                        setTimeout(() => {
+                            showSignInForm();
+                            document.getElementById('signin-email').value = email;
+                        }, 3000);
+                    }
+                } else {
+                    showError('Account creation failed. Please try again.');
+                }
+
+            } catch (error) {
+                console.error('Sign up error:', error);
+                showError(error.message || 'Account creation failed. Please try again.');
+            } finally {
+                setLoading('signup', false);
+            }
+        });
+
+        // Forgot password functionality
+        function showForgotPassword() {
+            const email = document.getElementById('signin-email').value;
+            if (email) {
+                // Would implement password reset here
+                showSuccess('Password reset link sent to your email (feature coming soon)');
+            } else {
+                showError('Please enter your email address first');
+            }
+        }
+
+        // Auto-focus on first input
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('signin-email').focus();
+        });
+    </script>
+</body>
+</html>

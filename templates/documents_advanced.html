@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Document Management - Tax Document Processor</title>
+
+    <!-- CSS Includes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enterprise-styles.css') }}">
+
+    <style>
+        /* Core Document Management Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header and Navigation */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav a {
+            padding: 0.5rem 1rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notifications {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+
+        .btn-outline:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        /* Advanced Search Styles */
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-header h3 {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .advanced-search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .search-group input,
+        .search-group select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-group input:focus,
+        .search-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .search-actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-controls label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .sort-controls select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .sort-order {
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        /* Saved Searches */
+        .saved-searches-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+
+        .saved-searches-section h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .saved-searches-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .saved-search-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-info h5 {
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-info small {
+            color: #6c757d;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        /* Document Grid Styles */
+        .grid-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .grid-header {
+            background: #f8f9fa;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grid-controls {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .view-toggle {
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-toggle:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .view-toggle:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .view-toggle.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .selection-controls,
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .selection-count {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .results-info {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        /* Document Grid Layout */
+        .document-grid {
+            padding: 2rem;
+        }
+
+        .document-grid.grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .document-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .document-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .document-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .document-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .document-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .document-status.processing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .document-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .document-status.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .document-thumbnail {
+            height: 150px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .document-thumbnail:hover {
+            background: #e9ecef;
+        }
+
+        .document-thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .file-icon {
+            text-align: center;
+        }
+
+        .file-icon i {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .extension {
+            background: #3498db;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .document-info {
+            padding: 1rem;
+        }
+
+        .document-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .document-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-meta span {
+            font-size: 0.85rem;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .document-meta i {
+            width: 14px;
+            text-align: center;
+        }
+
+        .confidence.high {
+            color: #28a745;
+        }
+
+        .confidence.medium {
+            color: #ffc107;
+        }
+
+        .confidence.low {
+            color: #dc3545;
+        }
+
+        .document-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: right;
+        }
+
+        .card-actions {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: space-between;
+        }
+
+        /* List View Styles */
+        .document-grid.list-view {
+            display: block;
+        }
+
+        .list-header,
+        .document-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 150px 120px 80px 100px 80px 100px 120px 120px;
+            gap: 1rem;
+            padding: 1rem;
+            align-items: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .list-header {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .document-row:hover {
+            background: #f8f9fa;
+        }
+
+        .list-cell {
+            font-size: 0.9rem;
+        }
+
+        .filename-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filename {
+            font-weight: 500;
+            cursor: pointer;
+            color: #3498db;
+        }
+
+        .filename:hover {
+            text-decoration: underline;
+        }
+
+        .annotation-indicator {
+            color: #f39c12;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Loading and Error States */
+        .grid-loading,
+        .grid-error {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-documents {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .no-documents i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        .no-documents h3 {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        /* Pagination */
+        .pagination {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .pagination-info {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .pagination-btn.btn-primary {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        /* Dropdown Menus */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-menu a.text-danger {
+            color: #dc3545;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .main-container {
+                padding: 0 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-controls {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .document-grid.grid-view {
+                grid-template-columns: 1fr;
+            }
+
+            .list-header,
+            .document-row {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .list-cell {
+                padding: 0.25rem 0;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .list-cell:before {
+                content: attr(data-label) ": ";
+                font-weight: 600;
+                color: #666;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                margin: 1rem auto;
+            }
+
+            .search-container,
+            .grid-container {
+                border-radius: 8px;
+            }
+
+            .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1><i class="fas fa-file-invoice"></i> Enterprise Tax Documents</h1>
+            </div>
+
+            <nav class="nav">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/documents" class="nav-link active">
+                    <i class="fas fa-file-alt"></i> Documents
+                </a>
+                <a href="/clients" class="nav-link">
+                    <i class="fas fa-users"></i> Clients
+                </a>
+                <a href="/analytics" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a href="/upload" class="nav-link">
+                    <i class="fas fa-upload"></i> Upload
+                </a>
+            </nav>
+
+            <div class="user-menu">
+                <div class="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                <div class="user-profile">
+                    <i class="fas fa-user-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Document Management</h1>
+            <div class="page-actions">
+                <button class="btn btn-outline" onclick="window.open('/upload', '_blank')">
+                    <i class="fas fa-upload"></i> Upload Documents
+                </button>
+                <button class="btn btn-secondary" onclick="exportAllDocuments()">
+                    <i class="fas fa-download"></i> Export All
+                </button>
+                <button class="btn btn-primary" onclick="refreshDocuments()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Advanced Search Section -->
+        <div class="search-container">
+            <div id="documentSearchContainer">
+                <!-- Advanced search interface will be rendered here by DocumentSearch.js -->
+            </div>
+        </div>
+
+        <!-- Document Grid Section -->
+        <div class="grid-container">
+            <div id="documentGridContainer">
+                <!-- Document grid will be rendered here by DocumentGrid.js -->
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Includes -->
+    <script src="{{ url_for('static', filename='js/DocumentSearch.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/DocumentGrid.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/AnnotationTool.js') }}"></script>
+
+    <script>
+        // Global utility functions
+        function refreshDocuments() {
+            if (window.documentGrid) {
+                window.documentGrid.loadDocuments();
+            }
+        }
+
+        function exportAllDocuments() {
+            if (window.documentSearch) {
+                window.documentSearch.exportResults('csv');
+            }
+        }
+
+        // Initialize page functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Any additional initialization can go here
+            console.log('Enterprise Document Management System initialized');
+        });
+
+        // Handle notification clicks
+        document.querySelector('.notifications').addEventListener('click', function() {
+            // Show notifications dropdown or navigate to notifications page
+            alert('Notifications: 3 new documents processed, 1 client needs attention');
+        });
+
+        // Handle user profile clicks
+        document.querySelector('.user-profile').addEventListener('click', function() {
+            // Show user menu or navigate to profile page
+            const menu = document.createElement('div');
+            menu.innerHTML = `
+                <div style="position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; min-width: 200px;">
+                    <a href="/profile" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                    <a href="/settings" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    <a href="/help" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                    <a href="/logout" style="display: block; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            `;
+
+            // Toggle menu display
+            const existing = document.querySelector('.user-menu-dropdown');
+            if (existing) {
+                existing.remove();
+            } else {
+                menu.className = 'user-menu-dropdown';
+                this.appendChild(menu);
+
+                // Close menu when clicking outside
+                setTimeout(() => {
+                    document.addEventListener('click', function(e) {
+                        if (!e.target.closest('.user-profile')) {
+                            const dropdown = document.querySelector('.user-menu-dropdown');
+                            if (dropdown) dropdown.remove();
+                        }
+                    }, { once: true });
+                }, 100);
+            }
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K for quick search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.getElementById('searchQuery');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                if (window.documentSearch) {
+                    window.documentSearch.clearSearch();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 class Client:
     """Client data model"""
     id: Optional[int] = None
+    user_id: str = ""  # Supabase user ID
     first_name: str = ""
     last_name: str = ""
     name: str = ""  # Auto-generated from first_name + last_name
@@ -37,6 +38,7 @@ class Client:
 class ProcessingSession:
     """Processing session data model"""
     id: Optional[int] = None
+    user_id: str = ""  # Supabase user ID
     session_id: str = ""
     status: str = "processing"
     processing_mode: str = "auto"
@@ -54,6 +56,7 @@ class ProcessingSession:
 class DocumentResult:
     """Document result data model"""
     id: Optional[int] = None
+    user_id: str = ""  # Supabase user ID
     session_id: str = ""  # UUID string that references processing_sessions.session_id
     client_id: Optional[int] = None
     original_filename: str = ""
@@ -104,12 +107,13 @@ class ClientDAO:
         return f"{first_clean} {last_clean}"
 
     @staticmethod
-    def create_client(first_name: str, last_name: str, email: Optional[str] = None,
+    def create_client(user_id: str, first_name: str, last_name: str, email: Optional[str] = None,
                      phone: Optional[str] = None) -> Optional[Client]:
         """
         Create a new client
 
         Args:
+            user_id: Authenticated user ID
             first_name: Client's first name
             last_name: Client's last name
             email: Optional email address
@@ -127,6 +131,7 @@ class ClientDAO:
             normalized_name = ClientDAO.normalize_name(first_name, last_name)
 
             data = {
+                'user_id': user_id,
                 'first_name': first_name.strip(),
                 'last_name': last_name.strip(),
                 'normalized_name': normalized_name,
@@ -140,6 +145,7 @@ class ClientDAO:
                 client_data = result.data[0]
                 return Client(
                     id=client_data['id'],
+                    user_id=client_data['user_id'],
                     first_name=client_data['first_name'],
                     last_name=client_data['last_name'],
                     normalized_name=client_data['normalized_name'],
@@ -155,11 +161,12 @@ class ClientDAO:
         return None
 
     @staticmethod
-    def find_by_name(first_name: str, last_name: str) -> Optional[Client]:
+    def find_by_name(user_id: str, first_name: str, last_name: str) -> Optional[Client]:
         """
-        Find client by name (case-insensitive)
+        Find client by name (case-insensitive) for specific user
 
         Args:
+            user_id: Authenticated user ID
             first_name: Client's first name
             last_name: Client's last name
 
@@ -173,12 +180,16 @@ class ClientDAO:
 
             normalized_name = ClientDAO.normalize_name(first_name, last_name)
 
-            result = supabase.table('clients').select('*').eq('normalized_name', normalized_name).execute()
+            result = supabase.table('clients').select('*')\
+                .eq('user_id', user_id)\
+                .eq('normalized_name', normalized_name)\
+                .execute()
 
             if result.data:
                 client_data = result.data[0]
                 return Client(
                     id=client_data['id'],
+                    user_id=client_data['user_id'],
                     first_name=client_data['first_name'],
                     last_name=client_data['last_name'],
                     normalized_name=client_data['normalized_name'],
@@ -194,11 +205,12 @@ class ClientDAO:
         return None
 
     @staticmethod
-    def find_or_create(first_name: str, last_name: str, email: Optional[str] = None) -> Optional[Client]:
+    def find_or_create(user_id: str, first_name: str, last_name: str, email: Optional[str] = None) -> Optional[Client]:
         """
         Find existing client or create new one
 
         Args:
+            user_id: Authenticated user ID
             first_name: Client's first name
             last_name: Client's last name
             email: Optional email address
@@ -207,17 +219,20 @@ class ClientDAO:
             Optional[Client]: Found or created client if successful, None otherwise
         """
         # Try to find existing client first
-        client = ClientDAO.find_by_name(first_name, last_name)
+        client = ClientDAO.find_by_name(user_id, first_name, last_name)
         if client:
             return client
 
         # Create new client if not found
-        return ClientDAO.create_client(first_name, last_name, email)
+        return ClientDAO.create_client(user_id, first_name, last_name, email)
 
     @staticmethod
-    def get_all_with_stats() -> List[Client]:
+    def get_all_with_stats(user_id: str) -> List[Client]:
         """
-        Get all clients with document statistics
+        Get all clients with document statistics for a specific user
+
+        Args:
+            user_id: Authenticated user ID
 
         Returns:
             List[Client]: List of clients with statistics
@@ -227,12 +242,13 @@ class ClientDAO:
             if not supabase:
                 return []
 
-            result = supabase.table('client_statistics').select('*').execute()
+            result = supabase.table('client_statistics').select('*').eq('user_id', user_id).execute()
 
             clients = []
             for client_data in result.data:
                 client = Client(
                     id=client_data['id'],
+                    user_id=client_data['user_id'],
                     first_name=client_data['first_name'],
                     last_name=client_data['last_name'],
                     name=client_data['name'],
@@ -260,12 +276,13 @@ class ClientDAO:
             return []
 
     @staticmethod
-    def get_by_id(client_id: int) -> Optional[Client]:
+    def get_by_id(user_id: str, client_id: int) -> Optional[Client]:
         """
-        Get client by ID
+        Get client by ID for a specific user
 
         Args:
-            client_id: Client's UUID
+            user_id: Authenticated user ID
+            client_id: Client's ID
 
         Returns:
             Optional[Client]: Found client if exists, None otherwise
@@ -275,12 +292,16 @@ class ClientDAO:
             if not supabase:
                 return None
 
-            result = supabase.table('clients').select('*').eq('id', client_id).execute()
+            result = supabase.table('clients').select('*')\
+                .eq('user_id', user_id)\
+                .eq('id', client_id)\
+                .execute()
 
             if result.data:
                 client_data = result.data[0]
                 return Client(
                     id=client_data['id'],
+                    user_id=client_data['user_id'],
                     first_name=client_data['first_name'],
                     last_name=client_data['last_name'],
                     normalized_name=client_data['normalized_name'],
@@ -299,12 +320,13 @@ class ProcessingSessionDAO:
     """Data Access Object for ProcessingSession operations"""
 
     @staticmethod
-    def create_session(session_id: str, processing_mode: str = "auto",
+    def create_session(user_id: str, session_id: str, processing_mode: str = "auto",
                       total_files: int = 0, manual_client_info: Optional[Dict] = None) -> Optional[ProcessingSession]:
         """
         Create a new processing session
 
         Args:
+            user_id: Authenticated user ID
             session_id: Unique session identifier (UUID string)
             processing_mode: Processing mode (auto/manual)
             total_files: Total number of files to process
@@ -320,6 +342,7 @@ class ProcessingSessionDAO:
                 return None
 
             data = {
+                'user_id': user_id,
                 'session_id': session_id,  # This will be stored as UUID
                 'status': 'processing',
                 'processing_mode': processing_mode,
@@ -336,6 +359,7 @@ class ProcessingSessionDAO:
                 session_data = result.data[0]
                 return ProcessingSession(
                     id=session_data['id'],  # This is the INTEGER primary key
+                    user_id=session_data['user_id'],
                     session_id=session_data['session_id'],  # This is the UUID
                     status=session_data['status'],
                     processing_mode=session_data['processing_mode'],
@@ -487,12 +511,13 @@ class DocumentResultDAO:
     """Data Access Object for DocumentResult operations"""
 
     @staticmethod
-    def create_document_result(session_uuid: str, original_filename: str,
+    def create_document_result(user_id: str, session_uuid: str, original_filename: str,
                               client_id: Optional[int] = None) -> Optional[DocumentResult]:
         """
         Create a new document result
 
         Args:
+            user_id: Authenticated user ID
             session_uuid: Session UUID string from processing_sessions.session_id
             original_filename: Original filename
             client_id: Optional client ID
@@ -507,6 +532,7 @@ class DocumentResultDAO:
                 return None
 
             data = {
+                'user_id': user_id,
                 'session_id': session_uuid,  # Use the UUID string directly
                 'client_id': client_id,
                 'original_filename': original_filename,
@@ -519,6 +545,7 @@ class DocumentResultDAO:
                 doc_data = result.data[0]
                 return DocumentResult(
                     id=doc_data['id'],
+                    user_id=doc_data['user_id'],
                     session_id=doc_data['session_id'],
                     client_id=doc_data.get('client_id'),
                     original_filename=doc_data['original_filename'],

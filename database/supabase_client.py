@@ -1,5 +1,5 @@
 """
-Supabase client initialization and connection management
+Supabase client initialization and connection management with authentication support
 """
 
 import os
@@ -180,3 +180,55 @@ def init_database():
         logger.warning("Application will continue without database functionality")
 
     return success
+
+def get_authenticated_supabase(access_token: str = None) -> Optional[Client]:
+    """
+    Get Supabase client with authentication context for RLS
+
+    Args:
+        access_token: User's access token for authentication
+
+    Returns:
+        Optional[Client]: Authenticated Supabase client or None
+    """
+    try:
+        # Create a new client instance for the authenticated user
+        client = create_client(
+            Config.SUPABASE_URL,
+            Config.SUPABASE_ANON_KEY
+        )
+
+        # Set the auth context if token is provided
+        if access_token:
+            # Set the auth header for RLS to work
+            # Note: In practice, you would store and use both access and refresh tokens
+            client.postgrest.auth(access_token)
+
+        return client
+
+    except Exception as e:
+        logger.error(f"Error creating authenticated Supabase client: {e}")
+        return None
+
+def set_user_context(client: Client, user_id: str) -> Client:
+    """
+    Set user context for RLS policies
+
+    Args:
+        client: Supabase client
+        user_id: User UUID for RLS context
+
+    Returns:
+        Client: Client with user context set
+    """
+    try:
+        # For RLS to work properly, we need to set the auth context
+        # This ensures that auth.uid() returns the correct user ID in policies
+        if hasattr(client, 'set_auth_context'):
+            client.set_auth_context(user_id)
+
+        return client
+
+    except Exception as e:
+        logger.warning(f"Could not set user context: {e}")
+        return client
