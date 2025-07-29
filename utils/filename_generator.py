@@ -17,7 +17,7 @@ class FilenameGenerator:
                 'w2': '{first_name} {last_initial} W-2 {employer} {year}{amended}.{ext}',
                 '1098': '{first_name} {last_initial} {form_type} {lender} {year}{amended}.{ext}',
                 '1040': '{first_name} {last_initial} {form_type} {year}{amended}.{ext}',
-                'joint': '{first_name}_{spouse_first}_{last_name} {doc_type} {year}{amended}.{ext}'
+                'joint': '{first_name} {spouse_first} {last_name} {doc_type} {year}{amended}.{ext}'
             },
             'business': {
                 'default': '{business_name} {doc_type} {year}{amended}.{ext}',
@@ -50,9 +50,9 @@ class FilenameGenerator:
             'Form 1098-E': '1098-E',
             'Form 1098-T': '1098-T',
             'Schedule K-1': 'K-1',
-            'Property Tax Statement': 'Property_Tax',
-            'Bank Statement': 'Bank_Statement',
-            'Investment Statement': 'Investment_Statement'
+            'Property Tax Statement': 'Property Tax',
+            'Bank Statement': 'Bank Statement',
+            'Investment Statement': 'Investment Statement'
         }
         
         # Amendment indicators
@@ -291,8 +291,8 @@ class FilenameGenerator:
                 return f"Sch_{schedule_match.group(1)}"
         
         # Fallback to cleaned document type
-        clean_type = re.sub(r'[^A-Za-z0-9_-]', '_', document_type)
-        clean_type = re.sub(r'_+', '_', clean_type).strip('_')
+        clean_type = re.sub(r'[^A-Za-z0-9 -]', ' ', document_type)
+        clean_type = re.sub(r'\s+', ' ', clean_type).strip(' ')
         return clean_type[:20]  # Limit length
     
     def _get_amendment_suffix(self, extracted_info: Dict) -> str:
@@ -333,11 +333,11 @@ class FilenameGenerator:
         # Remove problematic characters
         clean_name = re.sub(r'[<>:"/\\|?*]', '', name)
         
-        # Replace spaces with underscores
-        clean_name = re.sub(r'\s+', '_', clean_name)
+        # Keep spaces instead of underscores, just clean up multiple spaces
+        clean_name = re.sub(r'\s+', ' ', clean_name)
         
-        # Remove extra underscores
-        clean_name = re.sub(r'_+', '_', clean_name).strip('_')
+        # Remove leading/trailing spaces
+        clean_name = clean_name.strip(' ')
         
         # Limit length and handle abbreviation if too long
         if len(clean_name) > 30:
@@ -387,15 +387,16 @@ class FilenameGenerator:
         # Remove invalid characters
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         
-        # Clean up multiple spaces/underscores
-        filename = re.sub(r'[\s_]+', '_', filename)
+        # Clean up multiple spaces and replace underscores with spaces
+        filename = re.sub(r'_+', ' ', filename)  # Replace underscores with spaces
+        filename = re.sub(r'\s+', ' ', filename)  # Clean up multiple spaces
         
-        # Remove leading/trailing underscores and dots
-        filename = filename.strip('_.')
+        # Remove leading/trailing spaces and dots
+        filename = filename.strip(' .')
         
         # Ensure it's not empty
         if not filename:
-            filename = "Unknown_Document"
+            filename = "Unknown Document"
         
         return filename
     

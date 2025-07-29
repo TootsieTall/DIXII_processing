@@ -4,7 +4,6 @@ from pathlib import Path
 import uuid
 import time
 from PIL import Image
-import pdf2image
 import re
 import unicodedata
 import logging
@@ -12,6 +11,7 @@ import json
 from typing import Dict, Optional, List, Tuple
 from models.donut_classifier import DonutTaxClassifier
 from models.enhanced_claude_ocr import EnhancedClaudeOCR
+from models.enhanced_name_detector import EnhancedNameDetector
 from utils.entity_recognizer import EntityRecognizer
 from utils.filename_generator import FilenameGenerator
 from utils.document_preprocessor import DocumentPreprocessor
@@ -376,6 +376,9 @@ class EnhancedTaxDocumentProcessor:
         self.document_type_aware_preprocessor = DocumentTypeAwarePreprocessor()  # Phase 4: Type-aware enhancement
         self.dynamic_threshold_manager = DynamicThresholdManager()  # Phase 5: Dynamic thresholds
         
+        # Enhanced Name Detection System
+        self.name_detector = EnhancedNameDetector()
+        
         # Phase 6: Intelligent Batch Processing
         self.batch_processor = IntelligentBatchProcessor(self)
         self.batch_processing_enabled = True
@@ -395,7 +398,7 @@ class EnhancedTaxDocumentProcessor:
         # Load dynamic threshold data
         self.dynamic_threshold_manager.load_historical_data()
         
-        self.logger.info("Enhanced Tax Document Processor with Intelligent Batch Processing initialized")
+        self.logger.info("Enhanced Tax Document Processor with Intelligent Batch Processing and Enhanced Name Detection initialized")
     
     def _initialize_processing_stats(self):
         """Initialize comprehensive processing statistics including batch processing"""
@@ -404,6 +407,9 @@ class EnhancedTaxDocumentProcessor:
             'successful_extractions': 0,
             'processing_errors': 0,
             'document_types': {},
+            'entity_types': {},
+            'amendments_detected': 0,
+            'joint_returns': 0,
             'confidence_scores': [],
             'processing_times': [],
             'validation_applied': 0,
@@ -461,6 +467,21 @@ class EnhancedTaxDocumentProcessor:
                 'document_type_strategies': {},
                 'quality_score_improvements': []
             },
+            'enhanced_name_detection': {  # Enhanced Name Detection statistics
+                'total_documents_processed': 0,
+                'names_detected': 0,
+                'unknown_client_reduction': 0,
+                'priority_used': 0,  # Track when enhanced detection overrides Claude
+                'fallback_to_claude': 0,  # Track when enhanced detection fails and falls back to Claude
+                'confidence_improvements': [],
+                'detection_methods_used': {
+                    'layoutlm': 0,
+                    'bert_ner': 0,
+                    'patterns': 0
+                },
+                'average_confidence': 0.0,
+                'processing_time_savings': []
+            },
             'batch_processing': {  # Phase 6: Intelligent batch processing statistics
                 'total_batches_created': 0,
                 'total_documents_batched': 0,
@@ -497,17 +518,15 @@ class EnhancedTaxDocumentProcessor:
         result = {
             'original_filename': original_filename,
             'status': 'processing',
-            'error': None,
-            'client_name': None,
-            'tax_year': None,
-            'document_type': None,
             'confidence': 0.0,
-            'new_filename': None,
-            'client_folder': None,
-            'processed_path': None,
+            'document_type': 'Unknown',
+            'client_name': 'Unknown',
+            'tax_year': None,
             'entity_info': {},
             'extracted_details': {},
-            'processing_notes': []
+            'processing_notes': [],
+            'processing_mode': 'enhanced',
+            'error': None
         }
         
         temp_files = []
@@ -522,16 +541,18 @@ class EnhancedTaxDocumentProcessor:
                 result['error'] = 'Failed to prepare image for processing'
                 return result
             
-            # Step 2: Field-Specific Model Routing (Phase 2 Enhancement)
-            # 2a: Document type classification (Donut specialty)
+            # Step 2: Document type classification (Donut specialty) - KEEP AS FIRST LINE
             donut_result = self._classify_with_donut(image_path, original_filename)
             
-            # Step 2.5: Phase 4 - Document-Type Aware Preprocessing
+            # Step 3: Enhanced Name Detection as FIRST LINE for client/entity naming
+            name_detection_results = self._apply_enhanced_name_detection(image_path, donut_result)
+            
+            # Step 4: Document-Type Aware Preprocessing
             enhanced_image_path, preprocessing_results = self._apply_document_type_preprocessing(
                 image_path, donut_result, temp_files
             )
             
-            # 2b: Field-specific extraction routing (using enhanced image)
+            # Step 5: Field-specific extraction routing (using enhanced image)
             extracted_info = self._extract_with_field_routing(enhanced_image_path, donut_result)
             
             # Track field routing usage
@@ -544,112 +565,124 @@ class EnhancedTaxDocumentProcessor:
             # Track field routing statistics
             self._track_field_routing_stats(extracted_info)
             
-            # 2c: Merge and validate results with ensemble decision making
+            # Step 6: Merge enhanced name detection with extracted info (PRIORITIZE NAME DETECTION)
+            extracted_info = self._merge_enhanced_name_detection_priority(extracted_info, name_detection_results)
+            
+            # Step 7: Merge and validate results with ensemble decision making
             merged_info = self._merge_classification_results(donut_result, extracted_info)
             
-            # Step 3: Entity recognition and analysis
+            # Step 8: Entity recognition and analysis
             if manual_client_info:
                 # Override with manual information
                 merged_info = self._apply_manual_client_info(merged_info, manual_client_info)
             
+            # Step 9: Entity recognition and analysis
             entity_info = self.entity_recognizer.analyze_entity(merged_info)
             
-            # Step 4: Generate intelligent filename
+            # Step 10: Generate intelligent filename
             filename_info = self.filename_generator.get_filename_preview(
                 merged_info, entity_info, original_filename
             )
             
-            # Step 5: Organize and save document
+            # Step 11: Organize document into appropriate folder
             organization_result = self._organize_document(
                 file_path, entity_info, filename_info, merged_info
             )
             
-            # Step 6: Update result with all information
-            result.update({
-                'status': 'completed',
-                'client_name': self._get_client_display_name(entity_info),
-                'tax_year': merged_info.get('tax_year', 'Unknown'),
-                'document_type': merged_info.get('document_type', 'Unknown Document'),
-                'confidence': merged_info.get('confidence', 0.0),
-                'new_filename': filename_info['filename'],
-                'client_folder': entity_info.get('final_folder'),
-                'processed_path': organization_result['final_path'],
-                'entity_info': entity_info,
-                'extracted_details': merged_info,
-                'processing_notes': organization_result.get('notes', [])
-            })
-            
-            # Update statistics
+            # Step 12: Update processing statistics
             self._update_processing_stats(result)
             
-            if result['confidence'] > 0.7:
-                self.processing_stats['successful_extractions'] += 1
+            # Step 13: Prepare final result
+            # Calculate relative path for web serving
+            final_path = organization_result.get('final_path', file_path)
+            try:
+                processed_relative_path = os.path.relpath(final_path, self.processed_folder)
+                # Normalize path separators for web URLs
+                processed_relative_path = processed_relative_path.replace('\\', '/')
+            except:
+                processed_relative_path = filename_info.get('filename', original_filename)
             
-            self.logger.info(f"Successfully processed {original_filename}")
+            # Prepare comprehensive result
+            result.update({
+                'status': 'completed',  # Changed from 'success' to 'completed' to match frontend expectations
+                'document_type': merged_info.get('document_type', 'Unknown'),
+                'client_name': merged_info.get('client_name', 'Unknown'),
+                'person_name': merged_info.get('person_name', 'Unknown'),
+                'tax_year': merged_info.get('tax_year'),
+                'confidence': merged_info.get('confidence', 0.0),
+                'new_filename': organization_result.get('final_filename'),  # Add the new filename
+                'processed_path': processed_relative_path,  # Add processed path for actions
+                'entity_info': entity_info,
+                'extracted_details': merged_info,
+                'filename_info': filename_info,
+                'organization_result': organization_result,
+                'processed_relative_path': processed_relative_path,
+                'name_detection_results': name_detection_results,  # Include name detection results
+                'processing_notes': [
+                    f"Document type: {merged_info.get('document_type', 'Unknown')}",
+                    f"Client name: {merged_info.get('client_name', 'Unknown')}",
+                    f"Tax year: {merged_info.get('tax_year', 'Unknown')}",
+                    f"Entity type: {entity_info.get('entity_type', 'Unknown')}",
+                    f"Name detection confidence: {name_detection_results.get('confidence', 0.0)}",
+                    f"Name detection methods: {', '.join(name_detection_results.get('detection_methods', []))}"
+                ]
+            })
             
-        except Exception as e:
-            self.logger.error(f"Error processing {original_filename}: {e}")
-            result['status'] = 'error'
-            result['error'] = str(e)
-            self.processing_stats['processing_errors'] += 1
-            
-        finally:
             # Clean up temporary files
             self._clean_temp_files(temp_files)
-        
-        return result
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Error processing document {original_filename}: {e}")
+            result['status'] = 'error'
+            result['error'] = str(e)
+            result['new_filename'] = None  # Ensure new_filename is set even for errors
+            result['processed_path'] = None  # Ensure processed_path is set even for errors
+            self._clean_temp_files(temp_files)
+            return result
     
     def _prepare_image(self, file_path: str, temp_files: List[str]) -> Optional[str]:
-        """Enhanced image preparation with automatic quality enhancement"""
+        """Enhanced file preparation - keeps PDFs as PDFs, minimizes image conversion"""
         try:
             file_ext = Path(file_path).suffix.lower()
-            base_image_path = None
             
-            # Step 1: Handle PDF conversion if needed
+            # Step 1: Handle different file types appropriately
             if file_ext == '.pdf':
-                # Convert PDF to images with higher DPI for better quality
-                images = pdf2image.convert_from_path(file_path, dpi=300)
-                if not images:
-                    return None
-                
-                # Use first page for processing
-                temp_path = f"temp_pdf_{uuid.uuid4()}.jpg"
-                images[0].save(temp_path, 'JPEG', quality=95)
-                temp_files.append(temp_path)
-                base_image_path = temp_path
+                # Keep PDFs as PDFs - no conversion needed
+                self.logger.info(f"Processing PDF directly: {file_path}")
+                return file_path
             else:
-                # Direct image file
-                base_image_path = file_path
-            
-            # Step 2: Skip preprocessing to preserve original quality
-            if base_image_path:
-                # Just optimize for OCR without enhancement to preserve quality
-                with Image.open(base_image_path) as img:
+                # For image files, check if optimization is needed for AI models
+                with Image.open(file_path) as img:
                     if img.mode != 'RGB':
                         img = img.convert('RGB')
                     
-                    # Simple resize if needed for AI models
+                    # Check if resizing is needed for AI models
                     width, height = img.size
                     max_dimension = 2048
                     
                     if max(width, height) > max_dimension:
+                        # Only create optimized version if resizing is necessary
                         ratio = max_dimension / max(width, height)
                         new_width = int(width * ratio)
                         new_height = int(height * ratio)
                         img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    # Save optimized image
-                    optimized_path = f"optimized_{uuid.uuid4()}.jpg"
-                    img.save(optimized_path, 'JPEG', quality=95, dpi=(200, 200))
-                    temp_files.append(optimized_path)
-                    
-                    self.logger.info(f"Image optimization completed (no enhancement to preserve quality)")
-                    return optimized_path
+                        
+                        # Save optimized image only when necessary
+                        optimized_path = f"temp_optimized_{uuid.uuid4()}.jpg"
+                        img.save(optimized_path, 'JPEG', quality=95, dpi=(200, 200))
+                        temp_files.append(optimized_path)
+                        
+                        self.logger.info(f"Created temporary optimized image for AI processing")
+                        return optimized_path
+                    else:
+                        # Use original image if no resizing needed
+                        self.logger.info(f"Using original image for processing: {file_path}")
+                        return file_path
             
-            return None
-                
         except Exception as e:
-            self.logger.error(f"Error preparing image: {e}")
+            self.logger.error(f"Error preparing file: {e}")
             return None
     
     def _classify_with_donut(self, image_path: str, filename: str) -> Dict:
@@ -858,105 +891,141 @@ class EnhancedTaxDocumentProcessor:
         return claude_norm == donut_norm
     
     def _log_ensemble_decision(self, donut_result: Dict, claude_result: Dict, final_result: Dict):
-        """Log ensemble decision for monitoring and optimization"""
-        ensemble_details = final_result.get('ensemble_details', {})
-        confidence_boost = ensemble_details.get('confidence_boost', 0.0)
-        
-        # Log significant ensemble improvements
-        if confidence_boost > 0.1:
-            self.logger.info(f"🤖 Ensemble boost: +{confidence_boost:.2f} confidence "
-                           f"({final_result['classification_source']}) "
-                           f"Document: {final_result.get('document_type', 'Unknown')}")
-        
-        # Track ensemble statistics
-        if 'ensemble_decisions' not in self.processing_stats:
-            self.processing_stats['ensemble_decisions'] = {
-                'total': 0,
-                'agreements': 0,
-                'claude_wins': 0,
-                'donut_wins': 0,
-                'confidence_boosts': []
-            }
-        
-        stats = self.processing_stats['ensemble_decisions']
-        stats['total'] += 1
-        
-        if ensemble_details.get('type_agreement'):
-            stats['agreements'] += 1
-        
-        if 'claude' in final_result['classification_source']:
-            stats['claude_wins'] += 1
-        elif 'donut' in final_result['classification_source']:
-            stats['donut_wins'] += 1
-        
-        if confidence_boost > 0:
-            stats['confidence_boosts'].append(confidence_boost)
+        """Log ensemble decision statistics"""
+        try:
+            # Initialize ensemble_decisions if it doesn't exist
+            if 'ensemble_decisions' not in self.processing_stats:
+                self.processing_stats['ensemble_decisions'] = {
+                    'total': 0,
+                    'agreements': 0,
+                    'claude_wins': 0,
+                    'donut_wins': 0,
+                    'confidence_boosts': []
+                }
+            
+            stats = self.processing_stats['ensemble_decisions']
+            stats['total'] = stats.get('total', 0) + 1
+            
+            # Calculate confidence boost
+            donut_conf = donut_result.get('donut_confidence', 0.0)
+            claude_conf = claude_result.get('confidence', 0.0)
+            final_conf = final_result.get('confidence', 0.0)
+            confidence_boost = max(0, final_conf - max(donut_conf, claude_conf))
+            
+            # Track agreement/disagreement
+            if final_result.get('type_agreement', False):
+                stats['agreements'] = stats.get('agreements', 0) + 1
+            
+            # Track which model was favored
+            classification_source = final_result.get('classification_source', '')
+            if 'claude' in classification_source:
+                stats['claude_wins'] = stats.get('claude_wins', 0) + 1
+            elif 'donut' in classification_source:
+                stats['donut_wins'] = stats.get('donut_wins', 0) + 1
+            
+            if confidence_boost > 0:
+                if 'confidence_boosts' not in stats:
+                    stats['confidence_boosts'] = []
+                stats['confidence_boosts'].append(confidence_boost)
+                
+            # Log the ensemble decision
+            self.logger.info(f"🤖 Ensemble boost: +{confidence_boost:.2f} confidence ({classification_source}) Document: {final_result.get('document_type', 'Unknown')}")
+            
+        except Exception as e:
+            self.logger.error(f"Error logging ensemble decision: {e}")
+            # Don't let this error crash the processing
+            pass
     
     def _extract_with_field_routing(self, image_path: str, donut_result: Dict) -> Dict:
         """
-        Phase 2: Field-Specific Model Routing
-        Routes different fields to the models that excel at them for maximum accuracy and efficiency
+        SPEED OPTIMIZED: Field-specific extraction with reduced API calls
         """
-        start_time = time.time()
-        self.logger.info("🚀 Starting field-specific routing extraction...")
-        
-        # Step 1: Determine document type (use Donut's classification as primary)
-        doc_type = donut_result.get('donut_type', 'Unknown Document')
-        doc_confidence = donut_result.get('donut_confidence', 0.0)
-        
-        # Step 2: Create routing plan based on document type and model strengths
-        routing_plan = self._create_field_routing_plan(doc_type)
-        
-        # Step 3: Execute field-specific extractions
-        field_results = {}
-        
-        # Route document type (Donut specialty)
-        if routing_plan['document_type'] == 'donut':
-            field_results['document_type'] = doc_type
-            field_results['document_type_confidence'] = doc_confidence
-            field_results['document_type_source'] = 'donut'
-        
-        # Route client names and text fields (Claude specialty)
-        if routing_plan.get('client_names') == 'claude':
-            client_info = self._extract_client_names_claude(image_path)
-            field_results.update(client_info)
-        
-        # Route amounts and structured data (Donut specialty when implemented)
-        if routing_plan.get('amounts') == 'donut':
-            # For now, use Claude as we don't have Donut amount extraction
-            amount_info = self._extract_amounts_fallback(image_path)
-            field_results.update(amount_info)
-        
-        # Route dates (dual validation for critical fields)
-        if routing_plan.get('dates') == 'dual':
-            date_info = self._extract_dates_dual_validation(image_path)
-            field_results.update(date_info)
-        elif routing_plan.get('dates') == 'claude':
-            date_info = self._extract_dates_claude(image_path)
-            field_results.update(date_info)
-        
-        # Route addresses (Claude specialty)
-        if routing_plan.get('addresses') == 'claude':
-            address_info = self._extract_addresses_claude(image_path)
-            field_results.update(address_info)
-        
-        # Step 4: Fill any missing fields with comprehensive extraction
-        if self._needs_comprehensive_extraction(field_results):
-            self.logger.info("🔄 Running fallback comprehensive extraction for missing fields...")
-            comprehensive_info = self.claude_ocr.extract_with_smart_validation(image_path)
-            field_results = self._merge_with_comprehensive(field_results, comprehensive_info)
-        
-        # Step 4.5: Phase 3 - Cross-Model Validation (smart cost control)
-        field_results = self._apply_cross_model_validation(image_path, donut_result, field_results)
-        
-        # Step 5: Calculate routing efficiency and confidence
-        field_results['routing_plan'] = routing_plan
-        field_results['routing_time'] = time.time() - start_time
-        field_results['confidence'] = self._calculate_field_routing_confidence(field_results)
-        field_results['extraction_method'] = 'field_routing_with_cross_validation'
-        
-        self.logger.info(f"✅ Field routing completed in {field_results['routing_time']:.2f}s")
-        return field_results
+        try:
+            doc_type = donut_result.get('donut_type', 'Unknown')
+            confidence = donut_result.get('donut_confidence', 0.0)
+            
+            # SPEED OPTIMIZATION: Use comprehensive extraction for better efficiency
+            if confidence > 0.8:
+                # High confidence - use single comprehensive extraction
+                self.logger.info(f"Using comprehensive extraction for high-confidence {doc_type}")
+                comprehensive_info = self.claude_ocr.extract_comprehensive_document_info(image_path)
+                comprehensive_info['validation_applied'] = False
+                comprehensive_info['validation_skipped_reason'] = 'high_confidence_comprehensive'
+                return comprehensive_info
+            
+            # Get field routing plan
+            routing_plan = self._create_field_routing_plan(doc_type)
+            
+            # SPEED OPTIMIZATION: Use combined extraction if enabled
+            if Config.USE_COMBINED_EXTRACTION:
+                combined_extraction = self._extract_combined_fields(image_path, routing_plan)
+            else:
+                # Fallback to individual field extraction
+                combined_extraction = self._extract_individual_fields(image_path, routing_plan)
+            
+            # Apply validation only if needed
+            if combined_extraction.get('confidence', 0.0) < 0.7:
+                # Only validate low-confidence results
+                validation_result = self._apply_cross_model_validation(image_path, donut_result, combined_extraction)
+                if validation_result:
+                    combined_extraction = self._merge_with_validation(combined_extraction, validation_result)
+                    combined_extraction['validation_applied'] = True
+                else:
+                    combined_extraction['validation_applied'] = False
+                    combined_extraction['validation_skipped_reason'] = 'validation_failed'
+            else:
+                combined_extraction['validation_applied'] = False
+                combined_extraction['validation_skipped_reason'] = 'high_confidence_skip'
+            
+            return combined_extraction
+            
+        except Exception as e:
+            self.logger.error(f"Error in field routing extraction: {e}")
+            return {
+                'document_type': 'Unknown',
+                'confidence': 0.0,
+                'error': str(e),
+                'validation_applied': False,
+                'validation_skipped_reason': 'extraction_error'
+            }
+    
+    def _extract_combined_fields(self, image_path: str, routing_plan: Dict) -> Dict:
+        """
+        SPEED OPTIMIZATION: Extract multiple fields in single API call
+        """
+        try:
+            # Create comprehensive prompt for all needed fields
+            fields_needed = list(routing_plan.keys())
+            
+            prompt = f"""
+            Extract the following information from this tax document in a single pass:
+            {', '.join(fields_needed)}
+            
+            Return in JSON format:
+            {{
+                "document_type": "exact form type",
+                "client_name": "full name",
+                "tax_year": "YYYY",
+                "amounts": {{"field_name": "amount"}},
+                "dates": {{"field_name": "date"}},
+                "addresses": {{"field_name": "address"}},
+                "confidence": 0.0-1.0,
+                "extraction_notes": "any notes"
+            }}
+            """
+            
+            img_base64 = self.claude_ocr.image_to_base64(image_path)
+            if not img_base64:
+                return {'confidence': 0.0, 'error': 'Failed to convert image'}
+            
+            result = self.claude_ocr._make_api_call(img_base64, prompt)
+            result['extraction_method'] = 'combined_single_pass'
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Error in combined field extraction: {e}")
+            return {'confidence': 0.0, 'error': str(e)}
     
     def _create_field_routing_plan(self, doc_type: str) -> Dict[str, str]:
         """
@@ -1242,6 +1311,130 @@ class EnhancedTaxDocumentProcessor:
                     sources['dual'] += 1
                     stats['dual_validated_fields'] += 1
     
+    def _apply_enhanced_name_detection(self, image_path: str, donut_result: Dict) -> Dict:
+        """Apply enhanced name detection with multiple models"""
+        try:
+            # Validate inputs
+            if not image_path or not os.path.exists(image_path):
+                return {
+                    'names': [],
+                    'confidence': 0.0,
+                    'detection_methods': [],
+                    'error': 'Invalid image path'
+                }
+            
+            # Initialize name detector if not already done
+            if not hasattr(self, 'name_detector'):
+                try:
+                    self.name_detector = EnhancedNameDetector()
+                except Exception as e:
+                    self.logger.error(f"Failed to initialize name detector: {e}")
+                    return {
+                        'names': [],
+                        'confidence': 0.0,
+                        'detection_methods': [],
+                        'error': f'Name detector initialization failed: {e}'
+                    }
+            
+            # Get document type for pattern detection
+            doc_type = donut_result.get('donut_type', 'Unknown') if isinstance(donut_result, dict) else 'Unknown'
+            
+            # Apply enhanced name detection
+            name_results = self.name_detector.detect_names_in_document(image_path, doc_type)
+            
+            # Validate results
+            if not isinstance(name_results, dict):
+                self.logger.error(f"Invalid name detection results format: {type(name_results)}")
+                return {
+                    'names': [],
+                    'confidence': 0.0,
+                    'detection_methods': [],
+                    'error': 'Invalid name detection results'
+                }
+            
+            # Extract names and confidence
+            names = name_results.get('combined_names', [])
+            confidence = name_results.get('confidence', 0.0)
+            detection_methods = name_results.get('detection_methods', [])
+            
+            # Validate names list
+            if not isinstance(names, list):
+                names = []
+            
+            # Filter out invalid name entries
+            valid_names = []
+            for name_info in names:
+                if isinstance(name_info, dict) and 'name' in name_info:
+                    valid_names.append(name_info)
+                else:
+                    self.logger.warning(f"Invalid name info format: {name_info}")
+            
+            return {
+                'names': valid_names,
+                'confidence': float(confidence) if confidence is not None else 0.0,
+                'detection_methods': detection_methods if isinstance(detection_methods, list) else [],
+                'primary_name': self.name_detector.get_primary_client_name(name_results) if hasattr(self.name_detector, 'get_primary_client_name') else None,
+                'all_names': self.name_detector.get_all_detected_names(name_results) if hasattr(self.name_detector, 'get_all_detected_names') else []
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced name detection: {e}")
+            return {
+                'names': [],
+                'confidence': 0.0,
+                'detection_methods': [],
+                'error': str(e)
+            }
+    
+    def _merge_enhanced_name_detection_priority(self, extracted_info: Dict, name_results: Dict) -> Dict:
+        """
+        Merge enhanced name detection results with existing extracted information
+        PRIORITIZES enhanced name detection over Claude extraction for client/entity naming
+        """
+        try:
+            # If we have any names from enhanced detection, prioritize them
+            if name_results.get('combined_names'):
+                primary_name = self.name_detector.get_primary_client_name(name_results)
+                
+                if primary_name:
+                    # Parse the name into components
+                    name_parts = primary_name.split()
+                    if len(name_parts) >= 2:
+                        # ALWAYS use enhanced detection results for client naming
+                        extracted_info['enhanced_name_detection'] = name_results
+                        extracted_info['detected_primary_name'] = primary_name
+                        extracted_info['detected_first_name'] = name_parts[0]
+                        extracted_info['detected_last_name'] = ' '.join(name_parts[1:])
+                        
+                        # PRIORITY: Use enhanced detection for client name regardless of Claude results
+                        extracted_info['client_name'] = primary_name
+                        extracted_info['person_name'] = primary_name
+                        
+                        # Track enhanced name detection usage
+                        self.processing_stats['enhanced_name_detection']['names_detected'] += 1
+                        self.processing_stats['enhanced_name_detection']['priority_used'] += 1
+                        
+                        self.logger.info(f"Enhanced name detection PRIORITY: {primary_name} (overriding Claude extraction)")
+                        
+                        # If Claude had different names, log the override
+                        claude_client_name = extracted_info.get('claude_client_name', extracted_info.get('client_name'))
+                        if claude_client_name and claude_client_name != primary_name:
+                            self.logger.info(f"Enhanced detection overrode Claude: {claude_client_name} → {primary_name}")
+                            extracted_info['claude_override_notes'] = f"Enhanced detection overrode Claude: {claude_client_name} → {primary_name}"
+            
+            # If no enhanced detection names found, fall back to Claude extraction
+            elif not name_results.get('combined_names'):
+                self.logger.info("No names found by enhanced detection, using Claude extraction as fallback")
+                extracted_info['enhanced_name_detection'] = name_results
+                extracted_info['name_detection_fallback'] = 'claude'
+                self.processing_stats['enhanced_name_detection']['fallback_to_claude'] += 1
+            
+            return extracted_info
+            
+        except Exception as e:
+            self.logger.error(f"Error merging enhanced name detection with priority: {e}")
+            return extracted_info
+    
     def _apply_cross_model_validation(self, image_path: str, donut_result: Dict, field_results: Dict) -> Dict:
         """
         Phase 3: Cross-Model Validation
@@ -1299,71 +1492,79 @@ class EnhancedTaxDocumentProcessor:
     
     def _should_apply_cross_validation(self, donut_result: Dict, field_results: Dict) -> tuple[bool, str]:
         """
-        Phase 5: Dynamic threshold-based decision on cross-validation
-        Returns: (should_validate, reason)
+        Determine if cross-validation should be applied based on confidence and document type
+        SPEED OPTIMIZATION: Skip validation for high-confidence results to reduce API calls
         """
-        doc_type = field_results.get('document_type', 'Unknown')
-        
-        # Get adaptive validation recommendation
-        recommendation = self.dynamic_threshold_manager.get_validation_recommendation(doc_type, field_results)
-        
-        # Track threshold calculation
-        if 'dynamic_thresholds' not in self.processing_stats:
-            self.processing_stats['dynamic_thresholds'] = {
-                'total_threshold_calculations': 0,
-                'validation_recommended': 0,
-                'validation_skipped_by_thresholds': 0,
-                'threshold_adaptations': 0,
-                'performance_improvements': [],
-                'cost_optimizations': [],
-                'document_type_learning': {},
-                'field_importance_adaptations': 0
-            }
-        self.processing_stats['dynamic_thresholds']['total_threshold_calculations'] += 1
-        
-        # Log threshold adaptations if any were applied
-        adaptations = recommendation['confidence_threshold_used'].get('adaptations_applied', {})
-        if any(abs(val) > 0.01 if isinstance(val, (int, float)) else any(abs(v) > 0.01 for v in val) if isinstance(val, tuple) else False for val in adaptations.values()):
-            self.processing_stats['dynamic_thresholds']['threshold_adaptations_applied'] += 1
+        try:
+            # Check if speed optimizations are enabled
+            if not Config.ENABLE_SPEED_OPTIMIZATIONS:
+                return True, "speed_optimizations_disabled"
             
-            # Track specific adaptations
-            if adaptations.get('field_importance_boost', 0) != 0:
-                self.processing_stats['dynamic_thresholds']['field_importance_boosts'].append(adaptations['field_importance_boost'])
+            # Get document type and confidence
+            doc_type = field_results.get('document_type', 'Unknown')
+            confidence = field_results.get('confidence', 0.0)
             
-            if adaptations.get('success_rate_adjustment', 0) != 0:
-                self.processing_stats['dynamic_thresholds']['success_rate_adjustments'].append(adaptations['success_rate_adjustment'])
+            # SPEED OPTIMIZATION 1: Skip validation for very high confidence
+            if confidence > Config.SKIP_VALIDATION_HIGH_CONFIDENCE:
+                self.logger.info(f"Skipping cross-validation for high confidence ({confidence:.2f})")
+                return False, "high_confidence_skip"
             
-            if adaptations.get('time_based_adjustment', 0) != 0:
-                self.processing_stats['dynamic_thresholds']['time_based_adjustments'].append(adaptations['time_based_adjustment'])
-        
-        # Always validate when models disagree on document type (override adaptive system)
-        donut_type = donut_result.get('donut_type', '')
-        claude_type = field_results.get('document_type', '')
-        if donut_type and claude_type and self._normalize_document_type(donut_type) != self._normalize_document_type(claude_type):
-            return True, "model_disagreement"
-        
-        # Use adaptive recommendation
-        should_validate = recommendation['should_validate']
-        reason = recommendation['reason']
-        
-        # Track adaptive decisions
-        if should_validate:
-            self.processing_stats['dynamic_thresholds']['adaptive_validations_triggered'] += 1
-        else:
-            self.processing_stats['dynamic_thresholds']['adaptive_validations_skipped'] += 1
-        
-        # Log confidence adjustment for analysis
-        original_conf = recommendation['original_confidence']
-        adjusted_conf = recommendation['adjusted_confidence']
-        if abs(adjusted_conf - original_conf) > 0.01:
-            self.processing_stats['dynamic_thresholds']['confidence_adjustments'].append({
-                'original': original_conf,
-                'adjusted': adjusted_conf,
-                'boost': adjusted_conf - original_conf,
-                'doc_type': doc_type
-            })
-        
-        return should_validate, reason
+            # SPEED OPTIMIZATION 2: Skip validation for simple document types
+            simple_doc_types = ['W-2', '1099-NEC', '1099-MISC', '1099-INT', '1099-DIV']
+            if any(simple_type in doc_type for simple_type in simple_doc_types):
+                if confidence > Config.SKIP_VALIDATION_SIMPLE_DOCS:
+                    self.logger.info(f"Skipping validation for simple document type: {doc_type}")
+                    return False, "simple_document_skip"
+            
+            # Get adaptive threshold recommendation
+            recommendation = self.dynamic_threshold_manager.get_validation_recommendation(doc_type, field_results)
+            
+            # Initialize missing keys in processing stats
+            if 'dynamic_thresholds' not in self.processing_stats:
+                self.processing_stats['dynamic_thresholds'] = {
+                    'total_threshold_calculations': 0,
+                    'validation_recommended': 0,
+                    'validation_skipped_by_thresholds': 0,
+                    'threshold_adaptations': 0,
+                    'performance_improvements': [],
+                    'cost_optimizations': [],
+                    'document_type_learning': {},
+                    'field_importance_adaptations': 0,
+                    'adaptive_validations_triggered': 0,
+                    'adaptive_validations_skipped': 0,
+                    'confidence_adjustments': [],
+                    'threshold_adaptations_applied': 0,
+                    'field_importance_boosts': [],
+                    'success_rate_adjustments': [],
+                    'time_based_adjustments': []
+                }
+            
+            self.processing_stats['dynamic_thresholds']['total_threshold_calculations'] += 1
+            
+            # SPEED OPTIMIZATION 3: Skip validation for model agreement
+            donut_type = donut_result.get('donut_type', '')
+            claude_type = field_results.get('document_type', '')
+            if donut_type and claude_type and self._normalize_document_type(donut_type) == self._normalize_document_type(claude_type):
+                if confidence > 0.6:  # Lower threshold when models agree
+                    self.logger.info(f"Skipping validation - models agree on {claude_type}")
+                    return False, "model_agreement_skip"
+            
+            # Use adaptive recommendation
+            should_validate = recommendation['should_validate']
+            reason = recommendation['reason']
+            
+            # Track adaptive decisions
+            if should_validate:
+                self.processing_stats['dynamic_thresholds']['adaptive_validations_triggered'] += 1
+            else:
+                self.processing_stats['dynamic_thresholds']['adaptive_validations_skipped'] += 1
+            
+            return should_validate, reason
+            
+        except Exception as e:
+            self.logger.error(f"Error in cross-validation decision: {e}")
+            # Default to skip validation on error to maintain speed
+            return False, "error_skip"
     
     def _perform_cross_validation(self, image_path: str, donut_result: Dict, field_results: Dict) -> Dict:
         """
@@ -1650,7 +1851,7 @@ class EnhancedTaxDocumentProcessor:
             
             # Handle filename conflicts
             final_filename = self.filename_generator.resolve_filename_conflict(
-                filename_info['filename'], client_folder_path
+                filename_info.get('filename', 'Unknown_Document.pdf'), client_folder_path
             )
             
             # Final destination path
@@ -1660,8 +1861,8 @@ class EnhancedTaxDocumentProcessor:
             shutil.copy2(file_path, final_path)
             
             notes = []
-            if final_filename != filename_info['filename']:
-                notes.append(f"Filename conflict resolved: {filename_info['filename']} → {final_filename}")
+            if final_filename != filename_info.get('filename', ''):
+                notes.append(f"Filename conflict resolved: {filename_info.get('filename', '')} → {final_filename}")
             
             if entity_info.get('existing_folder'):
                 notes.append(f"Used existing client folder: {entity_info['existing_folder']}")
@@ -1889,22 +2090,61 @@ class EnhancedTaxDocumentProcessor:
     def _apply_document_type_preprocessing(self, image_path: str, donut_result: Dict, 
                                          temp_files: List[str]) -> Tuple[str, Dict]:
         """
-        Phase 4: Apply document-type aware preprocessing
-        
-        Args:
-            image_path: Path to the basic preprocessed image
-            donut_result: Document classification results from Donut
-            temp_files: List to track temporary files for cleanup
-            
-        Returns:
-            Tuple of (enhanced_image_path, preprocessing_results)
+        SPEED OPTIMIZED: Document-type aware preprocessing with reduced processing
         """
         preprocessing_start = time.time()
         
         try:
+            # Validate inputs
+            if not image_path or not os.path.exists(image_path):
+                return image_path, {
+                    'enhanced_image_path': image_path,
+                    'enhancement_applied': False,
+                    'error': 'Invalid image path',
+                    'processing_time': time.time() - preprocessing_start
+                }
+            
+            # Validate donut_result
+            if not isinstance(donut_result, dict):
+                donut_result = {'donut_type': 'Unknown', 'donut_confidence': 0.0}
+            
+            # Check if speed optimizations are enabled
+            if not Config.ENABLE_SPEED_OPTIMIZATIONS:
+                # Apply full preprocessing when optimizations are disabled
+                preprocessing_results = self.document_type_aware_preprocessor.preprocess_document(
+                    image_path, donut_result.get('donut_type', 'Unknown'), donut_result.get('donut_confidence', 0.0)
+                )
+                return preprocessing_results.get('enhanced_image_path', image_path), preprocessing_results
+            
             # Extract document type and confidence from Donut results
             doc_type = donut_result.get('donut_type', 'Unknown')
             doc_confidence = donut_result.get('donut_confidence', 0.0)
+            
+            # Ensure doc_type is not None
+            if doc_type is None:
+                doc_type = 'Unknown'
+            
+            # SPEED OPTIMIZATION: Skip preprocessing for high-confidence results
+            if doc_confidence > Config.SKIP_PREPROCESSING_HIGH_CONFIDENCE:
+                self.logger.info(f"Skipping preprocessing for high-confidence {doc_type} ({doc_confidence:.2f})")
+                return image_path, {
+                    'enhanced_image_path': image_path,
+                    'enhancement_applied': False,
+                    'processing_time': time.time() - preprocessing_start,
+                    'skip_reason': 'high_confidence'
+                }
+            
+            # SPEED OPTIMIZATION: Skip preprocessing for simple document types
+            simple_doc_types = ['W-2', '1099-NEC', '1099-MISC', '1099-INT', '1099-DIV']
+            if any(simple_type in doc_type for simple_type in simple_doc_types):
+                if doc_confidence > Config.SKIP_PREPROCESSING_SIMPLE_DOCS:
+                    self.logger.info(f"Skipping preprocessing for simple document type: {doc_type}")
+                    return image_path, {
+                        'enhanced_image_path': image_path,
+                        'enhancement_applied': False,
+                        'processing_time': time.time() - preprocessing_start,
+                        'skip_reason': 'simple_document'
+                    }
             
             self.logger.info(f"🎨 Applying document-type aware preprocessing for {doc_type} (confidence: {doc_confidence:.2f})")
             
@@ -1913,8 +2153,21 @@ class EnhancedTaxDocumentProcessor:
                 image_path, doc_type, doc_confidence
             )
             
+            # Validate preprocessing results
+            if not isinstance(preprocessing_results, dict):
+                self.logger.error(f"Invalid preprocessing results format: {type(preprocessing_results)}")
+                return image_path, {
+                    'enhanced_image_path': image_path,
+                    'enhancement_applied': False,
+                    'error': 'Invalid preprocessing results',
+                    'processing_time': time.time() - preprocessing_start
+                }
+            
             # Track preprocessing statistics
-            self._track_document_type_preprocessing_stats(preprocessing_results)
+            try:
+                self._track_document_type_preprocessing_stats(preprocessing_results)
+            except Exception as e:
+                self.logger.error(f"Error tracking preprocessing stats: {e}")
             
             enhanced_image_path = preprocessing_results.get('enhanced_image_path', image_path)
             
@@ -1923,17 +2176,12 @@ class EnhancedTaxDocumentProcessor:
                 temp_files.append(enhanced_image_path)
             
             processing_time = time.time() - preprocessing_start
-            
-            if preprocessing_results.get('enhancement_applied'):
-                self.logger.info(f"✨ Document-type preprocessing applied in {processing_time:.2f}s")
-            else:
-                self.logger.info(f"⏭️ Document-type preprocessing skipped (good quality or low confidence)")
+            preprocessing_results['processing_time'] = processing_time
             
             return enhanced_image_path, preprocessing_results
             
         except Exception as e:
-            self.logger.error(f"Error in document-type aware preprocessing: {e}")
-            # Return original image path if preprocessing fails
+            self.logger.error(f"Error in document preprocessing: {e}")
             return image_path, {
                 'enhanced_image_path': image_path,
                 'enhancement_applied': False,
@@ -2184,15 +2432,22 @@ class EnhancedTaxDocumentProcessor:
         
         Args:
             file_paths_and_names: List of (file_path, original_filename) tuples
-            processing_options: Optional processing configuration
+            processing_options: Optional processing configuration (including session_callback)
             
         Returns:
             List of processing results
         """
+        # Extract callback function if provided
+        session_callback = processing_options.get('session_callback') if processing_options else None
+        
         if not self.batch_processing_enabled or len(file_paths_and_names) < 2:
             # Process individually if batching disabled or too few documents
             results = []
-            for file_path, filename in file_paths_and_names:
+            for i, (file_path, filename) in enumerate(file_paths_and_names):
+                # Call progress callback if provided
+                if session_callback:
+                    session_callback(i + 1, filename)
+                    
                 result = self.process_document(file_path, filename, 
                                              processing_options.get('manual_client_info') if processing_options else None)
                 result['processing_mode'] = 'individual_batch_disabled'
@@ -2220,16 +2475,18 @@ class EnhancedTaxDocumentProcessor:
         
         # Process batch groups
         all_results = []
+        current_index = 0
         for batch_group in batch_groups:
-            batch_results = self._process_batch_group_directly(batch_group)
+            batch_results = self._process_batch_group_directly(batch_group, session_callback, current_index)
             all_results.extend(batch_results)
+            current_index += len(batch_group.documents)
         
         # Update batch processing statistics
         self._update_batch_processing_stats(batch_groups, all_results)
         
         return all_results
     
-    def _process_batch_group_directly(self, batch_group) -> List[Dict]:
+    def _process_batch_group_directly(self, batch_group, session_callback=None, start_index=0) -> List[Dict]:
         """Process a batch group directly (synchronous processing)"""
         results = []
         batch_start_time = time.time()
@@ -2237,7 +2494,10 @@ class EnhancedTaxDocumentProcessor:
         self.logger.info(f"🚀 Processing batch group with {len(batch_group.documents)} documents using {batch_group.strategy.value}")
         
         # Process documents in the batch group
-        for doc in batch_group.documents:
+        for i, doc in enumerate(batch_group.documents):
+            # Call progress callback if provided
+            if session_callback:
+                session_callback(start_index + i + 1, doc.original_filename)
             try:
                 result = self.process_document(
                     doc.file_path,
@@ -2523,3 +2783,78 @@ class EnhancedTaxDocumentProcessor:
         }
         
         return stats
+
+    def _merge_with_validation(self, original_result: Dict, validation_result: Dict) -> Dict:
+        """
+        Merge validation results with original extraction
+        """
+        try:
+            merged = original_result.copy()
+            
+            # Apply validation corrections
+            if validation_result.get('document_type_correct') == False:
+                merged['document_type'] = validation_result.get('corrected_document_type', merged.get('document_type'))
+            
+            if validation_result.get('client_name_correct') == False:
+                merged['client_name'] = validation_result.get('corrected_client_name', merged.get('client_name'))
+            
+            if validation_result.get('tax_year_correct') == False:
+                merged['tax_year'] = validation_result.get('corrected_tax_year', merged.get('tax_year'))
+            
+            # Update confidence based on validation
+            validation_confidence = validation_result.get('validation_confidence', 0.0)
+            original_confidence = merged.get('confidence', 0.0)
+            
+            # Weighted average of original and validation confidence
+            merged['confidence'] = (original_confidence * 0.7) + (validation_confidence * 0.3)
+            
+            # Add validation notes
+            merged['validation_notes'] = validation_result.get('validation_notes', '')
+            merged['validation_applied'] = True
+            
+            return merged
+            
+        except Exception as e:
+            self.logger.error(f"Error merging validation results: {e}")
+            return original_result
+    
+    def _extract_individual_fields(self, image_path: str, routing_plan: Dict) -> Dict:
+        """
+        Fallback: Extract fields individually (slower but more detailed)
+        """
+        try:
+            field_results = {}
+            
+            # Extract client names
+            if routing_plan.get('client_names') == 'claude':
+                client_info = self._extract_client_names_claude(image_path)
+                field_results.update(client_info)
+            
+            # Extract amounts
+            if routing_plan.get('amounts') == 'claude':
+                amount_info = self._extract_amounts_fallback(image_path)
+                field_results.update(amount_info)
+            
+            # Extract dates
+            if routing_plan.get('dates') == 'claude':
+                date_info = self._extract_dates_claude(image_path)
+                field_results.update(date_info)
+            
+            # Extract addresses
+            if routing_plan.get('addresses') == 'claude':
+                address_info = self._extract_addresses_claude(image_path)
+                field_results.update(address_info)
+            
+            # Fill missing fields with comprehensive extraction
+            if self._needs_comprehensive_extraction(field_results):
+                comprehensive_info = self.claude_ocr.extract_comprehensive_document_info(image_path)
+                field_results = self._merge_with_comprehensive(field_results, comprehensive_info)
+            
+            field_results['extraction_method'] = 'individual_fields'
+            field_results['confidence'] = self._calculate_field_routing_confidence(field_results)
+            
+            return field_results
+            
+        except Exception as e:
+            self.logger.error(f"Error in individual field extraction: {e}")
+            return {'confidence': 0.0, 'error': str(e)}

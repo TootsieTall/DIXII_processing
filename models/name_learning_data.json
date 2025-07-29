@@ -1,0 +1,559 @@
+{
+  "manual_inputs": [
+    {
+      "timestamp": "2025-07-29T17:58:47.128647",
+      "image_path": "test_schedule_k1_John_Smith.png",
+      "manual_name": "John Smith",
+      "doc_type": "schedule_k1",
+      "bbox_location": [
+        50,
+        100,
+        300,
+        120
+      ],
+      "confidence": 1.0,
+      "ocr_results": [
+        {
+          "text": "Schedule",
+          "bbox": [
+            51,
+            52,
+            95,
+            60
+          ],
+          "confidence": 0.76
+        },
+        {
+          "text": "K-1",
+          "bbox": [
+            99,
+            52,
+            111,
+            60
+          ],
+          "confidence": 0.63
+        },
+        {
+          "text": "(Form",
+          "bbox": [
+            116,
+            52,
+            142,
+            61
+          ],
+          "confidence": 0.82
+        },
+        {
+          "text": "1085),",
+          "bbox": [
+            146,
+            52,
+            171,
+            61
+          ],
+          "confidence": 0.81
+        },
+        {
+          "text": "Partner:",
+          "bbox": [
+            51,
+            102,
+            86,
+            110
+          ],
+          "confidence": 0.62
+        },
+        {
+          "text": "John",
+          "bbox": [
+            90,
+            102,
+            113,
+            110
+          ],
+          "confidence": 0.62
+        },
+        {
+          "text": "Smith",
+          "bbox": [
+            117,
+            102,
+            143,
+            110
+          ],
+          "confidence": 0.84
+        },
+        {
+          "text": "Tax",
+          "bbox": [
+            51,
+            152,
+            65,
+            160
+          ],
+          "confidence": 0.91
+        },
+        {
+          "text": "Year:",
+          "bbox": [
+            70,
+            141,
+            92,
+            169
+          ],
+          "confidence": 0.6
+        },
+        {
+          "text": "2024",
+          "bbox": [
+            96,
+            152,
+            117,
+            160
+          ],
+          "confidence": 0.6
+        }
+      ],
+      "image_size": [
+        800,
+        600
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T17:58:47.281253",
+      "image_path": "test_w2_Jane_Doe.png",
+      "manual_name": "Jane Doe",
+      "doc_type": "w2",
+      "bbox_location": [
+        50,
+        100,
+        300,
+        120
+      ],
+      "confidence": 1.0,
+      "ocr_results": [
+        {
+          "text": "Employee:",
+          "bbox": [
+            51,
+            102,
+            95,
+            112
+          ],
+          "confidence": 0.76
+        },
+        {
+          "text": "Jane",
+          "bbox": [
+            101,
+            102,
+            123,
+            110
+          ],
+          "confidence": 0.95
+        },
+        {
+          "text": "Dos",
+          "bbox": [
+            127,
+            102,
+            143,
+            110
+          ],
+          "confidence": 0.82
+        },
+        {
+          "text": "Tax",
+          "bbox": [
+            51,
+            152,
+            64,
+            160
+          ],
+          "confidence": 0.91
+        },
+        {
+          "text": "Year:",
+          "bbox": [
+            70,
+            141,
+            92,
+            169
+          ],
+          "confidence": 0.6
+        },
+        {
+          "text": "2024",
+          "bbox": [
+            96,
+            152,
+            117,
+            160
+          ],
+          "confidence": 0.6
+        }
+      ],
+      "image_size": [
+        800,
+        600
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T17:58:47.438056",
+      "image_path": "test_1099_Robert_Johnson.png",
+      "manual_name": "Robert Johnson",
+      "doc_type": "1099",
+      "bbox_location": [
+        50,
+        100,
+        300,
+        120
+      ],
+      "confidence": 1.0,
+      "ocr_results": [
+        {
+          "text": "Form",
+          "bbox": [
+            51,
+            52,
+            73,
+            60
+          ],
+          "confidence": 0.83
+        },
+        {
+          "text": "1099-MISC",
+          "bbox": [
+            77,
+            52,
+            127,
+            60
+          ],
+          "confidence": 0.38
+        },
+        {
+          "text": "Payee:",
+          "bbox": [
+            51,
+            102,
+            77,
+            112
+          ],
+          "confidence": 0.8
+        },
+        {
+          "text": "Robert",
+          "bbox": [
+            84,
+            92,
+            112,
+            120
+          ],
+          "confidence": 0.68
+        },
+        {
+          "text": "Johnson",
+          "bbox": [
+            117,
+            92,
+            154,
+            120
+          ],
+          "confidence": 0.68
+        },
+        {
+          "text": "Tax",
+          "bbox": [
+            51,
+            152,
+            64,
+            160
+          ],
+          "confidence": 0.91
+        },
+        {
+          "text": "Year:",
+          "bbox": [
+            70,
+            141,
+            92,
+            169
+          ],
+          "confidence": 0.6
+        },
+        {
+          "text": "2024",
+          "bbox": [
+            96,
+            152,
+            117,
+            160
+          ],
+          "confidence": 0.6
+        }
+      ],
+      "image_size": [
+        800,
+        600
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T17:58:47.753227",
+      "image_path": "test_schedule_k1_Alice_Brown.png",
+      "manual_name": "Alice Brown",
+      "doc_type": "schedule_k1",
+      "bbox_location": [
+        50,
+        100,
+        300,
+        120
+      ],
+      "confidence": 1.0,
+      "ocr_results": [
+        {
+          "text": "Schedule",
+          "bbox": [
+            51,
+            52,
+            95,
+            60
+          ],
+          "confidence": 0.76
+        },
+        {
+          "text": "K-1",
+          "bbox": [
+            99,
+            52,
+            111,
+            60
+          ],
+          "confidence": 0.63
+        },
+        {
+          "text": "(Form",
+          "bbox": [
+            116,
+            52,
+            142,
+            61
+          ],
+          "confidence": 0.82
+        },
+        {
+          "text": "1085),",
+          "bbox": [
+            146,
+            52,
+            171,
+            61
+          ],
+          "confidence": 0.81
+        },
+        {
+          "text": "Partner:",
+          "bbox": [
+            51,
+            102,
+            86,
+            110
+          ],
+          "confidence": 0.65
+        },
+        {
+          "text": "Alice",
+          "bbox": [
+            89,
+            102,
+            111,
+            110
+          ],
+          "confidence": 0.61
+        },
+        {
+          "text": "Brown,",
+          "bbox": [
+            115,
+            102,
+            143,
+            110
+          ],
+          "confidence": 0.66
+        },
+        {
+          "text": "Tax",
+          "bbox": [
+            51,
+            152,
+            64,
+            160
+          ],
+          "confidence": 0.91
+        },
+        {
+          "text": "Year:",
+          "bbox": [
+            70,
+            141,
+            92,
+            169
+          ],
+          "confidence": 0.6
+        },
+        {
+          "text": "2024",
+          "bbox": [
+            96,
+            152,
+            117,
+            160
+          ],
+          "confidence": 0.6
+        }
+      ],
+      "image_size": [
+        800,
+        600
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T17:58:47.931143",
+      "image_path": "test_w2_Bob_Wilson.png",
+      "manual_name": "Bob Wilson",
+      "doc_type": "w2",
+      "bbox_location": [
+        50,
+        100,
+        300,
+        120
+      ],
+      "confidence": 1.0,
+      "ocr_results": [
+        {
+          "text": "Employee:",
+          "bbox": [
+            51,
+            102,
+            95,
+            112
+          ],
+          "confidence": 0.77
+        },
+        {
+          "text": "ob",
+          "bbox": [
+            105,
+            102,
+            117,
+            110
+          ],
+          "confidence": 0.8
+        },
+        {
+          "text": "Wilson",
+          "bbox": [
+            119,
+            102,
+            150,
+            110
+          ],
+          "confidence": 0.53
+        },
+        {
+          "text": "Tax",
+          "bbox": [
+            51,
+            152,
+            64,
+            160
+          ],
+          "confidence": 0.91
+        },
+        {
+          "text": "Year:",
+          "bbox": [
+            70,
+            141,
+            92,
+            169
+          ],
+          "confidence": 0.6
+        },
+        {
+          "text": "2024",
+          "bbox": [
+            96,
+            152,
+            117,
+            160
+          ],
+          "confidence": 0.6
+        }
+      ],
+      "image_size": [
+        800,
+        600
+      ]
+    }
+  ],
+  "form_types": {
+    "schedule_k1": [
+      {
+        "name": "John Smith",
+        "bbox": [
+          50,
+          100,
+          300,
+          120
+        ],
+        "timestamp": "2025-07-29T17:58:47.128711"
+      },
+      {
+        "name": "Alice Brown",
+        "bbox": [
+          50,
+          100,
+          300,
+          120
+        ],
+        "timestamp": "2025-07-29T17:58:47.753290"
+      }
+    ],
+    "w2": [
+      {
+        "name": "Jane Doe",
+        "bbox": [
+          50,
+          100,
+          300,
+          120
+        ],
+        "timestamp": "2025-07-29T17:58:47.281295"
+      },
+      {
+        "name": "Bob Wilson",
+        "bbox": [
+          50,
+          100,
+          300,
+          120
+        ],
+        "timestamp": "2025-07-29T17:58:47.931185"
+      }
+    ],
+    "1099": [
+      {
+        "name": "Robert Johnson",
+        "bbox": [
+          50,
+          100,
+          300,
+          120
+        ],
+        "timestamp": "2025-07-29T17:58:47.438099"
+      }
+    ]
+  },
+  "confidence_improvements": [],
+  "last_updated": null
+}

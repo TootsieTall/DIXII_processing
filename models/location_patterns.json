@@ -1,0 +1,71 @@
+{
+  "form_types": {
+    "schedule_k1": {
+      "name_locations": [
+        {
+          "name": "John Smith",
+          "bbox": [
+            0.0625,
+            0.16666666666666666,
+            0.375,
+            0.2
+          ],
+          "timestamp": "2025-07-29T17:58:47.128716"
+        },
+        {
+          "name": "Alice Brown",
+          "bbox": [
+            0.0625,
+            0.16666666666666666,
+            0.375,
+            0.2
+          ],
+          "timestamp": "2025-07-29T17:58:47.753299"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "w2": {
+      "name_locations": [
+        {
+          "name": "Jane Doe",
+          "bbox": [
+            0.0625,
+            0.16666666666666666,
+            0.375,
+            0.2
+          ],
+          "timestamp": "2025-07-29T17:58:47.281299"
+        },
+        {
+          "name": "Bob Wilson",
+          "bbox": [
+            0.0625,
+            0.16666666666666666,
+            0.375,
+            0.2
+          ],
+          "timestamp": "2025-07-29T17:58:47.931192"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "1099": {
+      "name_locations": [
+        {
+          "name": "Robert Johnson",
+          "bbox": [
+            0.0625,
+            0.16666666666666666,
+            0.375,
+            0.2
+          ],
+          "timestamp": "2025-07-29T17:58:47.438104"
+        }
+      ],
+      "confidence_threshold": 0.7
+    }
+  },
+  "name_locations": {},
+  "confidence_thresholds": {}
+}

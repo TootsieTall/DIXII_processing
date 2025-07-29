@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rename Test</title>
+    <style>
+        body { padding: 20px; font-family: Arial; }
+        .form-input { 
+            width: 300px; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            margin: 10px 0;
+        }
+        button { 
+            padding: 8px 16px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Rename Input Test</h1>
+    <p>This tests if input fields work properly:</p>
+    
+    <label>Current Name (readonly):</label><br>
+    <input type="text" id="current-name" class="form-input" value="test_document.pdf" readonly>
+    
+    <label>New Name (editable):</label><br>
+    <input type="text" id="new-name" class="form-input" value="test_document.pdf" placeholder="Enter new filename" autocomplete="off">
+    
+    <br><button onclick="testRename()">Test Focus & Select</button>
+    <button onclick="showValues()">Show Values</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+    
+    <script>
+        function testRename() {
+            const newNameField = document.getElementById('new-name');
+            newNameField.removeAttribute('readonly');
+            newNameField.removeAttribute('disabled');
+            newNameField.focus();
+            newNameField.select();
+            console.log('Field focused and selected');
+            document.getElementById('result').innerHTML = 'Field should be focused and text selected';
+        }
+        
+        function showValues() {
+            const current = document.getElementById('current-name').value;
+            const newName = document.getElementById('new-name').value;
+            document.getElementById('result').innerHTML = `Current: ${current}<br>New: ${newName}`;
+            console.log('Current:', current, 'New:', newName);
+        }
+    </script>
+</body>
+</html> 

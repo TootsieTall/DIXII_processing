@@ -29,24 +29,38 @@ class EnhancedClaudeOCR:
         }
     
     def image_to_base64(self, image_path):
-        """Convert image to base64 for Claude API with optimization"""
+        """Convert image or PDF to base64 for Claude API with optimization"""
         try:
-            with Image.open(image_path) as img:
-                # Convert to RGB if necessary
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
+            # Handle PDFs by converting to image
+            file_ext = os.path.splitext(image_path)[1].lower()
+            if file_ext == '.pdf':
+                # Convert PDF to image for Claude processing
+                import pdf2image
+                images = pdf2image.convert_from_path(image_path, dpi=300)
+                if not images:
+                    return None
                 
-                # Resize image if too large (Claude has size limits)
-                max_size = (1568, 1568)
-                img.thumbnail(max_size, Image.Resampling.LANCZOS)
-                
-                # Convert to base64
-                buffer = io.BytesIO()
-                img.save(buffer, format='JPEG', quality=90)
-                img_data = buffer.getvalue()
-                return base64.b64encode(img_data).decode('utf-8')
+                # Use first page for processing
+                img = images[0]
+            else:
+                # Load image directly
+                img = Image.open(image_path)
+            
+            # Convert to RGB if necessary
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize image if too large (Claude has size limits)
+            max_size = (1568, 1568)
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            
+            # Convert to base64
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG', quality=90)
+            img_data = buffer.getvalue()
+            return base64.b64encode(img_data).decode('utf-8')
         except Exception as e:
-            self.logger.error(f"Error converting image to base64: {e}")
+            self.logger.error(f"Error converting image/PDF to base64: {e}")
             return None
     
     def extract_comprehensive_document_info(self, image_path):

@@ -30,6 +30,81 @@ Config.init_app(app)
 processing_sessions = {}
 enhanced_processor = None
 
+def cleanup_old_uploads(max_age_hours=24):
+    """Clean up old files from uploads folder"""
+    try:
+        upload_folder = Config.UPLOAD_FOLDER
+        if not os.path.exists(upload_folder):
+            return
+        
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+        
+        for filename in os.listdir(upload_folder):
+            file_path = os.path.join(upload_folder, filename)
+            
+            # Skip .gitkeep and other system files
+            if filename in ['.gitkeep', '.DS_Store']:
+                continue
+                
+            if os.path.isfile(file_path):
+                file_age = current_time - os.path.getmtime(file_path)
+                if file_age > max_age_seconds:
+                    try:
+                        os.remove(file_path)
+                        logging.info(f"Cleaned up old upload file: {filename}")
+                    except Exception as e:
+                        logging.warning(f"Failed to clean up {filename}: {e}")
+                        
+    except Exception as e:
+        logging.error(f"Error during upload cleanup: {e}")
+
+def cleanup_old_sessions(max_age_hours=2):
+    """Clean up old processing sessions from memory"""
+    global processing_sessions
+    
+    try:
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+        
+        sessions_to_remove = []
+        
+        for session_id, session in processing_sessions.items():
+            # Check if session is old enough to be cleaned up
+            session_age = current_time - session.get('session_created_at', current_time)
+            
+            # Clean up sessions that are:
+            # 1. Completed/Error and older than max_age_hours
+            # 2. Stuck in processing for more than STUCK_SESSION_CLEANUP_AGE_HOURS
+            if (session['status'] in ['completed', 'error'] and session_age > max_age_seconds) or \
+               (session['status'] == 'processing' and session_age > Config.STUCK_SESSION_CLEANUP_AGE_HOURS * 3600):
+                sessions_to_remove.append(session_id)
+                logging.info(f"Marking session {session_id} for cleanup (age: {session_age/3600:.1f}h, status: {session['status']})")
+        
+        # Remove old sessions
+        for session_id in sessions_to_remove:
+            del processing_sessions[session_id]
+            logging.info(f"Cleaned up old session: {session_id}")
+            
+    except Exception as e:
+        logging.error(f"Error during session cleanup: {e}")
+
+def _update_batch_progress(session_id, current, filename):
+    """Update batch processing progress for real-time updates"""
+    global processing_sessions
+    
+    if session_id in processing_sessions:
+        session = processing_sessions[session_id]
+        session['current'] = current
+        session['current_file'] = filename
+        
+        # Update the corresponding result status
+        if current > 0 and current <= len(session['results']):
+            session['results'][current - 1]['status'] = 'processing'
+        
+        logging.info(f"Batch progress update: {current}/{session.get('total', 0)} - {filename}")
+        logging.info(f"Session {session_id} batch processing file {current}/{session.get('total', 0)}: {filename}")
+
 def init_enhanced_processor():
     """Initialize the enhanced document processor with batch processing"""
     global enhanced_processor
@@ -68,31 +143,35 @@ def process_documents_enhanced_with_batching(session_id, file_paths, processing_
         total_files = len(file_paths)
         session = processing_sessions[session_id]
         
+        # Initialize results array if not already done
+        if not session.get('results'):
+            session['results'] = []
+            for _, original_filename in file_paths:
+                session['results'].append({
+                    'original_filename': original_filename,
+                    'status': 'waiting',
+                    'client_name': None,
+                    'document_type': None,
+                    'tax_year': None,
+                    'new_filename': None,
+                    'error': None,
+                    'confidence': 0.0,
+                    'entity_info': {},
+                    'extracted_details': {},
+                    'processing_notes': [],
+                    'processing_mode': 'unknown',
+                    'batch_performance': {}
+                })
+        
         session.update({
             'total': total_files,
-            'results': [],
             'enhanced_stats': {},
-            'batch_stats': {},
-            'processing_start_time': time.time()
+            'batch_stats': {}
         })
         
-        # Initialize all files with "waiting" status
-        for _, original_filename in file_paths:
-            session['results'].append({
-                'original_filename': original_filename,
-                'status': 'waiting',
-                'client_name': None,
-                'document_type': None,
-                'tax_year': None,
-                'new_filename': None,
-                'error': None,
-                'confidence': 0.0,
-                'entity_info': {},
-                'extracted_details': {},
-                'processing_notes': [],
-                'processing_mode': 'unknown',
-                'batch_performance': {}
-            })
+        # Set processing start time if not already set
+        if not session.get('processing_start_time'):
+            session['processing_start_time'] = time.time()
         
         # Get processing options
         manual_client_info = processing_options.get('manual_client_info')
@@ -107,17 +186,37 @@ def process_documents_enhanced_with_batching(session_id, file_paths, processing_
             # Configure batch processing options
             batch_options = {
                 'manual_client_info': manual_client_info,
-                'high_priority': processing_options.get('high_priority', False)
+                'high_priority': processing_options.get('high_priority', False),
+                'session_callback': lambda current, filename: _update_batch_progress(session_id, current, filename)
             }
             
             # Process with intelligent batching
             results = enhanced_processor.process_document_batch(file_paths_and_names, batch_options)
             
-            # Update session results
-            for i, result in enumerate(results):
-                if i < len(session['results']):
-                    session['results'][i] = result
-                    session['results'][i]['processed_at'] = time.time()
+            # Update session results with proper validation
+            if results and isinstance(results, list):
+                for i, result in enumerate(results):
+                    if i < len(session['results']):
+                        # Ensure result has required fields
+                        if isinstance(result, dict):
+                            session['results'][i].update(result)
+                            session['results'][i]['processed_at'] = time.time()
+                        else:
+                            logging.error(f"Invalid result format at index {i}: {result}")
+                            session['results'][i].update({
+                                'status': 'error',
+                                'error': 'Invalid result format',
+                                'processed_at': time.time()
+                            })
+            else:
+                logging.error(f"Invalid batch processing results: {results}")
+                # Mark all results as error
+                for i in range(len(session['results'])):
+                    session['results'][i].update({
+                        'status': 'error',
+                        'error': 'Batch processing failed',
+                        'processed_at': time.time()
+                    })
             
         else:
             # Fall back to individual processing
@@ -129,6 +228,11 @@ def process_documents_enhanced_with_batching(session_id, file_paths, processing_
                 session['current_file'] = original_filename
                 session['results'][i]['status'] = 'processing'
                 
+                logging.info(f"Starting processing file {i+1}/{len(file_paths)}: {original_filename}")
+                
+                # Small delay to ensure progress is visible during testing
+                time.sleep(0.1)
+                
                 try:
                     # Determine processing priority
                     priority = ProcessingPriority.HIGH if processing_options.get('high_priority') else ProcessingPriority.NORMAL
@@ -138,9 +242,17 @@ def process_documents_enhanced_with_batching(session_id, file_paths, processing_
                         file_path, original_filename, priority, manual_client_info
                     )
                     
-                    # Update the result in the session
-                    session['results'][i] = result
-                    session['results'][i]['processed_at'] = time.time()
+                    # Update the result in the session with validation
+                    if isinstance(result, dict):
+                        session['results'][i].update(result)
+                        session['results'][i]['processed_at'] = time.time()
+                    else:
+                        logging.error(f"Invalid result format for {original_filename}: {result}")
+                        session['results'][i].update({
+                            'status': 'error',
+                            'error': 'Invalid result format',
+                            'processed_at': time.time()
+                        })
                     
                     logging.info(f"Enhanced processing completed for {original_filename}")
                     
@@ -160,18 +272,37 @@ def process_documents_enhanced_with_batching(session_id, file_paths, processing_
                     pass
         
         # Generate enhanced statistics including batch performance
-        session['enhanced_stats'] = enhanced_processor.get_enhanced_processing_stats(
-            session['results']
-        )
+        try:
+            session['enhanced_stats'] = enhanced_processor.get_enhanced_processing_stats(
+                session['results']
+            )
+        except Exception as e:
+            logging.error(f"Error generating enhanced stats: {e}")
+            session['enhanced_stats'] = {}
         
         # Get batch processing specific statistics
-        session['batch_stats'] = enhanced_processor.get_batch_processing_status()
+        try:
+            session['batch_stats'] = enhanced_processor.get_batch_processing_status()
+        except Exception as e:
+            logging.error(f"Error getting batch stats: {e}")
+            session['batch_stats'] = {}
         
         session.update({
             'status': 'completed',
+            'current': len(file_paths),  # Ensure current shows total when complete
+            'current_file': '',  # Clear current file when done
             'processing_end_time': time.time(),
             'total_processing_time': time.time() - session['processing_start_time']
         })
+        
+        # Clean up all uploaded files after processing completion
+        for file_path, _ in file_paths:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    logging.info(f"Cleaned up processed file: {file_path}")
+            except Exception as e:
+                logging.warning(f"Failed to clean up {file_path}: {e}")
         
         logging.info(f"Batch processing completed for session {session_id} in {session['processing_mode']} mode")
         
@@ -238,6 +369,12 @@ def upload_files_enhanced():
     # Generate session ID
     session_id = str(uuid.uuid4())
     
+    # Clean up old uploads and sessions before processing new ones
+    if Config.ENABLE_UPLOAD_CLEANUP:
+        cleanup_old_uploads(max_age_hours=Config.UPLOAD_CLEANUP_AGE_HOURS)
+    if Config.ENABLE_SESSION_CLEANUP:
+        cleanup_old_sessions(max_age_hours=Config.SESSION_CLEANUP_AGE_HOURS)
+    
     # Save uploaded files
     file_paths = []
     for file in files:
@@ -256,11 +393,12 @@ def upload_files_enhanced():
         'total': len(file_paths),
         'current': 0,
         'current_file': '',
-        'results': [],
+        'results': [{'original_filename': filename, 'status': 'waiting'} for _, filename in file_paths],
         'enhanced_stats': {},
         'batch_stats': {},
         'error': None,
         'processing_mode': 'unknown',
+        'processing_start_time': time.time(),
         'processing_options': {
             'processing_mode': processing_mode,
             'entity_detection': entity_detection,
@@ -295,6 +433,10 @@ def get_status(session_id):
     """Get processing status with batch processing information"""
     global processing_sessions
     
+    # Clean up old sessions before checking status
+    if Config.ENABLE_SESSION_CLEANUP:
+        cleanup_old_sessions(max_age_hours=Config.SESSION_CLEANUP_AGE_HOURS)
+    
     if session_id not in processing_sessions:
         return jsonify({'error': 'Session not found'}), 404
     
@@ -326,8 +468,18 @@ def get_enhanced_status(session_id):
     """Get enhanced processing status for a session"""
     global processing_sessions
     
+    # Clean up old sessions before checking status
+    if Config.ENABLE_SESSION_CLEANUP:
+        cleanup_old_sessions(max_age_hours=Config.SESSION_CLEANUP_AGE_HOURS)
+    
+    # If session doesn't exist, return a more helpful error
     if session_id not in processing_sessions:
-        return jsonify({'error': 'Session not found'}), 404
+        return jsonify({
+            'error': 'Session not found', 
+            'message': 'This processing session has expired or was not found. Please upload your files again.',
+            'session_id': session_id,
+            'available_sessions': list(processing_sessions.keys())
+        }), 404
     
     session = processing_sessions[session_id]
     
@@ -634,11 +786,20 @@ def serve_processed_file(filename):
     try:
         # Security: prevent directory traversal
         if '..' in filename or filename.startswith('/'):
+            logging.warning(f"Invalid file path requested: {filename}")
             return "Invalid file path", 400
         
+        full_path = os.path.join(Config.PROCESSED_FOLDER, filename)
+        logging.info(f"Serving processed file: {filename} from {full_path}")
+        
+        if not os.path.exists(full_path):
+            logging.error(f"File not found: {full_path}")
+            return "File not found", 404
+        
         return send_from_directory(Config.PROCESSED_FOLDER, filename, as_attachment=False)
-    except FileNotFoundError:
-        return "File not found", 404
+    except Exception as e:
+        logging.error(f"Error serving file {filename}: {e}")
+        return f"Error serving file: {e}", 500
 
 @app.route('/download/<path:filename>')
 def download_processed_file(filename):
@@ -1035,6 +1196,114 @@ def download_all_files():
         logging.error(f"Error creating bulk download: {str(e)}")
         return jsonify({"error": "Failed to create download"}), 500
 
+@app.route('/api/cleanup-uploads', methods=['POST'])
+def cleanup_uploads():
+    """Manually clean up old upload files"""
+    try:
+        data = request.get_json() or {}
+        max_age_hours = data.get('max_age_hours', 1)  # Default to 1 hour
+        
+        # Count files before cleanup
+        upload_folder = Config.UPLOAD_FOLDER
+        files_before = len([f for f in os.listdir(upload_folder) if f not in ['.gitkeep', '.DS_Store']])
+        
+        cleanup_old_uploads(max_age_hours=max_age_hours)
+        
+        # Count files after cleanup
+        files_after = len([f for f in os.listdir(upload_folder) if f not in ['.gitkeep', '.DS_Store']])
+        files_removed = files_before - files_after
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Upload cleanup completed - {files_removed} files removed (older than {max_age_hours} hours)",
+            "files_removed": files_removed,
+            "files_remaining": files_after
+        })
+        
+    except Exception as e:
+        logging.error(f"Error during manual upload cleanup: {str(e)}")
+        return jsonify({"error": f"Failed to clean up uploads: {str(e)}"}), 500
+
+@app.route('/api/cleanup-sessions', methods=['POST'])
+def cleanup_sessions():
+    """Manually clean up old processing sessions"""
+    try:
+        data = request.get_json() or {}
+        max_age_hours = data.get('max_age_hours', 2)
+        
+        initial_count = len(processing_sessions)
+        cleanup_old_sessions(max_age_hours=max_age_hours)
+        final_count = len(processing_sessions)
+        cleaned_count = initial_count - final_count
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Session cleanup completed ({cleaned_count} sessions removed)",
+            "sessions_removed": cleaned_count,
+            "remaining_sessions": final_count
+        })
+        
+    except Exception as e:
+        logging.error(f"Error during manual session cleanup: {str(e)}")
+        return jsonify({"error": f"Failed to clean up sessions: {str(e)}"}), 500
+
+@app.route('/api/debug-sessions', methods=['GET'])
+def debug_sessions():
+    """Debug endpoint to check active sessions"""
+    try:
+        session_info = {}
+        for session_id, session in processing_sessions.items():
+            session_info[session_id] = {
+                'status': session.get('status'),
+                'current': session.get('current', 0),
+                'total': session.get('total', 0),
+                'current_file': session.get('current_file', ''),
+                'processing_mode': session.get('processing_mode', 'unknown'),
+                'results_count': len(session.get('results', []))
+            }
+        
+        return jsonify({
+            "success": True,
+            "active_sessions": len(processing_sessions),
+            "sessions": session_info
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting session debug info: {str(e)}")
+        return jsonify({"error": f"Failed to get session info: {str(e)}"}), 500
+
+@app.route('/api/debug-files', methods=['GET'])
+def debug_files():
+    """Debug endpoint to check processed files"""
+    try:
+        processed_path = Path(Config.PROCESSED_FOLDER)
+        files_info = []
+        
+        if processed_path.exists():
+            for root, dirs, files in os.walk(processed_path):
+                for file in files:
+                    file_path = Path(root) / file
+                    relative_path = file_path.relative_to(processed_path)
+                    files_info.append({
+                        'filename': file,
+                        'relative_path': str(relative_path).replace('\\', '/'),
+                        'full_path': str(file_path),
+                        'exists': file_path.exists(),
+                        'size': file_path.stat().st_size if file_path.exists() else 0
+                    })
+        
+        return jsonify({
+            "success": True,
+            "processed_folder": str(processed_path),
+            "folder_exists": processed_path.exists(),
+            "files_count": len(files_info),
+            "files": files_info[:20]  # Limit to first 20 files for readability
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting files debug info: {str(e)}")
+        return jsonify({"error": f"Failed to get files info: {str(e)}"}), 500
+
 @app.route('/api/open-explorer', methods=['POST'])
 def open_file_explorer():
     """Open local file explorer to show processed files folder"""
@@ -1171,6 +1440,62 @@ def get_batch_statistics():
         })
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/manual_client_input', methods=['POST'])
+def manual_client_input():
+    """Handle manual client input and trigger learning"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        session_id = data.get('session_id')
+        image_path = data.get('image_path')
+        manual_name = data.get('manual_name')
+        doc_type = data.get('doc_type')
+        bbox_location = data.get('bbox_location')
+        confidence = data.get('confidence', 1.0)
+        
+        if not session_id or not image_path or not manual_name:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Get the enhanced name detector
+        enhanced_processor = get_enhanced_processor()
+        if not enhanced_processor or not enhanced_processor.name_detector:
+            return jsonify({'error': 'Name detector not available'}), 500
+        
+        # Learn from manual input
+        enhanced_processor.name_detector.learn_from_manual_input(
+            image_path=image_path,
+            manual_name=manual_name,
+            doc_type=doc_type,
+            bbox_location=bbox_location,
+            confidence=confidence
+        )
+        
+        # Update session with manual input
+        if session_id in processing_sessions:
+            session = processing_sessions[session_id]
+            if 'manual_inputs' not in session:
+                session['manual_inputs'] = []
+            
+            session['manual_inputs'].append({
+                'name': manual_name,
+                'doc_type': doc_type,
+                'timestamp': datetime.now().isoformat(),
+                'confidence': confidence
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Learned from manual input: {manual_name}',
+            'session_id': session_id
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in manual client input: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

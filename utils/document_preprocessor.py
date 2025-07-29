@@ -360,21 +360,18 @@ class DocumentPreprocessor:
                     # Skip enhancement - image is already good quality
                     self.logger.info(f"Skipping enhancement (good quality: {initial_quality['overall_score']:.2f})")
                     
-                    # Just optimize for OCR without heavy processing
-                    optimized_img = self._optimize_for_ocr(img)
-                    enhanced_path = f"optimized_{uuid.uuid4()}.jpg"
-                    optimized_img.save(enhanced_path, 'JPEG', quality=95, dpi=(200, 200))
-                    
+                    # Return original file path instead of creating optimized version
                     enhancement_report = {
                         'initial_quality': initial_quality,
                         'final_quality': initial_quality,  # No change
                         'quality_improvement': 0.0,
-                        'enhancements_applied': ['ocr_optimization_only'],
+                        'enhancements_applied': ['no_enhancement_needed'],
                         'processing_successful': True,
-                        'time_saved': True
+                        'time_saved': True,
+                        'original_file_used': True
                     }
                     
-                    return enhanced_path, initial_quality['overall_score'], enhancement_report
+                    return image_path, initial_quality['overall_score'], enhancement_report
                     
         except Exception as e:
             self.logger.error(f"Error in smart enhancement: {e}")

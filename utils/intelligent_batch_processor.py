@@ -485,9 +485,11 @@ class IntelligentBatchProcessor:
             'total_batches_processed': 0,
             'total_documents_batched': 0,
             'total_individual_processed': 0,
+            'cost_optimization_rate': 0.0,
+            'time_optimization_rate': 0.0,
             'api_cost_savings': [],
             'processing_time_savings': [],
-            'batch_efficiency_scores': [],
+            'average_batch_size': [],
             'strategy_usage': {
                 'document_type_grouping': 0,
                 'quality_level_grouping': 0,
@@ -495,10 +497,13 @@ class IntelligentBatchProcessor:
                 'processing_requirement_grouping': 0,
                 'mixed_optimization': 0
             },
-            'document_type_batch_performance': {},
-            'average_batch_size': [],
-            'cost_optimization_rate': 0.0,
-            'time_optimization_rate': 0.0
+            'batch_processing_enabled': True,
+            'current_queue_size': 0,
+            'active_batches_count': 0,
+            'recent_completion_rate': 0.0,
+            'average_wait_time': 0.0,
+            'total_cost_saved': 0.0,
+            'total_time_saved': 0.0
         }
     
     def add_document_to_batch_queue(self, file_path: str, original_filename: str,
@@ -913,57 +918,83 @@ class IntelligentBatchProcessor:
     
     def get_batch_processing_status(self) -> Dict:
         """Get current status of batch processing system"""
-        return {
-            'processing_active': self.processing_active,
-            'pending_documents': len(self.pending_documents),
-            'active_batches': len(self.active_batches),
-            'completed_batches_recent': len(self.completed_batches),
-            'total_batches_processed': self.processing_stats['total_batches_processed'],
-            'total_documents_batched': self.processing_stats['total_documents_batched'],
-            'total_individual_processed': self.processing_stats['total_individual_processed'],
-            'current_optimization_rates': {
-                'cost_savings': self.processing_stats['cost_optimization_rate'],
-                'time_savings': self.processing_stats['time_optimization_rate']
-            },
-            'queue_details': [
-                {
-                    'filename': doc.original_filename,
-                    'priority': doc.processing_priority.value,
-                    'wait_time': time.time() - doc.added_timestamp,
-                    'document_type': doc.document_type
-                }
-                for doc in self.pending_documents
-            ]
-        }
+        try:
+            return {
+                'processing_active': self.processing_active,
+                'pending_documents': len(self.pending_documents),
+                'active_batches': len(self.active_batches),
+                'completed_batches_recent': len(self.completed_batches),
+                'total_batches_processed': self.processing_stats.get('total_batches_processed', 0),
+                'total_documents_batched': self.processing_stats.get('total_documents_batched', 0),
+                'total_individual_processed': self.processing_stats.get('total_individual_processed', 0),
+                'current_optimization_rates': {
+                    'cost_savings': self.processing_stats.get('cost_optimization_rate', 0.0),
+                    'time_savings': self.processing_stats.get('time_optimization_rate', 0.0)
+                },
+                'queue_details': [
+                    {
+                        'filename': doc.original_filename,
+                        'priority': doc.processing_priority.value,
+                        'wait_time': time.time() - doc.added_timestamp,
+                        'document_type': doc.document_type
+                    }
+                    for doc in self.pending_documents
+                ]
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting batch processing status: {e}")
+            return {
+                'processing_active': self.processing_active,
+                'pending_documents': len(self.pending_documents),
+                'active_batches': len(self.active_batches),
+                'completed_batches_recent': len(self.completed_batches),
+                'error': str(e)
+            }
     
     def get_batch_processing_statistics(self) -> Dict:
         """Get comprehensive batch processing statistics"""
-        stats = self.processing_stats.copy()
-        
-        # Calculate summary metrics
-        if stats['average_batch_size']:
-            stats['average_batch_size_value'] = sum(stats['average_batch_size']) / len(stats['average_batch_size'])
-        else:
-            stats['average_batch_size_value'] = 0.0
-        
-        # Calculate total savings
-        total_cost_saved = sum(s['cost_saved'] for s in stats['api_cost_savings'])
-        total_time_saved = sum(s['time_saved'] for s in stats['processing_time_savings'])
-        
-        stats['total_cost_saved'] = total_cost_saved
-        stats['total_time_saved'] = total_time_saved
-        
-        # Strategy effectiveness
-        total_strategy_usage = sum(stats['strategy_usage'].values())
-        if total_strategy_usage > 0:
-            stats['strategy_effectiveness'] = {
-                strategy: (count / total_strategy_usage) * 100
-                for strategy, count in stats['strategy_usage'].items()
+        try:
+            stats = self.processing_stats.copy()
+            
+            # Calculate summary metrics
+            average_batch_size = stats.get('average_batch_size', [])
+            if average_batch_size:
+                stats['average_batch_size_value'] = sum(average_batch_size) / len(average_batch_size)
+            else:
+                stats['average_batch_size_value'] = 0.0
+            
+            # Calculate total savings
+            api_cost_savings = stats.get('api_cost_savings', [])
+            processing_time_savings = stats.get('processing_time_savings', [])
+            
+            total_cost_saved = sum(s.get('cost_saved', 0) for s in api_cost_savings)
+            total_time_saved = sum(s.get('time_saved', 0) for s in processing_time_savings)
+            
+            stats['total_cost_saved'] = total_cost_saved
+            stats['total_time_saved'] = total_time_saved
+            
+            # Strategy effectiveness
+            strategy_usage = stats.get('strategy_usage', {})
+            total_strategy_usage = sum(strategy_usage.values())
+            if total_strategy_usage > 0:
+                stats['strategy_effectiveness'] = {
+                    strategy: (count / total_strategy_usage) * 100
+                    for strategy, count in strategy_usage.items()
+                }
+            else:
+                stats['strategy_effectiveness'] = {}
+            
+            return stats
+            
+        except Exception as e:
+            self.logger.error(f"Error getting batch processing statistics: {e}")
+            return {
+                'error': str(e),
+                'total_cost_saved': 0.0,
+                'total_time_saved': 0.0,
+                'average_batch_size_value': 0.0,
+                'strategy_effectiveness': {}
             }
-        else:
-            stats['strategy_effectiveness'] = {}
-        
-        return stats
     
     def _load_historical_stats(self):
         """Load historical batch processing statistics"""

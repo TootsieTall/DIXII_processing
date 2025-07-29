@@ -243,40 +243,50 @@ class DocumentTypeAwarePreprocessor:
     
     def preprocess_document(self, image_path: str, doc_type: str, 
                           doc_confidence: float = 0.0) -> Dict:
-        """
-        Apply document-type aware preprocessing
-        
-        Args:
-            image_path: Path to the image file
-            doc_type: Predicted document type
-            doc_confidence: Confidence in document type prediction
-            
-        Returns:
-            Dict with preprocessing results and enhanced image path
-        """
+        """Preprocess document based on type and quality analysis"""
         preprocessing_start = time.time()
         
         try:
+            # Validate inputs
+            if not image_path or not os.path.exists(image_path):
+                return {
+                    'enhanced_image_path': image_path,
+                    'enhancement_applied': False,
+                    'error': 'Invalid image path',
+                    'processing_time': time.time() - preprocessing_start
+                }
+            
+            # Ensure doc_type is not None
+            if doc_type is None:
+                doc_type = 'Unknown'
+            
             # Analyze image quality
             quality_analysis = self.analyze_image_quality(image_path)
             
             # Get preprocessing strategy
             strategy = self._get_preprocessing_strategy(doc_type, doc_confidence, quality_analysis)
             
-            # Apply preprocessing if needed
-            if strategy['should_preprocess']:
-                enhanced_path = self._apply_preprocessing(image_path, strategy)
-                enhancement_applied = True
-            else:
-                enhanced_path = image_path
-                enhancement_applied = False
+            # Check if preprocessing should be applied
+            if not strategy.get('should_preprocess', True):
+                return {
+                    'enhanced_image_path': image_path,
+                    'enhancement_applied': False,
+                    'processing_time': time.time() - preprocessing_start,
+                    'skip_reason': 'strategy_skip',
+                    'original_quality': quality_analysis,
+                    'strategy_used': strategy,
+                    'doc_type': doc_type,
+                    'doc_confidence': doc_confidence
+                }
             
-            # Calculate processing time
+            # Apply preprocessing
+            enhanced_image_path = self._apply_preprocessing(image_path, strategy)
+            enhancement_applied = enhanced_image_path != image_path
+            
             processing_time = time.time() - preprocessing_start
             
-            # Prepare results
             results = {
-                'enhanced_image_path': enhanced_path,
+                'enhanced_image_path': enhanced_image_path,
                 'enhancement_applied': enhancement_applied,
                 'original_quality': quality_analysis,
                 'strategy_used': strategy,
@@ -381,6 +391,15 @@ class DocumentTypeAwarePreprocessor:
     def _apply_preprocessing(self, image_path: str, strategy: Dict) -> str:
         """Apply the preprocessing strategy to the image"""
         try:
+            # Check if any enhancement is actually needed
+            methods = strategy.get('methods', [])
+            quality_driven = strategy.get('quality_driven_adjustments', [])
+            
+            # If no enhancement methods specified, return original
+            if not methods and not quality_driven:
+                self.logger.info(f"No enhancement needed for {image_path}")
+                return image_path
+            
             # Load image
             pil_image = Image.open(image_path)
             if pil_image.mode != 'RGB':
@@ -393,11 +412,15 @@ class DocumentTypeAwarePreprocessor:
             if strategy.get('quality_driven_adjustments'):
                 enhanced_image = self._apply_quality_enhancements(enhanced_image, strategy)
             
-            # Save enhanced image
-            enhanced_path = self._generate_enhanced_filename(image_path)
-            enhanced_image.save(enhanced_path, 'JPEG', quality=95)
-            
-            return enhanced_path
+            # Only save enhanced image if actual changes were made
+            if enhanced_image is not pil_image:
+                enhanced_path = self._generate_enhanced_filename(image_path)
+                enhanced_image.save(enhanced_path, 'JPEG', quality=95)
+                return enhanced_path
+            else:
+                # No changes made, return original
+                self.logger.info(f"No enhancement applied, using original file")
+                return image_path
             
         except Exception as e:
             self.logger.error(f"Error applying preprocessing: {e}")

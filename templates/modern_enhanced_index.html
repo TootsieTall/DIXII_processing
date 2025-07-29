@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>DIXII Pro - AI Tax Document Processor</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1665,6 +1668,13 @@
             background: var(--error-500);
         }
 
+        .generated-filename {
+            color: rgba(0, 0, 0, 0.5);
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
         /* Enhanced Results Tab */
         .results-empty {
             text-align: center;
@@ -1716,13 +1726,31 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            color: var(--neutral-900);
+            color: #1a1f36; /* Dark navy for all numbers */
         }
 
         .card-info p {
             margin: 0;
-            color: var(--neutral-600);
+            color: #1a1f36; /* Dark navy for all text */
             font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Specific styling for each statistic type */
+        #success-count + p {
+            color: #16a34a; /* Green for "Successfully Processed" text */
+        }
+
+        #error-count + p {
+            color: #dc2626; /* Red for "Processing Errors" text */
+        }
+
+        /* Keep numbers dark navy for all cards */
+        #success-count,
+        #client-count,
+        #document-types,
+        #error-count {
+            color: #1a1f36 !important; /* Dark navy for all numbers */
         }
 
         /* Download All Section */
@@ -2005,30 +2033,224 @@
 
         /* Document Viewer Modal */
         .document-viewer-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10002;
+            z-index: 99999 !important;
+            background: #1a1f36 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
         }
 
-        .document-viewer-content {
-            position: relative;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            width: 90%;
-            height: 90%;
-            max-width: 1200px;
-            max-height: 800px;
+        /* Force full screen when displayed */
+        .document-viewer-modal[style*="display: block"],
+        .document-viewer-modal[style*="display: flex"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+        }
+
+        /* Override body padding when modal is open */
+        body:has(.document-viewer-modal[style*="display: block"]) {
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Alternative for browsers that don't support :has() */
+        body.modal-open {
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .viewer-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: #2c3e50;
+            border-right: 1px solid #34495e;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 10003;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .sidebar-header {
             display: flex;
-            flex-direction: column;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar-header h3 {
+            color: white;
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #c0392b;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h4 {
+            color: white;
+            margin: 0 0 15px 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .document-info p {
+            margin: 5px 0;
+            color: #bdc3c7;
+            font-size: 0.9rem;
+        }
+
+        .viewer-main {
+            position: fixed !important;
+            left: 300px !important;
+            top: 0 !important;
+            width: calc(100vw - 300px) !important;
+            height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: white !important;
+        }
+
+        .viewer-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #34495e;
+            border-bottom: 1px solid #2c3e50;
+            margin: 0;
+            border-radius: 0;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #3498db;
+            border: 1px solid #2980b9;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            background: #7f8c8d;
+            border-color: #95a5a6;
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .current-doc-indicator {
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .viewer-body {
+            flex: 1;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            background: white;
+        }
+
+        .document-frame-container {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        #document-frame {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            background: white !important;
+            box-shadow: none !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+        }
+
+        .document-viewer-modal .viewer-body {
+            flex: 1 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+            background: white !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .document-viewer-modal .document-frame-container {
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: hidden !important;
+            position: relative !important;
         }
 
         .viewer-header {
@@ -2050,25 +2272,7 @@
             gap: var(--space-2);
         }
 
-        .viewer-body {
-            flex: 1;
-            padding: var(--space-4);
-            overflow: hidden;
-        }
-
-        .document-frame-container {
-            width: 100%;
-            height: 100%;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            background: white;
-        }
-
-        .document-frame-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+        /* Removed duplicate CSS - using the updated viewer-body and document-frame-container styles defined above */
 
         /* Responsive Design for Modal */
         @media (max-width: 768px) {
@@ -2242,13 +2446,14 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            color: var(--neutral-900);
+            color: #1a1f36; /* Dark navy for all numbers */
         }
 
         .card-info p {
             margin: 0;
-            color: var(--neutral-600);
+            color: #1a1f36; /* Dark navy for all text */
             font-size: 0.875rem;
+            font-weight: 500;
         }
 
         /* Results Section Header */
@@ -2714,25 +2919,61 @@
         
         <!-- Document Viewer Modal -->
         <div id="document-viewer-modal" class="document-viewer-modal">
-            <div class="modal-backdrop" onclick="closeDocumentViewer()"></div>
-            <div class="document-viewer-content">
-                <div class="viewer-header">
-                    <h3 id="viewer-title">Document Viewer</h3>
-                    <div class="viewer-actions">
-                        <button class="btn btn-sm" onclick="renameCurrentDocument()" title="Rename File">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm" onclick="editCurrentDocumentMetadata()" title="Edit Metadata">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        <button class="btn btn-sm" onclick="downloadCurrentDocument()" title="Download">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm" onclick="closeDocumentViewer()" title="Close">
-                            <i class="fas fa-times"></i>
-                        </button>
+            <!-- Left Sidebar -->
+            <div class="viewer-sidebar">
+                <div class="sidebar-header">
+                    <h3>Document Viewer</h3>
+                    <button class="close-btn" onclick="closeDocumentViewer()" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h4>Document</h4>
+                    <div class="document-info">
+                        <p id="current-doc-name">Document Name</p>
+                        <p id="current-doc-type">Document Type</p>
                     </div>
                 </div>
+                
+                <div class="sidebar-section">
+                    <h4>Auto Rename</h4>
+                    <button class="btn btn-primary" onclick="renameCurrentDocument()" title="Rename File">
+                        <i class="fas fa-edit"></i> Rename Document
+                    </button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h4>Client Management</h4>
+                    <button class="btn btn-secondary" onclick="editCurrentDocumentMetadata()" title="Edit Metadata">
+                        <i class="fas fa-cog"></i> Edit Metadata
+                    </button>
+                    <button class="btn btn-success" onclick="downloadCurrentDocument()" title="Download">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="viewer-main">
+                <!-- Navigation Header -->
+                <div class="viewer-nav-header">
+                    <button class="nav-btn" id="prev-doc-btn" onclick="navigateDocument(-1)" title="Previous Document">
+                        <i class="fas fa-chevron-left"></i>
+                        <span id="prev-doc-name">Previous</span>
+                    </button>
+                    
+                    <div class="current-doc-indicator">
+                        <span id="doc-counter">1 of 5</span>
+                    </div>
+                    
+                    <button class="nav-btn" id="next-doc-btn" onclick="navigateDocument(1)" title="Next Document">
+                        <span id="next-doc-name">Next</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Document Frame -->
                 <div class="viewer-body">
                     <div class="document-frame-container">
                         <iframe id="document-frame" src="" frameborder="0"></iframe>
@@ -2760,7 +3001,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="rename-new-name">New Name</label>
-                        <input type="text" id="rename-new-name" class="form-input" placeholder="Enter new filename">
+                        <input type="text" id="rename-new-name" class="form-input" placeholder="Enter new filename" autocomplete="off">
                         <small class="form-help">Include file extension (e.g., .pdf)</small>
                     </div>
                 </div>
@@ -3133,22 +3374,35 @@
                 fetch(`/enhanced_status/${jobId}`)
                 .then(response => response.json())
                 .then(data => {
-                    updateEnhancedProgress(data);
+                                            console.log('Status update:', data); // Debug logging
+                        console.log('Results with paths:', data.results?.map(r => ({
+                            filename: r.original_filename,
+                            processed_path: r.processed_path,
+                            new_filename: r.new_filename,
+                            status: r.status
+                        })));
+                        updateEnhancedProgress(data);
                     
                     if (data.status === 'completed') {
                         clearInterval(processingInterval);
                         updateProcessingStatus('success', 'Processing completed successfully!');
                         displayEnhancedResults(data);
                         refreshFileExplorer();
+                        
+                        // Automatically switch to results tab
+                        setTimeout(() => {
+                            switchTab('results');
+                        }, 1000); // Small delay to ensure results are displayed
                     } else if (data.status === 'error') {
                         clearInterval(processingInterval);
-                        updateProcessingStatus('error', 'Processing failed: ' + data.message);
+                        updateProcessingStatus('error', 'Processing failed: ' + (data.error || data.message));
                     } else {
                         updateProcessingStatus('processing', `Processing: ${data.current_file || 'Preparing...'}`);
                         updateFileProcessingList(data.results || []);
                     }
                 })
                 .catch(error => {
+                    console.error('Status check error:', error); // Debug logging
                     clearInterval(processingInterval);
                     updateProcessingStatus('error', 'Status check failed: ' + error.message);
                 });
@@ -3156,19 +3410,35 @@
         }
 
         function updateEnhancedProgress(data) {
+            console.log('Updating progress with data:', data); // Debug logging
+            
             // Update progress bar
-            updateProgressBar(data.progress);
+            const progress = data.progress || 0;
+            updateProgressBar(progress);
             
             // Update summary stats
-            document.getElementById('total-files').textContent = data.total || 0;
-            document.getElementById('completed-files').textContent = data.current || 0;
+            const totalFiles = data.total || 0;
+            const currentFiles = data.current || 0;
+            
+            const totalElement = document.getElementById('total-files');
+            const completedElement = document.getElementById('completed-files');
+            
+            if (totalElement) totalElement.textContent = totalFiles;
+            if (completedElement) completedElement.textContent = currentFiles;
             
             // Update elapsed time
             if (data.elapsed_time) {
                 const minutes = Math.floor(data.elapsed_time / 60);
                 const seconds = Math.floor(data.elapsed_time % 60);
-                document.getElementById('elapsed-time').textContent = 
-                    minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                const elapsedElement = document.getElementById('elapsed-time');
+                if (elapsedElement) {
+                    elapsedElement.textContent = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                }
+            }
+            
+            // Show current file being processed
+            if (data.current_file) {
+                console.log('Currently processing:', data.current_file);
             }
         }
 
@@ -3179,6 +3449,12 @@
                 listContainer.innerHTML = '';
                 return;
             }
+
+            console.log('Updating file processing list with results:', results.map(r => ({
+                filename: r.original_filename,
+                status: r.status,
+                new_filename: r.new_filename
+            })));
 
             listContainer.innerHTML = results.map(result => {
                 const statusIcon = getStatusIcon(result.status);
@@ -3193,6 +3469,8 @@
                             <div class="file-details">
                                 <h5>${result.original_filename}</h5>
                                 <small>${statusText}</small>
+                                ${result.status === 'completed' && result.new_filename ? 
+                                    `<div class="generated-filename">${result.new_filename.replace(/_/g, ' ')}</div>` : ''}
                             </div>
                         </div>
                         <div class="file-meta">
@@ -3218,11 +3496,7 @@
                 case 'waiting': return 'Waiting for processing...';
                 case 'processing': return 'Processing document...';
                 case 'completed': 
-                    const parts = [];
-                    if (result.client_name) parts.push(`Client: ${result.client_name}`);
-                    if (result.document_type) parts.push(`Type: ${result.document_type}`);
-                    if (result.tax_year) parts.push(`Year: ${result.tax_year}`);
-                    return parts.length > 0 ? parts.join(' • ') : 'Processing completed';
+                    return '✅ Completed successfully';
                 case 'error': return result.error || 'Processing failed';
                 default: return 'Unknown status';
             }
@@ -3281,7 +3555,7 @@
             const uniqueClients = new Set();
             const uniqueDocTypes = new Set();
             
-            results.forEach(result => {
+            results.forEach((result, index) => {
                 if (result.status === 'completed') {
                     stats.successful++;
                     
@@ -3318,7 +3592,7 @@
             
             tableBody.innerHTML = results.map((result, index) => {
                 const statusBadge = getStatusBadge(result.status);
-                const actions = result.status === 'completed' && result.new_filename ? 
+                const actions = result.status === 'completed' && (result.processed_path || result.new_filename) ? 
                     `<button class="btn btn-sm" onclick="viewDocument('${result.processed_path || result.new_filename}')" title="View Document">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -3338,7 +3612,7 @@
                         <td>${result.client_name || '-'}</td>
                         <td>${result.document_type || '-'}</td>
                         <td>${result.tax_year || '-'}</td>
-                        <td>${result.new_filename || '-'}</td>
+                        <td>${result.new_filename ? result.new_filename.replace(/_/g, ' ') : '-'}</td>
                         <td>${statusBadge}</td>
                         <td>${actions}</td>
                     </tr>
@@ -3488,7 +3762,7 @@
                                         <i class="fas ${getFileIcon(file.name)}"></i>
                                     </div>
                                     <div class="file-details">
-                                        <h5>${file.name}</h5>
+                                        <h5>${file.name.replace(/_/g, ' ')}</h5>
                                         <small>${formatFileSize(file.size)} • ${formatDate(file.modified)}</small>
                                     </div>
                                 </div>
@@ -3540,19 +3814,125 @@
 
         // Document viewing functions
         let currentDocumentPath = '';
+        let allDocuments = [];
+        let currentDocumentIndex = 0;
 
         function viewDocument(filePath) {
+            if (!filePath) {
+                console.error('No file path provided to viewDocument');
+                alert('Error: No file path available for preview');
+                return;
+            }
+            
+            console.log('Viewing document:', filePath);
+            
+            // Load all documents for navigation
+            loadAllDocuments().then(() => {
+                // Find the index of the current document
+                currentDocumentIndex = allDocuments.findIndex(doc => doc.path === filePath);
+                if (currentDocumentIndex === -1) {
+                    currentDocumentIndex = 0;
+                }
+                
+                // Display the document
+                displayDocument(filePath);
+                updateNavigationControls();
+            });
+        }
+
+        async function loadAllDocuments() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                if (data.success && data.clients) {
+                    allDocuments = [];
+                    data.clients.forEach(client => {
+                        client.files.forEach(file => {
+                            allDocuments.push({
+                                path: file.path,
+                                name: file.name.replace(/_/g, ' '),
+                                client: client.client,
+                                type: file.document_type || 'Unknown'
+                            });
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                allDocuments = [];
+            }
+        }
+
+        function displayDocument(filePath) {
             currentDocumentPath = filePath;
             const modal = document.getElementById('document-viewer-modal');
             const frame = document.getElementById('document-frame');
-            const title = document.getElementById('viewer-title');
             
-            const filename = filePath.split('/').pop();
-            title.textContent = filename;
+            // Update document info in sidebar
+            const currentDoc = allDocuments[currentDocumentIndex];
+            if (currentDoc) {
+                document.getElementById('current-doc-name').textContent = currentDoc.name;
+                document.getElementById('current-doc-type').textContent = currentDoc.type;
+            }
             
-            frame.src = `/processed/${filePath}`;
-            modal.style.display = 'flex';
+            // Construct the URL for serving the file
+            const documentUrl = `/processed/${filePath}`;
+            console.log('Loading document from:', documentUrl);
+            
+            frame.src = documentUrl;
+            modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+            
+            // Add keyboard listeners
+            addKeyboardListeners();
+            
+            // Add error handling for the iframe
+            frame.onerror = function() {
+                console.error('Failed to load document:', documentUrl);
+                alert('Error: Could not load document for preview');
+                closeDocumentViewer();
+            };
+        }
+
+        function updateNavigationControls() {
+            const prevBtn = document.getElementById('prev-doc-btn');
+            const nextBtn = document.getElementById('next-doc-btn');
+            const prevName = document.getElementById('prev-doc-name');
+            const nextName = document.getElementById('next-doc-name');
+            const counter = document.getElementById('doc-counter');
+            
+            // Update counter
+            counter.textContent = `${currentDocumentIndex + 1} of ${allDocuments.length}`;
+            
+            // Update previous button
+            if (currentDocumentIndex > 0) {
+                prevBtn.disabled = false;
+                prevName.textContent = allDocuments[currentDocumentIndex - 1].name;
+            } else {
+                prevBtn.disabled = true;
+                prevName.textContent = 'Previous';
+            }
+            
+            // Update next button
+            if (currentDocumentIndex < allDocuments.length - 1) {
+                nextBtn.disabled = false;
+                nextName.textContent = allDocuments[currentDocumentIndex + 1].name;
+            } else {
+                nextBtn.disabled = true;
+                nextName.textContent = 'Next';
+            }
+        }
+
+        function navigateDocument(direction) {
+            const newIndex = currentDocumentIndex + direction;
+            
+            if (newIndex >= 0 && newIndex < allDocuments.length) {
+                currentDocumentIndex = newIndex;
+                displayDocument(allDocuments[currentDocumentIndex].path);
+                updateNavigationControls();
+            }
         }
 
         function closeDocumentViewer() {
@@ -3562,7 +3942,37 @@
             modal.style.display = 'none';
             frame.src = '';
             currentDocumentPath = '';
+            allDocuments = [];
+            currentDocumentIndex = 0;
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+            
+            // Remove keyboard event listener
+            document.removeEventListener('keydown', handleDocumentViewerKeydown);
+        }
+
+        function handleDocumentViewerKeydown(event) {
+            if (document.getElementById('document-viewer-modal').style.display === 'block') {
+                switch(event.key) {
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        navigateDocument(-1);
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        navigateDocument(1);
+                        break;
+                    case 'Escape':
+                        event.preventDefault();
+                        closeDocumentViewer();
+                        break;
+                }
+            }
+        }
+
+        // Add keyboard event listener when modal opens
+        function addKeyboardListeners() {
+            document.addEventListener('keydown', handleDocumentViewerKeydown);
         }
 
         function downloadCurrentDocument() {
@@ -3852,11 +4262,26 @@
 
         // Rename functions
         function showRenameModal(filePath, currentName) {
+            console.log('Opening rename modal for:', filePath, currentName);
             currentEditingFile = filePath;
-            document.getElementById('rename-current-name').value = currentName;
-            document.getElementById('rename-new-name').value = currentName;
+            
+            const currentNameField = document.getElementById('rename-current-name');
+            const newNameField = document.getElementById('rename-new-name');
+            
+            currentNameField.value = currentName;
+            newNameField.value = currentName;
+            
             document.getElementById('rename-modal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            
+            // Ensure the field is editable and focused
+            setTimeout(() => {
+                newNameField.removeAttribute('readonly');
+                newNameField.removeAttribute('disabled');
+                newNameField.focus();
+                newNameField.select();
+                console.log('Rename field focused and selected');
+            }, 150);
         }
 
         function closeRenameModal() {

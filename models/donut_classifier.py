@@ -42,16 +42,29 @@ class DonutTaxClassifier:
     
     def classify_document(self, image_path):
         """
-        Classify a tax document image
+        Classify a tax document image or PDF
         Returns: (predicted_label, confidence_score)
         """
         if not self.model or not self.processor:
             return None, 0.0
         
         try:
-            # Load and resize image
-            img = Image.open(image_path)
-            img_resized = img.resize((1920, 2560), Image.Resampling.LANCZOS)
+            # Handle PDFs by converting to image for classification
+            file_ext = os.path.splitext(image_path)[1].lower()
+            if file_ext == '.pdf':
+                # Convert PDF to image for Donut model
+                import pdf2image
+                images = pdf2image.convert_from_path(image_path, dpi=300)
+                if not images:
+                    return None, 0.0
+                
+                # Use first page for classification
+                img = images[0]
+                img_resized = img.resize((1920, 2560), Image.Resampling.LANCZOS)
+            else:
+                # Load and resize image
+                img = Image.open(image_path)
+                img_resized = img.resize((1920, 2560), Image.Resampling.LANCZOS)
             
             # Perform inference
             with torch.no_grad():
