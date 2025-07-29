@@ -25,7 +25,7 @@ def download_model():
         print("⏳ This may take a few minutes (model is ~2GB)...")
         
         snapshot_download(
-            repo_id="AdamCodd/donut-irs-tax-docs-classifier",
+            repo_id="hsarfraz/donut-irs-tax-docs-classifier",
             local_dir=model_path,
             local_dir_use_symlinks=False
         )
@@ -40,9 +40,9 @@ def download_model():
     except Exception as e:
         print(f"❌ Error downloading model: {e}")
         print("\n🔧 Manual download instructions:")
-        print("1. Visit: https://huggingface.co/AdamCodd/donut-irs-tax-docs-classifier")
+        print("1. Visit: https://huggingface.co/hsarfraz/donut-irs-tax-docs-classifier")
         print("2. Click 'Download repository' or use git:")
-        print("   git clone https://huggingface.co/AdamCodd/donut-irs-tax-docs-classifier")
+        print("   git clone https://huggingface.co/hsarfraz/donut-irs-tax-docs-classifier")
         print("3. Move the downloaded folder to this project directory")
         sys.exit(1)
 

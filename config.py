@@ -8,7 +8,7 @@ class Config:
     ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
     
     # Model Configuration
-    DONUT_MODEL_PATH = './donut-irs-tax-docs-classifier'
+    DONUT_MODEL_PATH = 'hsarfraz/donut-irs-tax-docs-classifier'
     
     # File Processing Configuration
     UPLOAD_FOLDER = 'uploads'

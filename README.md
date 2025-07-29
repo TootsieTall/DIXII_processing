@@ -133,6 +133,19 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 - Configure API key without editing files
 - Secure password-style input with show/hide toggle
 
+## 🧠 AI Models & Technology
+
+### Donut Document Classifier
+- **Model**: [hsarfraz/donut-irs-tax-docs-classifier](https://huggingface.co/hsarfraz/donut-irs-tax-docs-classifier)
+- **Capability**: Classifies 28 different IRS tax document types
+- **Training**: Fine-tuned on 3000+ documents
+- **Accuracy**: High precision document type detection
+
+### Claude API Integration
+- **Provider**: Anthropic Claude 3.5 Sonnet
+- **Capability**: Comprehensive text extraction and validation
+- **Features**: Multi-pass extraction, self-validation, intelligent preprocessing
+
 ## 📊 Supported Document Types
 
 - **Form 1040** (Individual Income Tax Return)
