@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DIXII Pro - AI Tax Document Processor</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -376,7 +377,6 @@
         /* Modern Cards */
         .card {
             background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: var(--radius-xl);
             padding: var(--space-6);
@@ -428,7 +428,148 @@
             cursor: pointer;
             background: linear-gradient(135deg, var(--primary-50) 0%, rgba(255, 255, 255, 0.5) 100%);
             position: relative;
-            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-500);
+            background: linear-gradient(135deg, var(--primary-100) 0%, rgba(255, 255, 255, 0.8) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--primary-600);
+            background: linear-gradient(135deg, var(--primary-200) 0%, rgba(255, 255, 255, 0.9) 100%);
+            transform: scale(1.02);
+        }
+
+        /* Hide file input element */
+        .file-input {
+            display: none !important;
+        }
+
+        /* Enhanced Upload Area Styles */
+        .upload-main-card {
+            margin: 0 auto;
+            max-width: none;
+        }
+
+        .upload-area-container {
+            display: flex;
+            justify-content: center;
+            padding: var(--space-8);
+        }
+
+        .enhanced-upload-area {
+            max-width: 900px;
+            width: 100%;
+            padding: var(--space-20);
+            border: 3px dashed var(--primary-400);
+            border-radius: var(--radius-2xl);
+            background: linear-gradient(135deg, var(--primary-100) 0%, rgba(255, 255, 255, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-elevated);
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition-normal);
+        }
+
+        .enhanced-upload-area:hover {
+            border-color: var(--primary-600);
+            background: linear-gradient(135deg, var(--primary-200) 0%, rgba(255, 255, 255, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(var(--primary-500-rgb), 0.15);
+        }
+
+        .enhanced-upload-area .upload-plus-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            font-weight: 200;
+            color: rgba(var(--primary-500-rgb), 0.15);
+            z-index: 1;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        .enhanced-upload-area .upload-icon {
+            font-size: 5rem;
+            color: var(--primary-600);
+            margin-bottom: var(--space-8);
+            position: relative;
+            z-index: 2;
+        }
+
+        .enhanced-upload-area .upload-text {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--neutral-800);
+            margin-bottom: var(--space-4);
+            position: relative;
+            z-index: 2;
+        }
+
+        .enhanced-upload-area .upload-subtext {
+            font-size: 1.1rem;
+            color: var(--neutral-600);
+            margin-bottom: var(--space-10);
+            position: relative;
+            z-index: 2;
+        }
+
+        .enhanced-upload-area .supported-types {
+            position: relative;
+            z-index: 2;
+        }
+
+        .enhanced-upload-area.drag-over {
+            border-color: var(--primary-700);
+            background: linear-gradient(135deg, var(--primary-300) 0%, rgba(255, 255, 255, 1) 100%);
+            transform: scale(1.005);
+        }
+
+        .enhanced-upload-area.drag-over .upload-plus-icon {
+            color: rgba(var(--primary-600-rgb), 0.3);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        /* Dark mode adjustments for enhanced upload area */
+        [data-theme="dark"] .enhanced-upload-area {
+            background: linear-gradient(135deg, rgba(23, 23, 23, 0.8) 0%, rgba(38, 38, 38, 0.6) 100%);
+            border-color: var(--neutral-500);
+        }
+
+        [data-theme="dark"] .enhanced-upload-area:hover {
+            background: linear-gradient(135deg, rgba(23, 23, 23, 0.9) 0%, rgba(38, 38, 38, 0.8) 100%);
+            border-color: var(--primary-500);
+        }
+
+        [data-theme="dark"] .enhanced-upload-area .upload-plus-icon {
+            color: rgba(var(--primary-400-rgb), 0.2);
+        }
+
+        [data-theme="dark"] .enhanced-upload-area.drag-over .upload-plus-icon {
+            color: rgba(var(--primary-500-rgb), 0.4);
+        }
+
+
+
+        /* Centered Actions Panel */
+        .centered-actions {
+            display: flex !important;
+            justify-content: center !important;
+            gap: var(--space-4) !important;
+            flex-wrap: wrap !important;
+            padding: var(--space-6) !important;
+            margin-top: var(--space-4) !important;
+        }
+
+        .centered-actions .btn {
+            min-width: 180px;
+            padding: var(--space-3) var(--space-6);
+            font-weight: 600;
         }
 
         .upload-area::before {
@@ -964,6 +1105,7 @@
         
         [data-theme="dark"] .card {
             background: rgba(23, 23, 23, 0.8);
+            border: 1px solid var(--neutral-300);
         }
         
         [data-theme="dark"] .upload-area {
@@ -973,6 +1115,1215 @@
         
         [data-theme="dark"] .upload-area:hover {
             background: linear-gradient(135deg, rgba(23, 23, 23, 0.8) 0%, rgba(38, 38, 38, 0.7) 100%);
+        }
+
+        /* Enhanced dark mode styling for better visibility */
+        [data-theme="dark"] .card-title,
+        [data-theme="dark"] .option-label,
+        [data-theme="dark"] .form-label {
+            color: var(--neutral-800);
+        }
+
+        [data-theme="dark"] .upload-text {
+            color: var(--neutral-800);
+        }
+
+        [data-theme="dark"] .upload-subtext {
+            color: var(--neutral-600);
+        }
+
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .search-input {
+            background: var(--neutral-100);
+            border-color: var(--neutral-300);
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .form-input:focus,
+        [data-theme="dark"] .search-input:focus {
+            border-color: var(--primary-500);
+            background: var(--neutral-50);
+        }
+
+        [data-theme="dark"] .btn {
+            border: 1px solid var(--neutral-400);
+        }
+
+        [data-theme="dark"] .btn:not(.btn-primary):not(.btn-success):not(.btn-danger) {
+            background: var(--neutral-200);
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .btn:not(.btn-primary):not(.btn-success):not(.btn-danger):hover {
+            background: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .file-item {
+            background: var(--neutral-100);
+            border-color: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .file-item:hover {
+            background: var(--neutral-200);
+        }
+
+        [data-theme="dark"] .file-details h5 {
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .file-details small {
+            color: var(--neutral-600);
+        }
+
+        [data-theme="dark"] .client-folder {
+            background: var(--neutral-100);
+            border-color: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .folder-title {
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .file-count {
+            color: var(--neutral-600);
+        }
+
+        [data-theme="dark"] .results-table {
+            background: var(--neutral-100);
+        }
+
+        [data-theme="dark"] .results-table th {
+            background: var(--neutral-200);
+            color: var(--neutral-900);
+            border-color: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .results-table td {
+            background: var(--neutral-100);
+            color: var(--neutral-900);
+            border-color: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .results-table tbody tr:hover td {
+            background: var(--neutral-200);
+        }
+
+        [data-theme="dark"] .stat-badge {
+            background: var(--neutral-200);
+            color: var(--neutral-900);
+            border-color: var(--neutral-400);
+        }
+
+        [data-theme="dark"] .explorer-search {
+            background: var(--neutral-200);
+            border-color: var(--neutral-400);
+        }
+
+        [data-theme="dark"] .table-summary {
+            background: var(--neutral-200);
+            border-color: var(--neutral-400);
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .download-all-section {
+            background: var(--neutral-200);
+            border-color: var(--neutral-400);
+        }
+
+        [data-theme="dark"] .processing-summary {
+            background: var(--neutral-100);
+            border-color: var(--neutral-300);
+        }
+
+        [data-theme="dark"] .stat-item {
+            color: var(--neutral-900);
+        }
+
+        [data-theme="dark"] .tab {
+            color: var(--neutral-600);
+        }
+
+        [data-theme="dark"] .tab.active,
+        [data-theme="dark"] .tab:hover {
+            color: var(--neutral-900);
+            background: var(--neutral-200);
+        }
+
+        [data-theme="dark"] .modal-content {
+            background: rgba(23, 23, 23, 0.95);
+            border-color: var(--neutral-400);
+        }
+
+        [data-theme="dark"] .modal-header h2 {
+            color: var(--neutral-800);
+        }
+
+        [data-theme="dark"] .settings-section h3 {
+            color: var(--neutral-700);
+        }
+
+        /* Light mode improvements for better contrast */
+        [data-theme="light"] .search-icon,
+        [data-theme="light"] .clear-search-btn {
+            color: var(--neutral-500);
+        }
+
+        [data-theme="light"] .file-count {
+            color: var(--neutral-500);
+        }
+
+        [data-theme="light"] .table-summary p {
+            color: var(--neutral-600);
+        }
+
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+            transition: var(--transition-fast);
+        }
+
+        .modal-close:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: var(--space-6);
+        }
+
+        .settings-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-section h3 {
+            margin: 0 0 var(--space-4) 0;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .password-input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input-group .form-input {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-fast);
+        }
+
+        .password-toggle:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-help {
+            display: block;
+            margin-top: var(--space-2);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-4);
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .api-status.status-success {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .api-status.status-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .status-active {
+            color: #22c55e;
+        }
+
+        .status-inactive {
+            color: #ef4444;
+        }
+
+        .settings-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-item label {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .info-item span {
+            color: white;
+            font-weight: 600;
+        }
+
+        .modal-footer {
+            padding: var(--space-6);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-5);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-500);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-600);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-4) var(--space-5);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .notification-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .notification-info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .notification i {
+            font-size: 1.1rem;
+        }
+
+        .notification-success i {
+            color: #22c55e;
+        }
+
+        .notification-error i {
+            color: #ef4444;
+        }
+
+        .notification-info i {
+            color: #3b82f6;
+        }
+
+        /* Enhanced Processing Tab */
+        .processing-details {
+            margin-top: var(--space-6);
+        }
+
+        .progress-bar {
+            position: relative;
+            overflow: visible;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .processing-summary {
+            margin-bottom: var(--space-6);
+            padding: var(--space-5);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .stat-item i {
+            font-size: 1.2rem;
+            color: var(--accent-500);
+        }
+
+        .stat-label {
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: white;
+        }
+
+        .file-processing-list {
+            space-y: var(--space-3);
+        }
+
+        .file-processing-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: var(--space-3);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex: 1;
+        }
+
+        .file-status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-status-icon.waiting {
+            background: var(--neutral-500);
+        }
+
+        .file-status-icon.processing {
+            background: var(--accent-500);
+            animation: pulse 2s infinite;
+        }
+
+        .file-status-icon.completed {
+            background: var(--success-500);
+        }
+
+        .file-status-icon.error {
+            background: var(--error-500);
+        }
+
+        /* Enhanced Results Tab */
+        .results-empty {
+            text-align: center;
+            padding: var(--space-8);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .results-empty i {
+            font-size: 4rem;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        .results-summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            border: 1px solid var(--neutral-200);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .card-icon.success { background: var(--success-500); }
+        .card-icon.info { background: var(--primary-500); }
+        .card-icon.warning { background: var(--warning-500); }
+        .card-icon.error { background: var(--error-500); }
+
+        .card-info h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--neutral-900);
+        }
+
+        .card-info p {
+            margin: 0;
+            color: var(--neutral-600);
+            font-size: 0.875rem;
+        }
+
+        /* Download All Section */
+        .download-all-section {
+            margin: var(--space-6) 0;
+            display: flex;
+            justify-content: center;
+            padding: var(--space-4);
+            background: linear-gradient(135deg, var(--primary-50) 0%, rgba(255, 255, 255, 0.8) 100%);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--primary-200);
+        }
+
+        .download-all-btn {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            border: none;
+            padding: var(--space-3) var(--space-8);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .download-all-btn:hover {
+            background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .download-all-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-all-btn i {
+            font-size: 1.1rem;
+        }
+
+        .results-section {
+            margin-bottom: var(--space-6);
+        }
+
+        .results-section h4 {
+            color: white;
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .results-table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .results-table th {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 600;
+        }
+
+        .results-table td {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .client-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .client-card {
+            padding: var(--space-5);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .client-card h5 {
+            margin: 0 0 var(--space-3) 0;
+            color: white;
+            font-weight: 600;
+        }
+
+        .client-file-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .client-file-list li {
+            padding: var(--space-2) 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        /* Enhanced File Explorer */
+        .header-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .explorer-empty {
+            text-align: center;
+            padding: var(--space-8);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .explorer-empty i {
+            font-size: 4rem;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        .explorer-stats {
+            display: flex;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .client-folder {
+            margin-bottom: var(--space-6);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .folder-header {
+            padding: var(--space-5);
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .folder-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: white;
+            font-weight: 600;
+        }
+
+        .folder-files {
+            padding: var(--space-4);
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            transition: var(--transition-fast);
+            margin-bottom: var(--space-2);
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex: 1;
+        }
+
+        .file-icon {
+            color: var(--accent-500);
+            font-size: 1.2rem;
+        }
+
+        .file-details h5 {
+            margin: 0;
+            color: white;
+            font-weight: 500;
+        }
+
+        .file-details small {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: var(--space-2);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .file-item:hover .file-actions {
+            opacity: 1;
+        }
+
+        .file-actions .btn {
+            padding: var(--space-2);
+            font-size: 0.875rem;
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-secondary {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+
+        .confidence-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Document Viewer Modal */
+        .document-viewer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10002;
+        }
+
+        .document-viewer-content {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .viewer-header {
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .viewer-header h3 {
+            margin: 0;
+            color: white;
+            font-weight: 600;
+        }
+
+        .viewer-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .viewer-body {
+            flex: 1;
+            padding: var(--space-4);
+            overflow: hidden;
+        }
+
+        .document-frame-container {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: white;
+        }
+
+        .document-frame-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Responsive Design for Modal */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
+            
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: var(--space-4);
+            }
+            
+            .settings-info {
+                gap: var(--space-2);
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-2);
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+
+            .results-summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .client-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .document-viewer-content {
+                width: 95%;
+                height: 95%;
+            }
+
+            .results-table-container {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* File Explorer Styles */
+        .explorer-stats {
+            display: flex;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: linear-gradient(135deg, var(--primary-50) 0%, rgba(255, 255, 255, 0.8) 100%);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            border: 1px solid var(--primary-200);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--neutral-700);
+        }
+
+        .stat-badge i {
+            color: var(--primary-600);
+        }
+
+        /* Explorer Search Styles */
+        .explorer-search {
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: linear-gradient(135deg, var(--neutral-50) 0%, rgba(255, 255, 255, 0.8) 100%);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--neutral-200);
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-10) var(--space-3) var(--space-10);
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            background: white;
+            transition: all var(--transition-normal);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(var(--primary-500-rgb), 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: var(--space-3);
+            color: var(--neutral-500);
+            z-index: 10;
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: var(--space-3);
+            background: none;
+            border: none;
+            color: var(--neutral-500);
+            cursor: pointer;
+            padding: var(--space-1);
+            border-radius: var(--radius);
+            transition: all var(--transition-normal);
+        }
+
+        .clear-search-btn:hover {
+            color: var(--error-500);
+            background: var(--error-50);
+        }
+
+        /* Results Display */
+        .results-summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            border: 1px solid var(--neutral-200);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .card-icon.success { background: var(--success-500); }
+        .card-icon.info { background: var(--primary-500); }
+        .card-icon.warning { background: var(--warning-500); }
+        .card-icon.error { background: var(--error-500); }
+
+        .card-info h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--neutral-900);
+        }
+
+        .card-info p {
+            margin: 0;
+            color: var(--neutral-600);
+            font-size: 0.875rem;
+        }
+
+        /* Results Section Header */
+        .results-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .table-toggle-btn {
+            background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
+            border: 1px solid var(--neutral-300);
+            color: var(--neutral-700);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition-normal);
+        }
+
+        .table-toggle-btn:hover {
+            background: linear-gradient(135deg, var(--neutral-200) 0%, var(--neutral-300) 100%);
+            border-color: var(--neutral-400);
+        }
+
+        .table-toggle-btn i {
+            transition: transform var(--transition-normal);
+        }
+
+        .table-toggle-btn.expanded i {
+            transform: rotate(180deg);
+        }
+
+        /* Table Summary */
+        .table-summary {
+            padding: var(--space-3) var(--space-4);
+            background: linear-gradient(135deg, var(--primary-50) 0%, rgba(255, 255, 255, 0.8) 100%);
+            border: 1px solid var(--primary-200);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-3);
+            text-align: center;
+        }
+
+        .table-summary p {
+            margin: 0;
+            color: var(--neutral-600);
+            font-size: 0.875rem;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--primary-600);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .link-btn:hover {
+            color: var(--primary-700);
+        }
+
+        /* Collapsible Table Rows */
+        .results-table tbody tr.hidden-row {
+            display: none;
+        }
+
+        .results-table tbody tr.visible-row {
+            display: table-row;
         }
     </style>
 </head>
@@ -1098,30 +2449,29 @@
             </div>
 
             <!-- Upload Area Card -->
-            <div class="card">
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="upload-text">Drop files here or click to upload</div>
-                    <div class="upload-subtext">Advanced AI processing for multiple tax documents</div>
-                    <button type="button" class="btn btn-lg" onclick="document.getElementById('file-input').click()">
-                        <i class="fas fa-folder-open"></i>
-                        Choose Files
-                    </button>
-                    <input type="file" id="file-input" class="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
-                    
-                    <div class="supported-types">
-                        <h4><i class="fas fa-list-check"></i> Supported Document Types</h4>
-                        <div class="document-types">
-                            <span class="doc-type-badge">Form 1040</span>
-                            <span class="doc-type-badge">Form W-2</span>
-                            <span class="doc-type-badge">Form 1099</span>
-                            <span class="doc-type-badge">Schedule K-1</span>
-                            <span class="doc-type-badge">Form 1098</span>
-                            <span class="doc-type-badge">Form W-9</span>
-                            <span class="doc-type-badge">State Forms</span>
-                            <span class="doc-type-badge">Property Tax</span>
+            <div class="card upload-main-card">
+                <div class="upload-area-container">
+                    <div class="upload-area enhanced-upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                        <div class="upload-plus-icon">+</div>
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">Drop files here or click anywhere to upload</div>
+                        <div class="upload-subtext">Advanced AI processing for multiple tax documents</div>
+                        <input type="file" id="file-input" class="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
+                        
+                        <div class="supported-types">
+                            <h4><i class="fas fa-list-check"></i> Supported Document Types</h4>
+                            <div class="document-types">
+                                <span class="doc-type-badge">Form 1040</span>
+                                <span class="doc-type-badge">Form W-2</span>
+                                <span class="doc-type-badge">Form 1099</span>
+                                <span class="doc-type-badge">Schedule K-1</span>
+                                <span class="doc-type-badge">Form 1098</span>
+                                <span class="doc-type-badge">Form W-9</span>
+                                <span class="doc-type-badge">State Forms</span>
+                                <span class="doc-type-badge">Property Tax</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1129,7 +2479,7 @@
                 <div id="file-list" class="file-list hidden">
                     <h3><i class="fas fa-file-alt"></i> Selected Files</h3>
                     <div id="selected-files"></div>
-                    <div class="actions-panel">
+                    <div class="actions-panel centered-actions">
                         <button type="button" class="btn btn-success btn-lg" onclick="processFiles()">
                             <i class="fas fa-rocket"></i>
                             Start Processing
@@ -1137,6 +2487,10 @@
                         <button type="button" class="btn btn-danger" onclick="clearFiles()">
                             <i class="fas fa-trash"></i>
                             Clear Files
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="openLocalFileExplorer()" title="Open processed files folder">
+                            <i class="fas fa-folder-open"></i>
+                            Open Results Folder
                         </button>
                     </div>
                 </div>
@@ -1160,9 +2514,34 @@
                 
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    <div class="progress-text" id="progress-text">0%</div>
                 </div>
                 
-                <div id="processing-details"></div>
+                <div id="processing-details" class="processing-details">
+                    <div class="processing-summary" id="processing-summary" style="display: none;">
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span class="stat-label">Total Files:</span>
+                                <span class="stat-value" id="total-files">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span class="stat-label">Elapsed Time:</span>
+                                <span class="stat-value" id="elapsed-time">0s</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="stat-label">Completed:</span>
+                                <span class="stat-value" id="completed-files">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="file-processing-list" id="file-processing-list">
+                        <!-- Individual file processing status will be shown here -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1177,7 +2556,101 @@
                 </div>
                 
                 <div id="results-content">
-                    <p class="status-text">No processing results available yet.</p>
+                    <div class="results-empty" id="results-empty">
+                        <i class="fas fa-chart-line"></i>
+                        <p>No processing results available yet.</p>
+                        <small>Results will appear here after processing is complete.</small>
+                    </div>
+                    
+                    <div class="results-data" id="results-data" style="display: none;">
+                        <div class="results-summary-cards">
+                            <div class="summary-card">
+                                <div class="card-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h4 id="success-count">0</h4>
+                                    <p>Successfully Processed</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card">
+                                <div class="card-icon info">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h4 id="client-count">0</h4>
+                                    <p>Unique Clients</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card">
+                                <div class="card-icon warning">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h4 id="document-types">0</h4>
+                                    <p>Document Types</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card">
+                                <div class="card-icon error">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h4 id="error-count">0</h4>
+                                    <p>Processing Errors</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Download All Button -->
+                        <div class="download-all-section">
+                            <button class="btn btn-primary download-all-btn" onclick="downloadAllFiles()">
+                                <i class="fas fa-download"></i>
+                                Download All Files (.zip)
+                            </button>
+                        </div>
+                        
+                        <div class="results-details">
+                            <div class="results-section">
+                                <div class="results-section-header">
+                                    <h4><i class="fas fa-list"></i> Processing Details</h4>
+                                    <button class="table-toggle-btn" id="table-toggle-btn" onclick="toggleResultsTable()" style="display: none;">
+                                        <span id="toggle-text">Show All</span>
+                                        <i class="fas fa-chevron-down" id="toggle-icon"></i>
+                                    </button>
+                                </div>
+                                <div class="results-table-container">
+                                    <table class="results-table" id="results-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Original File</th>
+                                                <th>Client Name</th>
+                                                <th>Document Type</th>
+                                                <th>Tax Year</th>
+                                                <th>New Filename</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="results-table-body">
+                                        </tbody>
+                                    </table>
+                                    <div class="table-summary" id="table-summary" style="display: none;">
+                                        <p><i class="fas fa-info-circle"></i> Showing <span id="visible-rows">1</span> of <span id="total-rows">0</span> files. <button class="link-btn" onclick="toggleResultsTable()">Show all</button></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="results-section">
+                                <h4><i class="fas fa-folder"></i> Client Summary</h4>
+                                <div id="client-summary" class="client-summary">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1189,12 +2662,235 @@
                     <div class="card-icon">
                         <i class="fas fa-folder-open"></i>
                     </div>
-                    <h3 class="card-title">Processed Files</h3>
+                    <h3 class="card-title">File Explorer</h3>
+                    <div class="header-actions">
+                        <button class="btn btn-sm" onclick="refreshFileExplorer()" title="Refresh Files">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="explorer-content">
-                    <p class="status-text">No processed files available yet.</p>
+                    <div class="explorer-empty" id="explorer-empty">
+                        <i class="fas fa-folder-open"></i>
+                        <p>No processed files available yet.</p>
+                        <small>Processed files will appear here after successful document processing.</small>
+                    </div>
+                    
+                    <div class="explorer-data" id="explorer-data" style="display: none;">
+                        <div class="explorer-stats">
+                            <div class="stat-badge">
+                                <i class="fas fa-users"></i>
+                                <span id="explorer-client-count">0 Clients</span>
+                            </div>
+                            <div class="stat-badge">
+                                <i class="fas fa-file-alt"></i>
+                                <span id="explorer-file-count">0 Files</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Client Search Section -->
+                        <div class="explorer-search">
+                            <div class="search-input-wrapper">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" 
+                                       id="client-search-input" 
+                                       placeholder="Search clients by name..." 
+                                       onkeyup="filterClients()"
+                                       class="search-input">
+                                <button class="clear-search-btn" onclick="clearClientSearch()" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="client-folders" id="client-folders">
+                            <!-- Client folders will be dynamically populated -->
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Document Viewer Modal -->
+        <div id="document-viewer-modal" class="document-viewer-modal">
+            <div class="modal-backdrop" onclick="closeDocumentViewer()"></div>
+            <div class="document-viewer-content">
+                <div class="viewer-header">
+                    <h3 id="viewer-title">Document Viewer</h3>
+                    <div class="viewer-actions">
+                        <button class="btn btn-sm" onclick="renameCurrentDocument()" title="Rename File">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm" onclick="editCurrentDocumentMetadata()" title="Edit Metadata">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="btn btn-sm" onclick="downloadCurrentDocument()" title="Download">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm" onclick="closeDocumentViewer()" title="Close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="viewer-body">
+                    <div class="document-frame-container">
+                        <iframe id="document-frame" src="" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename File Modal -->
+    <div id="rename-modal" class="settings-modal">
+        <div class="modal-backdrop" onclick="closeRenameModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Rename File</h2>
+                <button class="modal-close" onclick="closeRenameModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <div class="form-group">
+                        <label class="form-label" for="rename-current-name">Current Name</label>
+                        <input type="text" id="rename-current-name" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="rename-new-name">New Name</label>
+                        <input type="text" id="rename-new-name" class="form-input" placeholder="Enter new filename">
+                        <small class="form-help">Include file extension (e.g., .pdf)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRenameModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-primary" onclick="performRename()">
+                    <i class="fas fa-save"></i> Rename File
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Metadata Modal -->
+    <div id="edit-metadata-modal" class="settings-modal">
+        <div class="modal-backdrop" onclick="closeEditMetadataModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Edit Document Metadata</h2>
+                <button class="modal-close" onclick="closeEditMetadataModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3><i class="fas fa-file-alt"></i> Document Information</h3>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-filename">Current Filename</label>
+                        <input type="text" id="edit-filename" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-client-name">Client Name</label>
+                        <input type="text" id="edit-client-name" class="form-input" placeholder="Enter client name">
+                        <small class="form-help">Full name for individuals or business name</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-document-type">Document Type</label>
+                        <select id="edit-document-type" class="form-input">
+                            <option value="">Select document type</option>
+                            <option value="Form 1040">Form 1040 (Individual Tax Return)</option>
+                            <option value="Form W-2">Form W-2 (Wage Statement)</option>
+                            <option value="Form 1099-NEC">Form 1099-NEC</option>
+                            <option value="Form 1099-MISC">Form 1099-MISC</option>
+                            <option value="Form 1099-INT">Form 1099-INT</option>
+                            <option value="Form 1099-DIV">Form 1099-DIV</option>
+                            <option value="Form 1099-R">Form 1099-R</option>
+                            <option value="Schedule K-1">Schedule K-1</option>
+                            <option value="Form 1098">Form 1098 (Mortgage Interest)</option>
+                            <option value="Form 1098-E">Form 1098-E (Student Loan Interest)</option>
+                            <option value="Form 1098-T">Form 1098-T (Tuition Statement)</option>
+                            <option value="Form W-9">Form W-9</option>
+                            <option value="Property Tax Statement">Property Tax Statement</option>
+                            <option value="Bank Statement">Bank Statement</option>
+                            <option value="Investment Statement">Investment Statement</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-tax-year">Tax Year</label>
+                        <input type="text" id="edit-tax-year" class="form-input" placeholder="e.g., 2023">
+                        <small class="form-help">Leave blank if not applicable</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-magic"></i> Auto-Rename Options</h3>
+                    <div class="form-group">
+                        <label class="radio-option">
+                            <input type="checkbox" id="auto-rename-checkbox">
+                            <span>Suggest new filename based on metadata</span>
+                        </label>
+                        <small class="form-help">Generate intelligent filename using the information above</small>
+                    </div>
+                    <div id="filename-suggestion" class="api-status" style="display: none;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span id="suggestion-text"></span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-folder"></i> Client Management</h3>
+                    <div class="form-group">
+                        <button class="btn btn-secondary" onclick="moveToClient()">
+                            <i class="fas fa-arrows-alt"></i> Move to Different Client
+                        </button>
+                        <button class="btn btn-secondary" onclick="reprocessDocument()">
+                            <i class="fas fa-sync-alt"></i> Reprocess with AI
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditMetadataModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-primary" onclick="saveMetadata()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move to Client Modal -->
+    <div id="move-client-modal" class="settings-modal">
+        <div class="modal-backdrop" onclick="closeMoveClientModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-arrows-alt"></i> Move to Client</h2>
+                <button class="modal-close" onclick="closeMoveClientModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <div class="form-group">
+                        <label class="form-label" for="move-client-name">Client Name</label>
+                        <input type="text" id="move-client-name" class="form-input" placeholder="Enter client name">
+                        <small class="form-help">File will be moved to this client's folder</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMoveClientModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-primary" onclick="performMoveToClient()">
+                    <i class="fas fa-save"></i> Move File
+                </button>
             </div>
         </div>
     </div>
@@ -1229,14 +2925,38 @@
         }
 
         // Tab switching
-        function switchTab(tabName) {
+        function switchTab(tabName, eventTarget = null) {
             // Update tab buttons
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.closest('.tab').classList.add('active');
+            
+            // Find and activate the correct tab
+            let targetTab = null;
+            
+            // If called from an event, use the event target
+            if (eventTarget) {
+                targetTab = eventTarget.closest('.tab');
+            } else if (window.event && window.event.target) {
+                targetTab = window.event.target.closest('.tab');
+            }
+            
+            // If we couldn't find the tab from event, search by onclick attribute
+            if (!targetTab) {
+                targetTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
+                    tab.getAttribute('onclick')?.includes(`'${tabName}'`)
+                );
+            }
+            
+            // Activate the found tab
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
+            const targetContent = document.getElementById(tabName + '-tab');
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
         }
 
         // File handling
@@ -1338,7 +3058,23 @@
 
         // Processing functionality
         function processFiles() {
-            if (selectedFiles.length === 0) return;
+            if (selectedFiles.length === 0) {
+                updateProcessingStatus('error', 'Please select files first');
+                return;
+            }
+            
+            // Validate file types
+            const allowedTypes = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp'];
+            const invalidFiles = selectedFiles.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return !allowedTypes.includes(ext);
+            });
+            
+            if (invalidFiles.length > 0) {
+                const invalidNames = invalidFiles.map(f => f.name).join(', ');
+                updateProcessingStatus('error', `Invalid file types: ${invalidNames}. Allowed: PDF, PNG, JPG, JPEG, TIFF, BMP`);
+                return;
+            }
             
             // Switch to processing tab
             switchTab('processing');
@@ -1369,36 +3105,47 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     startPolling(data.job_id);
                 } else {
-                    updateProcessingStatus('error', 'Error: ' + data.message);
+                    updateProcessingStatus('error', 'Error: ' + (data.error || data.message || 'Unknown error'));
+                    console.error('Processing error:', data);
                 }
             })
             .catch(error => {
                 updateProcessingStatus('error', 'Network error: ' + error.message);
+                console.error('Network error:', error);
             });
         }
 
         function startPolling(jobId) {
+            // Show processing summary when polling starts
+            document.getElementById('processing-summary').style.display = 'block';
+            
             processingInterval = setInterval(() => {
                 fetch(`/enhanced_status/${jobId}`)
                 .then(response => response.json())
                 .then(data => {
-                    updateProgressBar(data.progress);
+                    updateEnhancedProgress(data);
                     
                     if (data.status === 'completed') {
                         clearInterval(processingInterval);
                         updateProcessingStatus('success', 'Processing completed successfully!');
-                        displayResults(data.results);
-                        updateFileExplorer(data.processed_files);
+                        displayEnhancedResults(data);
+                        refreshFileExplorer();
                     } else if (data.status === 'error') {
                         clearInterval(processingInterval);
                         updateProcessingStatus('error', 'Processing failed: ' + data.message);
                     } else {
                         updateProcessingStatus('processing', `Processing: ${data.current_file || 'Preparing...'}`);
+                        updateFileProcessingList(data.results || []);
                     }
                 })
                 .catch(error => {
@@ -1406,6 +3153,79 @@
                     updateProcessingStatus('error', 'Status check failed: ' + error.message);
                 });
             }, 1000);
+        }
+
+        function updateEnhancedProgress(data) {
+            // Update progress bar
+            updateProgressBar(data.progress);
+            
+            // Update summary stats
+            document.getElementById('total-files').textContent = data.total || 0;
+            document.getElementById('completed-files').textContent = data.current || 0;
+            
+            // Update elapsed time
+            if (data.elapsed_time) {
+                const minutes = Math.floor(data.elapsed_time / 60);
+                const seconds = Math.floor(data.elapsed_time % 60);
+                document.getElementById('elapsed-time').textContent = 
+                    minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+            }
+        }
+
+        function updateFileProcessingList(results) {
+            const listContainer = document.getElementById('file-processing-list');
+            
+            if (!results || results.length === 0) {
+                listContainer.innerHTML = '';
+                return;
+            }
+
+            listContainer.innerHTML = results.map(result => {
+                const statusIcon = getStatusIcon(result.status);
+                const statusText = getStatusText(result.status, result);
+                
+                return `
+                    <div class="file-processing-item">
+                        <div class="file-info">
+                            <div class="file-status-icon ${result.status}">
+                                <i class="fas ${statusIcon}"></i>
+                            </div>
+                            <div class="file-details">
+                                <h5>${result.original_filename}</h5>
+                                <small>${statusText}</small>
+                            </div>
+                        </div>
+                        <div class="file-meta">
+                            ${result.confidence ? `<span class="confidence-badge">${Math.round(result.confidence * 100)}%</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'waiting': return 'fa-clock';
+                case 'processing': return 'fa-spinner fa-spin';
+                case 'completed': return 'fa-check';
+                case 'error': return 'fa-exclamation-triangle';
+                default: return 'fa-circle';
+            }
+        }
+
+        function getStatusText(status, result) {
+            switch (status) {
+                case 'waiting': return 'Waiting for processing...';
+                case 'processing': return 'Processing document...';
+                case 'completed': 
+                    const parts = [];
+                    if (result.client_name) parts.push(`Client: ${result.client_name}`);
+                    if (result.document_type) parts.push(`Type: ${result.document_type}`);
+                    if (result.tax_year) parts.push(`Year: ${result.tax_year}`);
+                    return parts.length > 0 ? parts.join(' • ') : 'Processing completed';
+                case 'error': return result.error || 'Processing failed';
+                default: return 'Unknown status';
+            }
         }
 
         function updateProcessingStatus(status, message) {
@@ -1418,50 +3238,603 @@
 
         function updateProgressBar(progress) {
             const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
             progressFill.style.width = progress + '%';
+            progressText.textContent = Math.round(progress) + '%';
         }
 
-        function displayResults(results) {
-            const content = document.getElementById('results-content');
-            content.innerHTML = `
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    Processing completed successfully!
-                </div>
-                <div class="results-summary">
-                    <h4>Processing Summary</h4>
-                    <p>Processed ${results.total_files} files with ${results.success_count} successful extractions.</p>
-                </div>
-            `;
+        function displayEnhancedResults(data) {
+            const resultsEmpty = document.getElementById('results-empty');
+            const resultsData = document.getElementById('results-data');
+            
+            resultsEmpty.style.display = 'none';
+            resultsData.style.display = 'block';
+            
+            const results = data.results || [];
+            
+            // Calculate statistics
+            const stats = calculateResultsStats(results);
+            
+            // Update summary cards
+            document.getElementById('success-count').textContent = stats.successful;
+            document.getElementById('client-count').textContent = stats.clients;
+            document.getElementById('document-types').textContent = stats.documentTypes;
+            document.getElementById('error-count').textContent = stats.errors;
+            
+            // Update results table
+            updateResultsTable(results);
+            
+            // Update client summary
+            updateClientSummary(stats.clientDetails);
         }
 
-        function updateFileExplorer(files) {
-            const content = document.getElementById('explorer-content');
-            if (files && files.length > 0) {
-                content.innerHTML = files.map(file => `
-                    <div class="file-item">
-                        <div class="file-info">
-                            <div class="file-icon">
-                                <i class="fas fa-file-pdf"></i>
-                            </div>
-                            <div class="file-details">
-                                <h4>${file.name}</h4>
-                                <div class="file-size">${file.path}</div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+        function calculateResultsStats(results) {
+            const stats = {
+                successful: 0,
+                errors: 0,
+                clients: 0,
+                documentTypes: 0,
+                clientDetails: {}
+            };
+            
+            const uniqueClients = new Set();
+            const uniqueDocTypes = new Set();
+            
+            results.forEach(result => {
+                if (result.status === 'completed') {
+                    stats.successful++;
+                    
+                    if (result.client_name) {
+                        uniqueClients.add(result.client_name);
+                        
+                        if (!stats.clientDetails[result.client_name]) {
+                            stats.clientDetails[result.client_name] = [];
+                        }
+                        stats.clientDetails[result.client_name].push(result);
+                    }
+                    
+                    if (result.document_type) {
+                        uniqueDocTypes.add(result.document_type);
+                    }
+                } else if (result.status === 'error') {
+                    stats.errors++;
+                }
+            });
+            
+            stats.clients = uniqueClients.size;
+            stats.documentTypes = uniqueDocTypes.size;
+            
+            return stats;
+        }
+
+        function updateResultsTable(results) {
+            const tableBody = document.getElementById('results-table-body');
+            const toggleBtn = document.getElementById('table-toggle-btn');
+            const tableSummary = document.getElementById('table-summary');
+            
+            // Store results globally for toggle functionality
+            window.currentResults = results;
+            
+            tableBody.innerHTML = results.map((result, index) => {
+                const statusBadge = getStatusBadge(result.status);
+                const actions = result.status === 'completed' && result.new_filename ? 
+                    `<button class="btn btn-sm" onclick="viewDocument('${result.processed_path || result.new_filename}')" title="View Document">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm" onclick="downloadDocument('${result.processed_path || result.new_filename}')" title="Download">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn btn-sm" onclick="showRenameModal('${result.processed_path || result.new_filename}', '${result.new_filename || result.original_filename}')" title="Rename">
+                        <i class="fas fa-edit"></i>
+                    </button>` : '-';
+                
+                // Add CSS classes for collapsible functionality
+                const rowClass = index === 0 ? 'visible-row' : 'hidden-row';
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td>${result.original_filename}</td>
+                        <td>${result.client_name || '-'}</td>
+                        <td>${result.document_type || '-'}</td>
+                        <td>${result.tax_year || '-'}</td>
+                        <td>${result.new_filename || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actions}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Show/hide toggle controls based on result count
+            if (results.length > 1) {
+                toggleBtn.style.display = 'flex';
+                tableSummary.style.display = 'block';
+                document.getElementById('visible-rows').textContent = '1';
+                document.getElementById('total-rows').textContent = results.length;
+            } else {
+                toggleBtn.style.display = 'none';
+                tableSummary.style.display = 'none';
+            }
+            
+            // Reset toggle state
+            resetTableToggle();
+        }
+
+        function toggleResultsTable() {
+            const rows = document.querySelectorAll('#results-table-body tr');
+            const toggleBtn = document.getElementById('table-toggle-btn');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const tableSummary = document.getElementById('table-summary');
+            const visibleRowsSpan = document.getElementById('visible-rows');
+            const totalRows = rows.length;
+            
+            const isExpanded = toggleBtn.classList.contains('expanded');
+            
+            if (isExpanded) {
+                // Collapse: Show only first row
+                rows.forEach((row, index) => {
+                    row.className = index === 0 ? 'visible-row' : 'hidden-row';
+                });
+                toggleText.textContent = 'Show All';
+                toggleBtn.classList.remove('expanded');
+                tableSummary.style.display = 'block';
+                visibleRowsSpan.textContent = '1';
+            } else {
+                // Expand: Show all rows
+                rows.forEach(row => {
+                    row.className = 'visible-row';
+                });
+                toggleText.textContent = 'Show Less';
+                toggleBtn.classList.add('expanded');
+                tableSummary.style.display = 'none';
             }
         }
 
+        function resetTableToggle() {
+            const toggleBtn = document.getElementById('table-toggle-btn');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            toggleBtn.classList.remove('expanded');
+            toggleText.textContent = 'Show All';
+        }
+
+        function getStatusBadge(status) {
+            const badgeClass = {
+                'completed': 'success',
+                'error': 'error',
+                'processing': 'warning',
+                'waiting': 'info'
+            }[status] || 'secondary';
+            
+            const badgeText = {
+                'completed': 'Completed',
+                'error': 'Error',
+                'processing': 'Processing',
+                'waiting': 'Waiting'
+            }[status] || status;
+            
+            return `<span class="badge badge-${badgeClass}">${badgeText}</span>`;
+        }
+
+        function updateClientSummary(clientDetails) {
+            const summaryContainer = document.getElementById('client-summary');
+            
+            summaryContainer.innerHTML = Object.entries(clientDetails).map(([clientName, files]) => `
+                <div class="client-card">
+                    <h5><i class="fas fa-user"></i> ${clientName}</h5>
+                    <ul class="client-file-list">
+                        ${files.map(file => `
+                            <li>
+                                <i class="fas fa-file-alt"></i>
+                                ${file.new_filename || file.original_filename}
+                                ${file.tax_year ? `(${file.tax_year})` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        async function refreshFileExplorer() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateFileExplorerDisplay(data);
+                } else {
+                    console.error('Failed to load files:', data.error);
+                }
+            } catch (error) {
+                console.error('Error refreshing file explorer:', error);
+            }
+        }
+
+        function updateFileExplorerDisplay(data) {
+            const explorerEmpty = document.getElementById('explorer-empty');
+            const explorerData = document.getElementById('explorer-data');
+            
+            if (!data.clients || data.clients.length === 0) {
+                explorerEmpty.style.display = 'block';
+                explorerData.style.display = 'none';
+                return;
+            }
+            
+            explorerEmpty.style.display = 'none';
+            explorerData.style.display = 'block';
+            
+            // Update stats
+            document.getElementById('explorer-client-count').textContent = `${data.total_clients} Clients`;
+            document.getElementById('explorer-file-count').textContent = `${data.total_files} Files`;
+            
+            // Update client folders
+            const clientFolders = document.getElementById('client-folders');
+            clientFolders.innerHTML = data.clients.map(client => `
+                <div class="client-folder">
+                    <div class="folder-header">
+                        <div class="folder-title">
+                            <i class="fas fa-folder"></i>
+                            <span>${client.client}</span>
+                            <span class="file-count">(${client.file_count} files)</span>
+                        </div>
+                    </div>
+                    <div class="folder-files">
+                        ${client.files.map(file => `
+                            <div class="file-item">
+                                <div class="file-item-info">
+                                    <div class="file-icon">
+                                        <i class="fas ${getFileIcon(file.name)}"></i>
+                                    </div>
+                                    <div class="file-details">
+                                        <h5>${file.name}</h5>
+                                        <small>${formatFileSize(file.size)} • ${formatDate(file.modified)}</small>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <button class="btn btn-sm" onclick="viewDocument('${file.path}')" title="View Document">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm" onclick="downloadDocument('${file.path}')" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm" onclick="showRenameModal('${file.path}', '${file.name}')" title="Rename File">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm" onclick="showEditMetadataModal('${file.path}', '${file.name}', '${client.client}')" title="Edit Metadata">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.toLowerCase().split('.').pop();
+            switch (ext) {
+                case 'pdf': return 'fa-file-pdf';
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'tiff':
+                case 'bmp': return 'fa-file-image';
+                default: return 'fa-file-alt';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(timestamp) {
+            return new Date(timestamp * 1000).toLocaleDateString();
+        }
+
+        // Document viewing functions
+        let currentDocumentPath = '';
+
+        function viewDocument(filePath) {
+            currentDocumentPath = filePath;
+            const modal = document.getElementById('document-viewer-modal');
+            const frame = document.getElementById('document-frame');
+            const title = document.getElementById('viewer-title');
+            
+            const filename = filePath.split('/').pop();
+            title.textContent = filename;
+            
+            frame.src = `/processed/${filePath}`;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDocumentViewer() {
+            const modal = document.getElementById('document-viewer-modal');
+            const frame = document.getElementById('document-frame');
+            
+            modal.style.display = 'none';
+            frame.src = '';
+            currentDocumentPath = '';
+            document.body.style.overflow = '';
+        }
+
+        function downloadCurrentDocument() {
+            if (currentDocumentPath) {
+                downloadDocument(currentDocumentPath);
+            }
+        }
+
+        function downloadDocument(filePath) {
+            window.open(`/download/${filePath}`, '_blank');
+        }
+
         function openSettings() {
-            alert('Settings panel coming soon!');
+            showSettingsModal();
+        }
+
+        // Settings Modal Functions
+        function showSettingsModal() {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('settings-modal');
+            if (!modal) {
+                createSettingsModal();
+                modal = document.getElementById('settings-modal');
+            }
+            
+            // Load current settings
+            loadCurrentSettings();
+            
+            // Show modal
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function createSettingsModal() {
+            const modalHTML = `
+                <div id="settings-modal" class="settings-modal">
+                    <div class="modal-backdrop" onclick="closeSettingsModal()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-cog"></i> Settings</h2>
+                            <button class="modal-close" onclick="closeSettingsModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- API Configuration -->
+                            <div class="settings-section">
+                                <h3><i class="fas fa-key"></i> API Configuration</h3>
+                                <div class="form-group">
+                                    <label class="form-label" for="claude-api-key">Claude API Key</label>
+                                    <div class="password-input-group">
+                                        <input type="password" id="claude-api-key" class="form-input" 
+                                               placeholder="sk-ant-api03-..." autocomplete="off">
+                                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('claude-api-key')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <small class="form-help">Enter your Anthropic Claude API key to enable enhanced processing</small>
+                                </div>
+                                <div class="api-status" id="api-status">
+                                    <i class="fas fa-circle"></i>
+                                    <span>Checking API status...</span>
+                                </div>
+                            </div>
+
+                            <!-- Processing Configuration -->
+                            <div class="settings-section">
+                                <h3><i class="fas fa-sliders-h"></i> Processing Settings</h3>
+                                <div class="settings-info">
+                                    <div class="info-item">
+                                        <label>Max File Size:</label>
+                                        <span id="max-file-size">16 MB</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Supported Formats:</label>
+                                        <span id="supported-formats">PDF, PNG, JPG, JPEG, TIFF, BMP</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Donut Model:</label>
+                                        <span id="donut-model-status">Loaded</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- System Information -->
+                            <div class="settings-section">
+                                <h3><i class="fas fa-info-circle"></i> System Information</h3>
+                                <div class="settings-info">
+                                    <div class="info-item">
+                                        <label>Enhanced OCR:</label>
+                                        <span id="enhanced-ocr-status">Checking...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Entity Recognition:</label>
+                                        <span id="entity-recognition-status">Active</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Smart Filenames:</label>
+                                        <span id="smart-filenames-status">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeSettingsModal()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button class="btn btn-primary" onclick="saveSettings()">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const toggle = input.nextElementSibling.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                toggle.className = 'fas fa-eye';
+            }
+        }
+
+        async function loadCurrentSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+                
+                // Update API status
+                updateApiStatus(settings.claude_api_configured);
+                
+                // Update system information
+                document.getElementById('max-file-size').textContent = settings.max_file_size_mb + ' MB';
+                document.getElementById('supported-formats').textContent = settings.allowed_extensions.join(', ').toUpperCase();
+                document.getElementById('enhanced-ocr-status').textContent = settings.processing_capabilities.enhanced_ocr ? 'Active' : 'Inactive';
+                document.getElementById('entity-recognition-status').textContent = settings.processing_capabilities.entity_recognition ? 'Active' : 'Inactive';
+                document.getElementById('smart-filenames-status').textContent = settings.processing_capabilities.smart_filename_generation ? 'Active' : 'Inactive';
+                
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                updateApiStatus(false, 'Failed to load settings');
+            }
+        }
+
+        function updateApiStatus(isConfigured, message = null) {
+            const statusElement = document.getElementById('api-status');
+            const icon = statusElement.querySelector('i');
+            const text = statusElement.querySelector('span');
+            
+            if (isConfigured) {
+                icon.className = 'fas fa-circle status-active';
+                text.textContent = message || 'API Key Configured';
+                statusElement.className = 'api-status status-success';
+            } else {
+                icon.className = 'fas fa-circle status-inactive';
+                text.textContent = message || 'API Key Not Configured';
+                statusElement.className = 'api-status status-error';
+            }
+        }
+
+        async function saveSettings() {
+            const apiKey = document.getElementById('claude-api-key').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter a Claude API key');
+                return;
+            }
+            
+            try {
+                // Show saving state
+                const saveBtn = document.querySelector('.modal-footer .btn-primary');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveBtn.disabled = true;
+                
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        claude_api_key: apiKey
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateApiStatus(true, 'API Key Saved Successfully');
+                    
+                    // Clear the input field for security
+                    document.getElementById('claude-api-key').value = '';
+                    
+                    // Show success message
+                    showNotification('Settings saved successfully!', 'success');
+                    
+                    // Close modal after a short delay
+                    setTimeout(() => {
+                        closeSettingsModal();
+                    }, 1500);
+                } else {
+                    updateApiStatus(false, result.error || 'Failed to save API key');
+                    showNotification('Failed to save settings: ' + (result.error || 'Unknown error'), 'error');
+                }
+                
+                // Restore button
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                updateApiStatus(false, 'Failed to save settings');
+                showNotification('Failed to save settings. Please check your connection.', 'error');
+                
+                // Restore button
+                const saveBtn = document.querySelector('.modal-footer .btn-primary');
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                saveBtn.disabled = false;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification if it doesn't exist
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.className = 'notification';
+                document.body.appendChild(notification);
+            }
+            
+            notification.className = `notification notification-${type} show`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             initializeTheme();
             initializeFileHandling();
+            refreshFileExplorer(); // Load existing files on page load
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDocumentViewer();
+                closeSettingsModal();
+            }
         });
 
         // Listen for system theme changes
@@ -1472,6 +3845,514 @@
                 updateThemeIcon(theme);
             }
         });
+
+        // File Management Functions (NEW)
+        let currentEditingFile = '';
+        let currentEditingClient = '';
+
+        // Rename functions
+        function showRenameModal(filePath, currentName) {
+            currentEditingFile = filePath;
+            document.getElementById('rename-current-name').value = currentName;
+            document.getElementById('rename-new-name').value = currentName;
+            document.getElementById('rename-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRenameModal() {
+            document.getElementById('rename-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            currentEditingFile = '';
+        }
+
+        function renameCurrentDocument() {
+            if (currentDocumentPath) {
+                const filename = currentDocumentPath.split('/').pop();
+                showRenameModal(currentDocumentPath, filename);
+            }
+        }
+
+        async function performRename() {
+            const newFilename = document.getElementById('rename-new-name').value.trim();
+            
+            if (!newFilename) {
+                alert('Please enter a new filename');
+                return;
+            }
+            
+            if (!currentEditingFile) {
+                alert('No file selected for renaming');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/rename_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        old_path: currentEditingFile,
+                        new_filename: newFilename
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('File renamed successfully!', 'success');
+                    closeRenameModal();
+                    
+                    // Update current document path if in viewer
+                    if (currentDocumentPath === currentEditingFile) {
+                        currentDocumentPath = result.new_path;
+                        document.getElementById('viewer-title').textContent = result.new_filename;
+                    }
+                    
+                    // Refresh file explorer
+                    refreshFileExplorer();
+                } else {
+                    showNotification('Failed to rename file: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error renaming file:', error);
+                showNotification('Error renaming file: ' + error.message, 'error');
+            }
+        }
+
+        // Edit metadata functions
+        function showEditMetadataModal(filePath, filename, clientName) {
+            currentEditingFile = filePath;
+            currentEditingClient = clientName;
+            
+            document.getElementById('edit-filename').value = filename;
+            document.getElementById('edit-client-name').value = clientName || '';
+            
+            // Try to extract document type and year from filename
+            const docTypeMatch = filename.match(/(1040|W-2|1099|K-1|1098|W-9)/i);
+            if (docTypeMatch) {
+                const docType = docTypeMatch[1].toUpperCase();
+                const select = document.getElementById('edit-document-type');
+                for (let option of select.options) {
+                    if (option.value.includes(docType)) {
+                        select.value = option.value;
+                        break;
+                    }
+                }
+            }
+            
+            const yearMatch = filename.match(/\b(20\d{2})\b/);
+            if (yearMatch) {
+                document.getElementById('edit-tax-year').value = yearMatch[1];
+            }
+            
+            document.getElementById('edit-metadata-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditMetadataModal() {
+            document.getElementById('edit-metadata-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            currentEditingFile = '';
+            currentEditingClient = '';
+            document.getElementById('filename-suggestion').style.display = 'none';
+        }
+
+        function editCurrentDocumentMetadata() {
+            if (currentDocumentPath) {
+                const filename = currentDocumentPath.split('/').pop();
+                const clientName = currentDocumentPath.split('/')[0];
+                showEditMetadataModal(currentDocumentPath, filename, clientName);
+            }
+        }
+
+        async function saveMetadata() {
+            const clientName = document.getElementById('edit-client-name').value.trim();
+            const documentType = document.getElementById('edit-document-type').value;
+            const taxYear = document.getElementById('edit-tax-year').value.trim();
+            const autoRename = document.getElementById('auto-rename-checkbox').checked;
+            
+            try {
+                const response = await fetch('/api/edit_metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_path: currentEditingFile,
+                        client_name: clientName,
+                        document_type: documentType,
+                        tax_year: taxYear,
+                        auto_rename: autoRename
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let message = 'Metadata updated successfully!';
+                    
+                    if (result.suggestions && result.suggestions.filename) {
+                        const suggestion = result.suggestions.filename;
+                        if (confirm(`Suggested filename: ${suggestion}\n\nWould you like to rename the file?`)) {
+                            // Perform rename with suggested filename
+                            const renameResponse = await fetch('/api/rename_file', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    old_path: currentEditingFile,
+                                    new_filename: suggestion
+                                })
+                            });
+                            
+                            const renameResult = await renameResponse.json();
+                            if (renameResult.success) {
+                                message += ' File renamed as suggested.';
+                                // Update current document path if in viewer
+                                if (currentDocumentPath === currentEditingFile) {
+                                    currentDocumentPath = renameResult.new_path;
+                                    document.getElementById('viewer-title').textContent = renameResult.new_filename;
+                                }
+                            }
+                        }
+                    }
+                    
+                    showNotification(message, 'success');
+                    closeEditMetadataModal();
+                    refreshFileExplorer();
+                } else {
+                    showNotification('Failed to update metadata: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating metadata:', error);
+                showNotification('Error updating metadata: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-rename suggestion
+        document.getElementById('auto-rename-checkbox').addEventListener('change', function() {
+            if (this.checked) {
+                // Show filename suggestion
+                document.getElementById('filename-suggestion').style.display = 'block';
+                document.getElementById('suggestion-text').textContent = 'Checking for suggestions...';
+                
+                // Get suggestion
+                getSuggestion();
+            } else {
+                document.getElementById('filename-suggestion').style.display = 'none';
+            }
+        });
+
+        async function getSuggestion() {
+            const clientName = document.getElementById('edit-client-name').value.trim();
+            const documentType = document.getElementById('edit-document-type').value;
+            const taxYear = document.getElementById('edit-tax-year').value.trim();
+            
+            if (!clientName && !documentType && !taxYear) {
+                document.getElementById('suggestion-text').textContent = 'Enter metadata to see suggestions';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/edit_metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_path: currentEditingFile,
+                        client_name: clientName,
+                        document_type: documentType,
+                        tax_year: taxYear,
+                        auto_rename: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.suggestions && result.suggestions.filename) {
+                    document.getElementById('suggestion-text').textContent = 
+                        `Suggested: ${result.suggestions.filename}`;
+                } else {
+                    document.getElementById('suggestion-text').textContent = 'No suggestions available';
+                }
+            } catch (error) {
+                document.getElementById('suggestion-text').textContent = 'Error getting suggestions';
+            }
+        }
+
+        // Move to client functions
+        function moveToClient() {
+            document.getElementById('move-client-name').value = '';
+            document.getElementById('move-client-modal').style.display = 'flex';
+        }
+
+        function closeMoveClientModal() {
+            document.getElementById('move-client-modal').style.display = 'none';
+        }
+
+        async function performMoveToClient() {
+            const newClientName = document.getElementById('move-client-name').value.trim();
+            
+            if (!newClientName) {
+                alert('Please enter a client name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/move_to_client', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_path: currentEditingFile,
+                        client_name: newClientName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(`File moved to ${result.new_client} successfully!`, 'success');
+                    closeMoveClientModal();
+                    closeEditMetadataModal();
+                    
+                    // Update current document path if in viewer
+                    if (currentDocumentPath === currentEditingFile) {
+                        currentDocumentPath = result.new_path;
+                        document.getElementById('viewer-title').textContent = result.filename;
+                    }
+                    
+                    refreshFileExplorer();
+                } else {
+                    showNotification('Failed to move file: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error moving file:', error);
+                showNotification('Error moving file: ' + error.message, 'error');
+            }
+        }
+
+        // Reprocess document
+        async function reprocessDocument() {
+            const clientName = document.getElementById('edit-client-name').value.trim();
+            
+            if (!confirm('This will reprocess the document with AI. Continue?')) {
+                return;
+            }
+            
+            try {
+                showNotification('Reprocessing document...', 'info');
+                
+                const corrections = {};
+                if (clientName) {
+                    const nameParts = clientName.split(' ');
+                    if (nameParts.length >= 2) {
+                        corrections.client_first_name = nameParts[0];
+                        corrections.client_last_name = nameParts.slice(1).join(' ');
+                    }
+                }
+                
+                const response = await fetch('/api/reprocess_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_path: currentEditingFile,
+                        corrections: corrections
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Document reprocessed successfully!', 'success');
+                    closeEditMetadataModal();
+                    
+                    // Update fields with new results
+                    if (result.result) {
+                        const res = result.result;
+                        if (res.client_name) document.getElementById('edit-client-name').value = res.client_name;
+                        if (res.document_type) {
+                            const select = document.getElementById('edit-document-type');
+                            select.value = res.document_type;
+                        }
+                        if (res.tax_year) document.getElementById('edit-tax-year').value = res.tax_year;
+                    }
+                    
+                    refreshFileExplorer();
+                } else {
+                    showNotification('Failed to reprocess: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error reprocessing document:', error);
+                showNotification('Error reprocessing document: ' + error.message, 'error');
+            }
+        }
+
+        // Add event listeners for metadata fields to trigger suggestions
+        ['edit-client-name', 'edit-document-type', 'edit-tax-year'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                if (document.getElementById('auto-rename-checkbox').checked) {
+                    setTimeout(getSuggestion, 500); // Debounce suggestions
+                }
+            });
+        });
+
+        // Bulk Download Functionality
+        async function downloadAllFiles() {
+            try {
+                // Show loading state
+                const button = document.querySelector('.download-all-btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Download...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/download-all');
+                
+                if (response.ok) {
+                    // Get the filename from the response headers
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = 'DIXII_All_Documents.zip';
+                    if (contentDisposition) {
+                        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (match) filename = match[1];
+                    }
+                    
+                    // Create download link
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showNotification(`Downloaded ${filename} successfully!`, 'success');
+                } else {
+                    const error = await response.json();
+                    showNotification('Download failed: ' + error.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error downloading all files:', error);
+                showNotification('Error downloading files: ' + error.message, 'error');
+            } finally {
+                // Restore button
+                const button = document.querySelector('.download-all-btn');
+                button.innerHTML = '<i class="fas fa-download"></i> Download All Files (.zip)';
+                button.disabled = false;
+            }
+        }
+
+        // Client Search and Filtering
+        function filterClients() {
+            const searchInput = document.getElementById('client-search-input');
+            const clearButton = document.querySelector('.clear-search-btn');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const clientFolders = document.querySelectorAll('.client-folder');
+            
+            // Show/hide clear button
+            if (clearButton) {
+                clearButton.style.display = searchTerm ? 'block' : 'none';
+            }
+            
+            let visibleClients = 0;
+            let visibleFiles = 0;
+            
+            clientFolders.forEach(folder => {
+                // Get client name from the folder-title span (second span contains the client name)
+                const folderTitle = folder.querySelector('.folder-title');
+                if (!folderTitle) return;
+                
+                const spans = folderTitle.querySelectorAll('span');
+                const clientName = spans.length > 0 ? spans[0].textContent.toLowerCase() : '';
+                
+                const shouldShow = searchTerm === '' || clientName.includes(searchTerm);
+                
+                folder.style.display = shouldShow ? 'block' : 'none';
+                
+                if (shouldShow) {
+                    visibleClients++;
+                    const fileCount = folder.querySelectorAll('.file-item').length;
+                    visibleFiles += fileCount;
+                }
+            });
+            
+            // Update stats to show filtered results
+            updateFilteredStats(visibleClients, visibleFiles, searchTerm);
+        }
+
+        function clearClientSearch() {
+            const searchInput = document.getElementById('client-search-input');
+            const clearButton = document.querySelector('.clear-search-btn');
+            
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            
+            // Show all folders
+            const clientFolders = document.querySelectorAll('.client-folder');
+            clientFolders.forEach(folder => {
+                folder.style.display = 'block';
+            });
+            
+            // Reset stats
+            refreshFileExplorer();
+        }
+
+        function openLocalFileExplorer() {
+            try {
+                // Show loading state
+                showNotification('Opening file explorer...', 'info');
+                
+                // Call backend API to open file explorer
+                fetch('/api/open-explorer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(`File explorer opened: ${data.path}`, 'success');
+                    } else {
+                        // Fallback: switch to File Explorer tab
+                        showNotification(data.error + ' - Switching to File Explorer tab', 'warning');
+                        switchTab(null, 'explorer-tab');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error opening file explorer:', error);
+                    // Fallback: switch to File Explorer tab
+                    showNotification('Unable to open native file explorer. Switching to File Explorer tab.', 'warning');
+                    switchTab(null, 'explorer-tab');
+                });
+            } catch (error) {
+                console.error('Error calling file explorer API:', error);
+                showNotification('Error opening file explorer. Use File Explorer tab instead.', 'error');
+                switchTab(null, 'explorer-tab');
+            }
+        }
+
+        function updateFilteredStats(clientCount, fileCount, searchTerm) {
+            const clientCountElement = document.getElementById('explorer-client-count');
+            const fileCountElement = document.getElementById('explorer-file-count');
+            
+            if (searchTerm) {
+                clientCountElement.innerHTML = `<i class="fas fa-filter"></i> ${clientCount} Clients (filtered)`;
+                fileCountElement.innerHTML = `<i class="fas fa-filter"></i> ${fileCount} Files (filtered)`;
+            } else {
+                // This will be reset by refreshFileExplorer when clearing search
+                clientCountElement.textContent = `${clientCount} Clients`;
+                fileCountElement.textContent = `${fileCount} Files`;
+            }
+        }
     </script>
 </body>
 </html> 

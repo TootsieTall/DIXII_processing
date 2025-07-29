@@ -55,7 +55,7 @@ class DonutTaxClassifier:
             
             # Perform inference
             with torch.no_grad():
-                pixel_values = self.processor(img_resized.convert("RGB"), return_tensors="pt").pixel_values
+                pixel_values = self.processor(img_resized.convert("RGB"), return_tensors="pt", legacy=False).pixel_values
                 pixel_values = pixel_values.to(self.device)
                 outputs = self.model(pixel_values)
                 
