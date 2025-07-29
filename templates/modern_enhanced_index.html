@@ -1289,7 +1289,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
+            z-index: 1000000;
         }
 
         .modal-backdrop {
@@ -2031,7 +2031,7 @@
             font-weight: 600;
         }
 
-        /* Document Viewer Modal */
+        /* Document Viewer Modal - True Full Screen */
         .document-viewer-modal {
             position: fixed !important;
             top: 0 !important;
@@ -2039,7 +2039,7 @@
             width: 100vw !important;
             height: 100vh !important;
             display: none;
-            z-index: 99999 !important;
+            z-index: 999999 !important;
             background: #1a1f36 !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -2047,6 +2047,9 @@
             border-radius: 0 !important;
             box-shadow: none !important;
             overflow: hidden !important;
+            transform: none !important;
+            /* Ensure it's outside any container */
+            position: fixed !important;
         }
 
         /* Force full screen when displayed */
@@ -2057,7 +2060,8 @@
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            z-index: 99999 !important;
+            z-index: 999999 !important;
+            transform: none !important;
         }
 
         /* Override body padding when modal is open */
@@ -2072,6 +2076,35 @@
             overflow: hidden !important;
         }
 
+        /* Force modal to be completely independent */
+        body.modal-open {
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body.modal-open * {
+            box-sizing: border-box;
+        }
+
+        /* Ensure modal is always on top */
+        .document-viewer-modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999999 !important;
+            background: #1a1f36 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+            transform: none !important;
+        }
+
         .viewer-sidebar {
             position: fixed;
             left: 0;
@@ -2082,7 +2115,7 @@
             border-right: 1px solid #34495e;
             padding: 20px;
             overflow-y: auto;
-            z-index: 10003;
+            z-index: 1000003;
             margin: 0;
             border-radius: 0;
             box-shadow: none;
@@ -2151,6 +2184,7 @@
             border: none !important;
             border-radius: 0 !important;
             background: white !important;
+            z-index: 1000002 !important;
         }
 
         .viewer-nav-header {
@@ -2229,6 +2263,7 @@
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
+            z-index: 1000001 !important;
         }
 
         .document-viewer-modal .viewer-body {
@@ -2917,7 +2952,9 @@
             </div>
         </div>
         
-        <!-- Document Viewer Modal -->
+        </div>
+
+        <!-- Document Viewer Modal - Moved outside container -->
         <div id="document-viewer-modal" class="document-viewer-modal">
             <!-- Left Sidebar -->
             <div class="viewer-sidebar">
@@ -2981,160 +3018,161 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Rename File Modal -->
-    <div id="rename-modal" class="settings-modal">
-        <div class="modal-backdrop" onclick="closeRenameModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-edit"></i> Rename File</h2>
-                <button class="modal-close" onclick="closeRenameModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <div class="form-group">
-                        <label class="form-label" for="rename-current-name">Current Name</label>
-                        <input type="text" id="rename-current-name" class="form-input" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="rename-new-name">New Name</label>
-                        <input type="text" id="rename-new-name" class="form-input" placeholder="Enter new filename" autocomplete="off">
-                        <small class="form-help">Include file extension (e.g., .pdf)</small>
+        </div>
+
+        <!-- Rename File Modal - Moved outside container -->
+        <div id="rename-modal" class="settings-modal">
+            <div class="modal-backdrop" onclick="closeRenameModal()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-edit"></i> Rename File</h2>
+                    <button class="modal-close" onclick="closeRenameModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <div class="form-group">
+                            <label class="form-label" for="rename-current-name">Current Name</label>
+                            <input type="text" id="rename-current-name" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="rename-new-name">New Name</label>
+                            <input type="text" id="rename-new-name" class="form-input" placeholder="Enter new filename" autocomplete="off">
+                            <small class="form-help">Include file extension (e.g., .pdf)</small>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRenameModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn btn-primary" onclick="performRename()">
-                    <i class="fas fa-save"></i> Rename File
-                </button>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeRenameModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="performRename()">
+                        <i class="fas fa-save"></i> Rename File
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Edit Metadata Modal -->
-    <div id="edit-metadata-modal" class="settings-modal">
-        <div class="modal-backdrop" onclick="closeEditMetadataModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-cog"></i> Edit Document Metadata</h2>
-                <button class="modal-close" onclick="closeEditMetadataModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3><i class="fas fa-file-alt"></i> Document Information</h3>
-                    <div class="form-group">
-                        <label class="form-label" for="edit-filename">Current Filename</label>
-                        <input type="text" id="edit-filename" class="form-input" readonly>
+        <!-- Edit Metadata Modal - Moved outside container -->
+        <div id="edit-metadata-modal" class="settings-modal">
+            <div class="modal-backdrop" onclick="closeEditMetadataModal()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-cog"></i> Edit Document Metadata</h2>
+                    <button class="modal-close" onclick="closeEditMetadataModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h3><i class="fas fa-file-alt"></i> Document Information</h3>
+                        <div class="form-group">
+                            <label class="form-label" for="edit-filename">Current Filename</label>
+                            <input type="text" id="edit-filename" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit-client-name">Client Name</label>
+                            <input type="text" id="edit-client-name" class="form-input" placeholder="Enter client name">
+                            <small class="form-help">Full name for individuals or business name</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit-document-type">Document Type</label>
+                            <select id="edit-document-type" class="form-input">
+                                <option value="">Select document type</option>
+                                <option value="Form 1040">Form 1040 (Individual Tax Return)</option>
+                                <option value="Form W-2">Form W-2 (Wage Statement)</option>
+                                <option value="Form 1099-NEC">Form 1099-NEC</option>
+                                <option value="Form 1099-MISC">Form 1099-MISC</option>
+                                <option value="Form 1099-INT">Form 1099-INT</option>
+                                <option value="Form 1099-DIV">Form 1099-DIV</option>
+                                <option value="Form 1099-R">Form 1099-R</option>
+                                <option value="Schedule K-1">Schedule K-1</option>
+                                <option value="Form 1098">Form 1098 (Mortgage Interest)</option>
+                                <option value="Form 1098-E">Form 1098-E (Student Loan Interest)</option>
+                                <option value="Form 1098-T">Form 1098-T (Tuition Statement)</option>
+                                <option value="Form W-9">Form W-9</option>
+                                <option value="Property Tax Statement">Property Tax Statement</option>
+                                <option value="Bank Statement">Bank Statement</option>
+                                <option value="Investment Statement">Investment Statement</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit-tax-year">Tax Year</label>
+                            <input type="text" id="edit-tax-year" class="form-input" placeholder="e.g., 2023">
+                            <small class="form-help">Leave blank if not applicable</small>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="edit-client-name">Client Name</label>
-                        <input type="text" id="edit-client-name" class="form-input" placeholder="Enter client name">
-                        <small class="form-help">Full name for individuals or business name</small>
+                    
+                    <div class="settings-section">
+                        <h3><i class="fas fa-magic"></i> Auto-Rename Options</h3>
+                        <div class="form-group">
+                            <label class="radio-option">
+                                <input type="checkbox" id="auto-rename-checkbox">
+                                <span>Suggest new filename based on metadata</span>
+                            </label>
+                            <small class="form-help">Generate intelligent filename using the information above</small>
+                        </div>
+                        <div id="filename-suggestion" class="api-status" style="display: none;">
+                            <i class="fas fa-lightbulb"></i>
+                            <span id="suggestion-text"></span>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="edit-document-type">Document Type</label>
-                        <select id="edit-document-type" class="form-input">
-                            <option value="">Select document type</option>
-                            <option value="Form 1040">Form 1040 (Individual Tax Return)</option>
-                            <option value="Form W-2">Form W-2 (Wage Statement)</option>
-                            <option value="Form 1099-NEC">Form 1099-NEC</option>
-                            <option value="Form 1099-MISC">Form 1099-MISC</option>
-                            <option value="Form 1099-INT">Form 1099-INT</option>
-                            <option value="Form 1099-DIV">Form 1099-DIV</option>
-                            <option value="Form 1099-R">Form 1099-R</option>
-                            <option value="Schedule K-1">Schedule K-1</option>
-                            <option value="Form 1098">Form 1098 (Mortgage Interest)</option>
-                            <option value="Form 1098-E">Form 1098-E (Student Loan Interest)</option>
-                            <option value="Form 1098-T">Form 1098-T (Tuition Statement)</option>
-                            <option value="Form W-9">Form W-9</option>
-                            <option value="Property Tax Statement">Property Tax Statement</option>
-                            <option value="Bank Statement">Bank Statement</option>
-                            <option value="Investment Statement">Investment Statement</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="edit-tax-year">Tax Year</label>
-                        <input type="text" id="edit-tax-year" class="form-input" placeholder="e.g., 2023">
-                        <small class="form-help">Leave blank if not applicable</small>
+                    
+                    <div class="settings-section">
+                        <h3><i class="fas fa-folder"></i> Client Management</h3>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="moveToClient()">
+                                <i class="fas fa-arrows-alt"></i> Move to Different Client
+                            </button>
+                            <button class="btn btn-secondary" onclick="reprocessDocument()">
+                                <i class="fas fa-sync-alt"></i> Reprocess with AI
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="settings-section">
-                    <h3><i class="fas fa-magic"></i> Auto-Rename Options</h3>
-                    <div class="form-group">
-                        <label class="radio-option">
-                            <input type="checkbox" id="auto-rename-checkbox">
-                            <span>Suggest new filename based on metadata</span>
-                        </label>
-                        <small class="form-help">Generate intelligent filename using the information above</small>
-                    </div>
-                    <div id="filename-suggestion" class="api-status" style="display: none;">
-                        <i class="fas fa-lightbulb"></i>
-                        <span id="suggestion-text"></span>
-                    </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeEditMetadataModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="saveMetadata()">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
                 </div>
-                
-                <div class="settings-section">
-                    <h3><i class="fas fa-folder"></i> Client Management</h3>
-                    <div class="form-group">
-                        <button class="btn btn-secondary" onclick="moveToClient()">
-                            <i class="fas fa-arrows-alt"></i> Move to Different Client
-                        </button>
-                        <button class="btn btn-secondary" onclick="reprocessDocument()">
-                            <i class="fas fa-sync-alt"></i> Reprocess with AI
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeEditMetadataModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn btn-primary" onclick="saveMetadata()">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Move to Client Modal -->
-    <div id="move-client-modal" class="settings-modal">
-        <div class="modal-backdrop" onclick="closeMoveClientModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-arrows-alt"></i> Move to Client</h2>
-                <button class="modal-close" onclick="closeMoveClientModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <div class="form-group">
-                        <label class="form-label" for="move-client-name">Client Name</label>
-                        <input type="text" id="move-client-name" class="form-input" placeholder="Enter client name">
-                        <small class="form-help">File will be moved to this client's folder</small>
+        <!-- Move to Client Modal - Moved outside container -->
+        <div id="move-client-modal" class="settings-modal">
+            <div class="modal-backdrop" onclick="closeMoveClientModal()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-arrows-alt"></i> Move to Client</h2>
+                    <button class="modal-close" onclick="closeMoveClientModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <div class="form-group">
+                            <label class="form-label" for="move-client-name">Client Name</label>
+                            <input type="text" id="move-client-name" class="form-input" placeholder="Enter client name">
+                            <small class="form-help">File will be moved to this client's folder</small>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeMoveClientModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn btn-primary" onclick="performMoveToClient()">
-                    <i class="fas fa-save"></i> Move File
-                </button>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeMoveClientModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="performMoveToClient()">
+                        <i class="fas fa-save"></i> Move File
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
     <script>
         // Modern JavaScript functionality
@@ -3880,6 +3918,15 @@
             const documentUrl = `/processed/${filePath}`;
             console.log('Loading document from:', documentUrl);
             
+            // Ensure modal is truly full screen
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.zIndex = '999999';
+            modal.style.transform = 'none';
+            
             frame.src = documentUrl;
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -3939,8 +3986,22 @@
             const modal = document.getElementById('document-viewer-modal');
             const frame = document.getElementById('document-frame');
             
-            modal.style.display = 'none';
+            // Clear the iframe source first
             frame.src = '';
+            
+            // Hide the modal
+            modal.style.display = 'none';
+            
+            // Reset modal positioning
+            modal.style.position = '';
+            modal.style.top = '';
+            modal.style.left = '';
+            modal.style.width = '';
+            modal.style.height = '';
+            modal.style.zIndex = '';
+            modal.style.transform = '';
+            
+            // Reset page state
             currentDocumentPath = '';
             allDocuments = [];
             currentDocumentIndex = 0;
@@ -4237,6 +4298,17 @@
             initializeTheme();
             initializeFileHandling();
             refreshFileExplorer(); // Load existing files on page load
+            
+            // Ensure document viewer modal is properly positioned
+            const modal = document.getElementById('document-viewer-modal');
+            if (modal) {
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100vw';
+                modal.style.height = '100vh';
+                modal.style.zIndex = '999999';
+            }
         });
 
         // Keyboard shortcuts
