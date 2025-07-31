@@ -1386,9 +1386,148 @@ class EnhancedTaxDocumentProcessor:
                 'error': str(e)
             }
     
+    def _enhanced_name_field_mapping(self, extracted_info: Dict, name_results: Dict) -> Dict:
+        """
+        ENHANCED NAME FIELD MAPPING - Bridge between name detection and entity recognition
+        Maps detected names to the specific field names expected by entity recognizer
+        """
+        try:
+            doc_type = extracted_info.get('document_type', '').lower()
+            
+            # Get the primary detected name
+            primary_name = None
+            if name_results.get('combined_names'):
+                primary_name = self.name_detector.get_primary_client_name(name_results)
+            
+            if not primary_name:
+                # Fallback to any available name from Claude extraction
+                primary_name = (extracted_info.get('client_name') or 
+                              extracted_info.get('person_name') or 
+                              extracted_info.get('detected_primary_name'))
+                
+                # If still no primary name, try to extract from other fields
+                if not primary_name:
+                    # Look for any name fields that might contain a full name
+                    name_fields = [
+                        'primary_first_name', 'primary_last_name',
+                        'partner_first_name', 'partner_last_name',
+                        'recipient_first_name', 'recipient_last_name',
+                        'employee_first_name', 'employee_last_name',
+                        'borrower_first_name', 'borrower_last_name',
+                        'person_first_name', 'person_last_name'
+                    ]
+                    
+                    for field in name_fields:
+                        if extracted_info.get(field) and extracted_info.get(field) != 'Unknown':
+                            # Try to construct a full name from first/last pairs
+                            if field.endswith('_first_name'):
+                                last_field = field.replace('_first_name', '_last_name')
+                                first_name = extracted_info.get(field)
+                                last_name = extracted_info.get(last_field)
+                                if first_name and last_name and first_name != 'Unknown' and last_name != 'Unknown':
+                                    primary_name = f"{first_name} {last_name}"
+                                    self.logger.info(f"Constructed primary name from {field}: {primary_name}")
+                                    break
+            
+            if not primary_name:
+                self.logger.warning("No primary name found for field mapping")
+                return extracted_info
+            
+            # Parse name into components
+            name_parts = primary_name.split()
+            if len(name_parts) < 2:
+                self.logger.warning(f"Primary name '{primary_name}' has insufficient parts for parsing")
+                return extracted_info
+            
+            first_name = name_parts[0]
+            last_name = ' '.join(name_parts[1:])
+            
+            # Map to document-specific field names based on document type
+            if 'k-1' in doc_type or 'schedule k-1' in doc_type:
+                # K-1 documents: partner/recipient is the primary entity
+                extracted_info.update({
+                    'partner_first_name': first_name,
+                    'partner_last_name': last_name,
+                    'recipient_first_name': first_name,
+                    'recipient_last_name': last_name,
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"K-1 field mapping: {first_name} {last_name} → partner/recipient fields")
+                
+            elif '1099' in doc_type:
+                # 1099 documents: recipient is the primary entity
+                extracted_info.update({
+                    'recipient_first_name': first_name,
+                    'recipient_last_name': last_name,
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"1099 field mapping: {first_name} {last_name} → recipient fields")
+                
+            elif 'w-2' in doc_type:
+                # W-2 documents: employee is the primary entity
+                extracted_info.update({
+                    'employee_first_name': first_name,
+                    'employee_last_name': last_name,
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"W-2 field mapping: {first_name} {last_name} → employee fields")
+                
+            elif '1098' in doc_type:
+                # 1098 documents: borrower/student is the primary entity
+                extracted_info.update({
+                    'borrower_first_name': first_name,
+                    'borrower_last_name': last_name,
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"1098 field mapping: {first_name} {last_name} → borrower fields")
+                
+            elif '1040' in doc_type:
+                # 1040 documents: primary taxpayer is the main entity
+                extracted_info.update({
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"1040 field mapping: {first_name} {last_name} → primary taxpayer fields")
+                
+            else:
+                # Generic mapping for unknown document types
+                extracted_info.update({
+                    'primary_first_name': first_name,
+                    'primary_last_name': last_name,
+                    'person_first_name': first_name,
+                    'person_last_name': last_name
+                })
+                self.logger.info(f"Generic field mapping: {first_name} {last_name} → primary/person fields")
+            
+            # Add enhanced name detection metadata
+            extracted_info['enhanced_name_mapping_applied'] = True
+            extracted_info['mapped_primary_name'] = primary_name
+            extracted_info['mapped_first_name'] = first_name
+            extracted_info['mapped_last_name'] = last_name
+            
+            return extracted_info
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced name field mapping: {e}")
+            return extracted_info
+    
     def _merge_enhanced_name_detection_priority(self, extracted_info: Dict, name_results: Dict) -> Dict:
         """
-        Merge enhanced name detection results with existing extracted information
+        ENHANCED: Merge enhanced name detection results with existing extracted information
         PRIORITIZES enhanced name detection over Claude extraction for client/entity naming
         """
         try:
@@ -1410,6 +1549,9 @@ class EnhancedTaxDocumentProcessor:
                         extracted_info['client_name'] = primary_name
                         extracted_info['person_name'] = primary_name
                         
+                        # ENHANCED: Apply field mapping for entity recognition
+                        extracted_info = self._enhanced_name_field_mapping(extracted_info, name_results)
+                        
                         # Track enhanced name detection usage
                         self.processing_stats['enhanced_name_detection']['names_detected'] += 1
                         self.processing_stats['enhanced_name_detection']['priority_used'] += 1
@@ -1428,6 +1570,9 @@ class EnhancedTaxDocumentProcessor:
                 extracted_info['enhanced_name_detection'] = name_results
                 extracted_info['name_detection_fallback'] = 'claude'
                 self.processing_stats['enhanced_name_detection']['fallback_to_claude'] += 1
+                
+                # ENHANCED: Apply field mapping even for Claude fallback
+                extracted_info = self._enhanced_name_field_mapping(extracted_info, name_results)
             
             return extracted_info
             

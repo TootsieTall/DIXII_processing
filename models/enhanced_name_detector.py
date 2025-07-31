@@ -492,7 +492,7 @@ class EnhancedNameDetector:
             return []
     
     def _detect_names_patterns(self, image_path: str, doc_type: str) -> List[Dict]:
-        """Detect names using pattern matching for tax documents"""
+        """ENHANCED: Detect names using pattern matching for tax documents with better filtering"""
         try:
             # Extract text from image (handle PDFs)
             if image_path.lower().endswith('.pdf'):
@@ -511,31 +511,49 @@ class EnhancedNameDetector:
             names = []
             entity_types = []
             
-            # Get patterns for the specific document type
-            patterns = self.tax_name_patterns.get(doc_type.lower(), [])
+            # ENHANCED: More specific patterns for actual person names
+            person_name_patterns = [
+                # Individual names with proper capitalization
+                r'([A-Z][a-z]+ [A-Z][a-z]+)',
+                r'([A-Z][a-z]+ [A-Z][a-z]+ [A-Z][a-z]+)',  # First Middle Last
+                # Names with titles
+                r'(Mr\.|Mrs\.|Ms\.|Dr\.) ([A-Z][a-z]+ [A-Z][a-z]+)',
+                # Names in specific contexts
+                r'(Partner|Recipient|Employee|Taxpayer|Borrower): ([A-Z][a-z]+ [A-Z][a-z]+)',
+                r'([A-Z][a-z]+ [A-Z][a-z]+) (Partner|Recipient|Employee|Taxpayer|Borrower)',
+                # Trust beneficiary patterns
+                r'([A-Z][a-z]+ [A-Z][a-z]+) Trust',
+                r'Trust of ([A-Z][a-z]+ [A-Z][a-z]+)',
+                # Partnership patterns
+                r'([A-Z][a-z]+ [A-Z][a-z]+) & ([A-Z][a-z]+ [A-Z][a-z]+)',
+                r'([A-Z][a-z]+ [A-Z][a-z]+) AND ([A-Z][a-z]+ [A-Z][a-z]+)',
+            ]
             
-            # Also check general entity patterns
-            general_patterns = self.tax_name_patterns.get('general_entity', [])
+            # ENHANCED: Filter out common non-name terms
+            exclude_terms = {
+                'federal', 'state', 'total', 'units', 'value', 'amount', 'tax', 'trust', 'assets',
+                'liquid', 'estate', 'other', 'held', 'goodman', 'llc', 'applicable', 'discounts',
+                'net', 'taxable', 'related', 'generation', 'skipping', 'payable', 'available',
+                'estimated', 'capital', 'gains', 'monetization', 'beneficiaries', 'transfer',
+                'basis', 'personal', 'article', 'exempt', 'nia', 'uw', 'appt', 'farber'
+            }
             
-            # Combine specific and general patterns
-            all_patterns = patterns + general_patterns
-            
-            for pattern in all_patterns:
+            for pattern in person_name_patterns:
                 matches = re.finditer(pattern, text, re.IGNORECASE)
                 for match in matches:
                     if len(match.groups()) == 1:
                         name = match.group(1).strip()
-                        entity_type = self._detect_entity_type_from_pattern(pattern, name, text)
                     else:
                         # For patterns with multiple groups (like partnerships)
                         name_parts = [match.group(i).strip() for i in range(1, len(match.groups()) + 1)]
                         name = ' '.join(name_parts)
-                        entity_type = self._detect_entity_type_from_pattern(pattern, name, text)
                     
-                    if name and len(name.split()) >= 2:
+                    # ENHANCED: Filter out non-name terms
+                    if self._is_valid_person_name(name, exclude_terms):
+                        entity_type = self._detect_entity_type_from_pattern(pattern, name, text)
                         names.append({
                             'name': name,
-                            'confidence': 0.7,
+                            'confidence': 0.8,  # Higher confidence for filtered names
                             'method': 'patterns',
                             'entity_type': entity_type,
                             'bbox': None
@@ -553,6 +571,48 @@ class EnhancedNameDetector:
         except Exception as e:
             self.logger.error(f"Error in pattern-based name detection: {e}")
             return []
+    
+    def _is_valid_person_name(self, name: str, exclude_terms: set) -> bool:
+        """ENHANCED: Validate if a detected name is actually a person name"""
+        if not name or len(name.strip()) < 3:
+            return False
+        
+        name_lower = name.lower()
+        name_parts = name.split()
+        
+        # Must have at least first and last name
+        if len(name_parts) < 2:
+            return False
+        
+        # Check if any part is in exclude terms
+        for part in name_parts:
+            if part.lower() in exclude_terms:
+                return False
+        
+        # Check for proper capitalization (first letter of each part should be uppercase)
+        for part in name_parts:
+            if not part or not part[0].isupper():
+                return False
+        
+        # Check for reasonable name length (not too long)
+        if len(name) > 50:
+            return False
+        
+        # Check for common name patterns
+        # Should not be all uppercase (likely a header)
+        if name.isupper():
+            return False
+        
+        # Should not contain numbers (likely not a person name)
+        if any(char.isdigit() for char in name):
+            return False
+        
+        # Should not be common financial terms
+        financial_terms = {'total', 'value', 'amount', 'units', 'federal', 'state', 'tax'}
+        if any(term in name_lower for term in financial_terms):
+            return False
+        
+        return True
     
     def _detect_entity_type_from_pattern(self, pattern: str, name: str, text: str) -> str:
         """Detect entity type based on the pattern and context"""
@@ -662,13 +722,110 @@ class EnhancedNameDetector:
         return min(1.0, base_confidence)
     
     def get_primary_client_name(self, results: Dict) -> Optional[str]:
-        """Extract the most likely primary client name from detection results"""
-        if not results['combined_names']:
+        """ENHANCED: Extract the most likely primary client name from detection results"""
+        if not results.get('combined_names'):
+            self.logger.warning("No combined names found in results")
             return None
         
-        # Return the highest confidence name
-        best_name = results['combined_names'][0]
-        return best_name['name']
+        # Log all detected names for debugging
+        self.logger.info(f"All detected names: {[n['name'] for n in results['combined_names']]}")
+        
+        # ENHANCED: Filter out non-person names
+        person_names = []
+        for name_info in results['combined_names']:
+            name = name_info['name'].strip()
+            if self._is_likely_person_name(name):
+                person_names.append(name_info)
+        
+        if not person_names:
+            self.logger.warning("No valid person names found after filtering")
+            return None
+        
+        # Enhanced selection logic for person names
+        best_name = None
+        best_score = 0.0
+        
+        for name_info in person_names:
+            name = name_info['name'].strip()
+            confidence = name_info['confidence']
+            
+            # Calculate a score based on multiple factors
+            score = confidence
+            
+            # Boost score for names that look like real person names
+            name_parts = name.split()
+            if len(name_parts) >= 2:
+                # Boost for full names (first + last)
+                score += 0.2
+                
+                # Boost for names with proper capitalization
+                if name_parts[0][0].isupper() and name_parts[1][0].isupper():
+                    score += 0.1
+            
+            # Boost for names detected by multiple methods
+            detection_methods = name_info.get('detection_methods', [])
+            if len(detection_methods) > 1:
+                score += 0.15
+            
+            # Boost for names with higher confidence
+            if confidence > 0.8:
+                score += 0.1
+            
+            # Update best name if this one has a higher score
+            if score > best_score:
+                best_score = score
+                best_name = name
+        
+        if best_name:
+            self.logger.info(f"Selected primary name: {best_name} (score: {best_score:.2f})")
+            return best_name
+        else:
+            self.logger.warning("No suitable primary name found")
+            return None
+    
+    def _is_likely_person_name(self, name: str) -> bool:
+        """ENHANCED: Check if a name is likely to be a real person name"""
+        if not name or len(name.strip()) < 3:
+            return False
+        
+        name_parts = name.split()
+        
+        # Must have at least first and last name
+        if len(name_parts) < 2:
+            return False
+        
+        # Check for proper capitalization
+        for part in name_parts:
+            if not part or not part[0].isupper():
+                return False
+        
+        # Check for reasonable name length
+        if len(name) > 50:
+            return False
+        
+        # Should not be all uppercase (likely a header)
+        if name.isupper():
+            return False
+        
+        # Should not contain numbers
+        if any(char.isdigit() for char in name):
+            return False
+        
+        # Should not be common financial/legal terms
+        exclude_terms = {
+            'federal', 'state', 'total', 'units', 'value', 'amount', 'tax', 'trust', 'assets',
+            'liquid', 'estate', 'other', 'held', 'goodman', 'llc', 'applicable', 'discounts',
+            'net', 'taxable', 'related', 'generation', 'skipping', 'payable', 'available',
+            'estimated', 'capital', 'gains', 'monetization', 'beneficiaries', 'transfer',
+            'basis', 'personal', 'article', 'exempt', 'nia', 'uw', 'appt', 'farber'
+        }
+        
+        name_lower = name.lower()
+        for term in exclude_terms:
+            if term in name_lower:
+                return False
+        
+        return True
     
     def get_all_detected_names(self, results: Dict) -> List[str]:
         """Get all detected names as a list"""

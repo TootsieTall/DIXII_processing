@@ -103,13 +103,29 @@ class EntityRecognizer:
             return self._default_entity_info()
     
     def _determine_primary_entity(self, extracted_info: Dict) -> Dict:
-        """Determine the primary entity from extracted information"""
+        """ENHANCED: Determine the primary entity from extracted information with improved name handling"""
         doc_type = extracted_info.get('document_type', '')
+        
+        # ENHANCED: Check for mapped names first (from enhanced name detection)
+        mapped_first_name = extracted_info.get('mapped_first_name')
+        mapped_last_name = extracted_info.get('mapped_last_name')
+        
+        if mapped_first_name and mapped_last_name:
+            # Use mapped names from enhanced detection
+            first_name = mapped_first_name
+            last_name = mapped_last_name
+            self.logger.info(f"Using mapped names from enhanced detection: {first_name} {last_name}")
+        else:
+            # Fallback to document-specific field extraction
+            first_name = None
+            last_name = None
         
         # For K-1s, the recipient (partner) is the primary entity
         if 'K-1' in doc_type or 'Schedule K-1' in doc_type:
-            first_name = extracted_info.get('partner_first_name')
-            last_name = extracted_info.get('partner_last_name')
+            if not first_name or not last_name:
+                first_name = extracted_info.get('partner_first_name')
+                last_name = extracted_info.get('partner_last_name')
+            
             partnership_name = extracted_info.get('partnership_name')
             
             if first_name and last_name:
@@ -147,8 +163,9 @@ class EntityRecognizer:
                     'document_context': '1099 Recipient'
                 }
             else:
-                first_name = extracted_info.get('recipient_first_name') or 'Unknown'
-                last_name = extracted_info.get('recipient_last_name') or 'Recipient'
+                if not first_name or not last_name:
+                    first_name = extracted_info.get('recipient_first_name') or 'Unknown'
+                    last_name = extracted_info.get('recipient_last_name') or 'Recipient'
                 return {
                     'entity_type': 'Individual',
                     'first_name': first_name,
@@ -160,8 +177,9 @@ class EntityRecognizer:
         
         # For W-2s, the employee is the primary entity
         elif 'W-2' in doc_type:
-            first_name = extracted_info.get('employee_first_name') or 'Unknown'
-            last_name = extracted_info.get('employee_last_name') or 'Employee'
+            if not first_name or not last_name:
+                first_name = extracted_info.get('employee_first_name') or 'Unknown'
+                last_name = extracted_info.get('employee_last_name') or 'Employee'
             return {
                 'entity_type': 'Individual',
                 'first_name': first_name,
@@ -173,8 +191,9 @@ class EntityRecognizer:
         
         # For 1098s, the borrower/student is the primary entity
         elif '1098' in doc_type:
-            first_name = extracted_info.get('borrower_first_name') or 'Unknown'
-            last_name = extracted_info.get('borrower_last_name') or 'Borrower'
+            if not first_name or not last_name:
+                first_name = extracted_info.get('borrower_first_name') or 'Unknown'
+                last_name = extracted_info.get('borrower_last_name') or 'Borrower'
             return {
                 'entity_type': 'Individual',
                 'first_name': first_name,
@@ -186,8 +205,9 @@ class EntityRecognizer:
         
         # For 1040s, primary taxpayer is the main entity
         elif '1040' in doc_type:
-            first_name = extracted_info.get('primary_first_name') or 'Unknown'
-            last_name = extracted_info.get('primary_last_name') or 'Taxpayer'
+            if not first_name or not last_name:
+                first_name = extracted_info.get('primary_first_name') or 'Unknown'
+                last_name = extracted_info.get('primary_last_name') or 'Taxpayer'
             return {
                 'entity_type': 'Individual',
                 'first_name': first_name,
@@ -211,8 +231,9 @@ class EntityRecognizer:
                     'document_context': 'Generic Business'
                 }
             else:
-                first_name = extracted_info.get('person_first_name') or 'Unknown'
-                last_name = extracted_info.get('person_last_name') or 'Individual'
+                if not first_name or not last_name:
+                    first_name = extracted_info.get('person_first_name') or 'Unknown'
+                    last_name = extracted_info.get('person_last_name') or 'Individual'
                 return {
                     'entity_type': 'Individual',
                     'first_name': first_name,

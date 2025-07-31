@@ -1462,7 +1462,7 @@ def manual_client_input():
             return jsonify({'error': 'Missing required fields'}), 400
         
         # Get the enhanced name detector
-        enhanced_processor = get_enhanced_processor()
+        global enhanced_processor
         if not enhanced_processor or not enhanced_processor.name_detector:
             return jsonify({'error': 'Name detector not available'}), 500
         
