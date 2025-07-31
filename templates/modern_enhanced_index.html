@@ -1635,6 +1635,116 @@
             margin-bottom: var(--space-3);
         }
 
+        .file-processing-item .file-actions {
+            display: flex;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+        }
+
+        .file-processing-item .file-actions .btn {
+            padding: var(--space-1) var(--space-3);
+            font-size: 0.75rem;
+            min-width: auto;
+        }
+
+        /* Real-time Results Section */
+        .real-time-results {
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .real-time-results .results-section-header {
+            margin-bottom: var(--space-4);
+        }
+
+        .real-time-results .results-section-header h4 {
+            color: white;
+            margin: 0 0 var(--space-2) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .real-time-results .results-section-header small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        .real-time-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .completed-file-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            transition: var(--transition-normal);
+        }
+
+        .completed-file-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .completed-file-card .file-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .completed-file-card .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--success-500);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .completed-file-card .file-info h5 {
+            color: white;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .completed-file-card .file-info small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        .completed-file-card .file-details {
+            margin-bottom: var(--space-3);
+        }
+
+        .completed-file-card .file-details p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: var(--space-1) 0;
+            font-size: 0.875rem;
+        }
+
+        .completed-file-card .file-actions {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        .completed-file-card .file-actions .btn {
+            flex: 1;
+            min-width: 80px;
+            padding: var(--space-2) var(--space-3);
+            font-size: 0.875rem;
+        }
+
         .file-info {
             display: flex;
             align-items: center;
@@ -2781,6 +2891,17 @@
                     <div class="file-processing-list" id="file-processing-list">
                         <!-- Individual file processing status will be shown here -->
                     </div>
+                    
+                    <!-- Real-time Results Section -->
+                    <div class="real-time-results" id="real-time-results" style="display: none;">
+                        <div class="results-section-header">
+                            <h4><i class="fas fa-check-circle"></i> Completed Files</h4>
+                            <small>View and manage files as they complete processing</small>
+                        </div>
+                        <div class="real-time-results-grid" id="real-time-results-grid">
+                            <!-- Completed files will be displayed here in real-time -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3355,6 +3476,9 @@
                 return;
             }
             
+            // Reset completed count for new processing job
+            window.previousCompletedCount = 0;
+            
             // Switch to processing tab
             switchTab('processing');
             
@@ -3498,6 +3622,24 @@
                 const statusIcon = getStatusIcon(result.status);
                 const statusText = getStatusText(result.status, result);
                 
+                // Add action buttons for completed files
+                let actionButtons = '';
+                if (result.status === 'completed' && (result.processed_path || result.new_filename)) {
+                    actionButtons = `
+                        <div class="file-actions">
+                            <button class="btn btn-sm btn-primary" onclick="viewDocument('${result.processed_path || result.new_filename}')" title="View Document">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="downloadDocument('${result.processed_path || result.new_filename}')" title="Download">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="showRenameModal('${result.processed_path || result.new_filename}', '${result.new_filename || result.original_filename}')" title="Rename">
+                                <i class="fas fa-edit"></i> Rename
+                            </button>
+                        </div>
+                    `;
+                }
+                
                 return `
                     <div class="file-processing-item">
                         <div class="file-info">
@@ -3513,10 +3655,14 @@
                         </div>
                         <div class="file-meta">
                             ${result.confidence ? `<span class="confidence-badge">${Math.round(result.confidence * 100)}%</span>` : ''}
+                            ${actionButtons}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            // Update real-time results section
+            updateRealTimeResults(results);
         }
 
         function getStatusIcon(status) {
@@ -3538,6 +3684,74 @@
                 case 'error': return result.error || 'Processing failed';
                 default: return 'Unknown status';
             }
+        }
+
+        function updateRealTimeResults(results) {
+            const realTimeSection = document.getElementById('real-time-results');
+            const realTimeGrid = document.getElementById('real-time-results-grid');
+            
+            // Filter completed files
+            const completedFiles = results.filter(result => result.status === 'completed');
+            
+            if (completedFiles.length === 0) {
+                realTimeSection.style.display = 'none';
+                return;
+            }
+            
+            // Show the real-time results section
+            realTimeSection.style.display = 'block';
+            
+            // Check for newly completed files and show notifications
+            const previousCompletedCount = window.previousCompletedCount || 0;
+            const newCompletedCount = completedFiles.length;
+            
+            if (newCompletedCount > previousCompletedCount) {
+                const newlyCompleted = completedFiles.slice(previousCompletedCount);
+                newlyCompleted.forEach(file => {
+                    showNotification(`✅ ${file.original_filename} completed processing!`, 'success');
+                });
+            }
+            
+            window.previousCompletedCount = newCompletedCount;
+            
+            // Update the grid with completed files
+            realTimeGrid.innerHTML = completedFiles.map(result => {
+                const clientName = result.client_name || 'Unknown Client';
+                const documentType = result.document_type || 'Unknown Type';
+                const taxYear = result.tax_year || 'N/A';
+                const newFilename = result.new_filename ? result.new_filename.replace(/_/g, ' ') : result.original_filename;
+                
+                return `
+                    <div class="completed-file-card">
+                        <div class="file-header">
+                            <div class="file-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="file-info">
+                                <h5>${result.original_filename}</h5>
+                                <small>${newFilename}</small>
+                            </div>
+                        </div>
+                        <div class="file-details">
+                            <p><strong>Client:</strong> ${clientName}</p>
+                            <p><strong>Type:</strong> ${documentType}</p>
+                            <p><strong>Year:</strong> ${taxYear}</p>
+                            ${result.confidence ? `<p><strong>Confidence:</strong> ${Math.round(result.confidence * 100)}%</p>` : ''}
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-primary" onclick="viewDocument('${result.processed_path || result.new_filename}')" title="View Document">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-success" onclick="downloadDocument('${result.processed_path || result.new_filename}')" title="Download">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                            <button class="btn btn-secondary" onclick="showRenameModal('${result.processed_path || result.new_filename}', '${result.new_filename || result.original_filename}')" title="Rename">
+                                <i class="fas fa-edit"></i> Rename
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateProcessingStatus(status, message) {
